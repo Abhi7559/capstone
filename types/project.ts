@@ -1,0 +1,23 @@
+export type ProjectStatus = "active" | "archived";
+
+export interface Project {
+  id: string; // UUID string
+  name: string;
+  description: string;
+  status: ProjectStatus;
+  createdAt: string; // ISO date string
+  memberIds: string[]; // UUIDs of assigned members
+}
+
+export interface CreateProjectInput {
+  name: string;
+  description: string;
+  memberIds?: string[];
+}
+
+export interface UpdateProjectInput {
+  name?: string;
+  description?: string;
+  status?: ProjectStatus;
+  memberIds?: string[];
+}

@@ -1,0 +1,160 @@
+import type {
+  CreateTaskInput,
+  Task,
+  TaskFilters,
+  UpdateTaskInput,
+} from "@/types/task";
+import { projectRepository } from "../repositories/project.repository";
+import { taskRepository } from "../repositories/task.repository";
+
+export const taskServiceServer = {
+  getProjectTasks(
+    projectId: string,
+    filters?: TaskFilters,
+    userRole?: string,
+    userId?: string,
+  ): Task[] {
+    if (!userId || !userRole) {
+      throw new Error("Unauthorized: Valid session required");
+    }
+
+    const project = projectRepository.findById(projectId);
+    if (!project) {
+      throw new Error("Project not found");
+    }
+
+    const hasAccess =
+      userRole === "admin" || project.memberIds.includes(userId);
+    if (!hasAccess) {
+      throw new Error(
+        "Forbidden: You do not have access to this project's tasks.",
+      );
+    }
+
+    return taskRepository.findByProjectId(projectId, filters);
+  },
+
+  getAllTasks(userRole?: string, userId?: string): Task[] {
+    if (!userId || !userRole) {
+      throw new Error("Unauthorized: Valid session required");
+    }
+
+    const allTasks = taskRepository.findAll();
+    if (userRole === "admin") {
+      return allTasks;
+    }
+
+    const userProjectIds = projectRepository
+      .findByMemberId(userId)
+      .map((p) => p.id);
+    return allTasks.filter((t) => userProjectIds.includes(t.projectId));
+  },
+
+  getTaskById(taskId: string, userRole?: string, userId?: string): Task {
+    if (!userId || !userRole) {
+      throw new Error("Unauthorized: Valid session required");
+    }
+
+    const task = taskRepository.findById(taskId);
+    if (!task) {
+      throw new Error("Task not found");
+    }
+
+    const project = projectRepository.findById(task.projectId);
+    const hasAccess =
+      userRole === "admin" || project?.memberIds.includes(userId);
+
+    if (!hasAccess) {
+      throw new Error("Forbidden: You do not have access to this task.");
+    }
+
+    return task;
+  },
+
+  createTask(input: CreateTaskInput, userRole?: string): Task {
+    if (userRole !== "admin") {
+      throw new Error("Forbidden: Admin privileges required to create tasks.");
+    }
+
+    const newTask: Task = {
+      id: crypto.randomUUID(),
+      projectId: input.projectId,
+      title: input.title.trim(),
+      description: input.description.trim(),
+      priority: input.priority,
+      status: input.status || "todo",
+      assigneeId: input.assigneeId,
+      dueDate: input.dueDate,
+      tags: input.tags || [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    return taskRepository.create(newTask);
+  },
+
+  updateTask(
+    taskId: string,
+    input: UpdateTaskInput,
+    userRole?: string,
+    userId?: string,
+  ): Task {
+    const existingTask = taskRepository.findById(taskId);
+    if (!existingTask) {
+      throw new Error("Task not found");
+    }
+
+    const project = projectRepository.findById(existingTask.projectId);
+    const hasAccess =
+      userRole === "admin" || project?.memberIds.includes(userId || "");
+
+    if (!hasAccess) {
+      throw new Error("Forbidden: Access denied to update this task.");
+    }
+
+    let payload: Partial<Task> = {};
+
+    if (userRole === "admin") {
+      payload = {
+        ...(input.title && { title: input.title.trim() }),
+        ...(input.description && { description: input.description.trim() }),
+        ...(input.priority && { priority: input.priority }),
+        ...(input.status && { status: input.status }),
+        ...(input.assigneeId && { assigneeId: input.assigneeId }),
+        ...(input.dueDate && { dueDate: input.dueDate }),
+        ...(input.tags && { tags: input.tags }),
+      };
+    } else {
+      if (input.status) {
+        payload = { status: input.status };
+      } else {
+        throw new Error(
+          "Forbidden: Members are only permitted to update task status.",
+        );
+      }
+    }
+
+    const updated = taskRepository.update(taskId, payload);
+    if (!updated) {
+      throw new Error("Task not found");
+    }
+
+    return updated;
+  },
+
+  deleteTask(taskId: string, userRole?: string, userId?: string): void {
+    const task = taskRepository.findById(taskId);
+    if (!task) {
+      throw new Error("Task not found");
+    }
+
+    if (userRole && userRole !== "admin") {
+      throw new Error("Forbidden: Only Admins can delete tasks");
+    }
+
+    const success = taskRepository.delete(taskId);
+    if (!success) {
+      throw new Error("Failed to delete task");
+    }
+  },
+};
