@@ -114,10 +114,7 @@ export function MultiStepProjectModal({
             editingProject.endDate ||
             defaultEnd,
           priority: "medium",
-          projectState:
-            editingProject.status === "archived"
-              ? "on_hold"
-              : editingProject.status || "active",
+          projectState: (editingProject.status as any) || "active",
           category: "Engineering",
           budget: "",
         });
@@ -176,11 +173,7 @@ export function MultiStepProjectModal({
     if (currentStep < 4) return;
     setSubmitError(null);
     const mappedStatus: ProjectStatus =
-      data.projectState === "on_hold"
-        ? "on_hold"
-        : data.projectState === "completed"
-          ? "archived"
-          : (data.projectState as ProjectStatus) || "active";
+      (data.projectState as ProjectStatus) || "active";
 
     try {
       if (editingProject) {

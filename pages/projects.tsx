@@ -122,7 +122,7 @@ export default function ProjectsPage() {
   // Local state for Search, Filter, Sort, and View mode
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<
-    "all" | "active" | "archived"
+    "all" | "active" | "planning" | "on_hold" | "archived"
   >("all");
   const [sortBy, setSortBy] = useState<"newest" | "name" | "status">("newest");
   const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
@@ -133,8 +133,14 @@ export default function ProjectsPage() {
   const activeCount = allProjectsList.filter(
     (p) => p.status === "active",
   ).length;
+  const planningCount = allProjectsList.filter(
+    (p) => p.status === "planning",
+  ).length;
+  const onHoldCount = allProjectsList.filter(
+    (p) => p.status === "on_hold",
+  ).length;
   const archivedCount = allProjectsList.filter(
-    (p) => p.status === "archived",
+    (p) => p.status === "archived" || p.status === "completed",
   ).length;
   const avgProgress =
     totalCount > 0
@@ -153,7 +159,11 @@ export default function ProjectsPage() {
         project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         project.description.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesStatus =
-        statusFilter === "all" || project.status === statusFilter;
+        statusFilter === "all"
+          ? true
+          : statusFilter === "archived"
+            ? project.status === "archived" || project.status === "completed"
+            : project.status === statusFilter;
       return matchesSearch && matchesStatus;
     })
     .sort((a, b) => {
@@ -413,6 +423,48 @@ export default function ProjectsPage() {
 
                 <button
                   type="button"
+                  onClick={() => setStatusFilter("planning")}
+                  className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
+                    statusFilter === "planning"
+                      ? "bg-sky-600 text-white shadow-sm"
+                      : "bg-sky-50 text-sky-700 hover:bg-sky-100"
+                  }`}
+                >
+                  Planning
+                  <span
+                    className={`rounded-full px-1.5 py-0.5 text-[10px] ${
+                      statusFilter === "planning"
+                        ? "bg-sky-700 text-sky-100"
+                        : "bg-sky-200/60 text-sky-800"
+                    }`}
+                  >
+                    {planningCount}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter("on_hold")}
+                  className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
+                    statusFilter === "on_hold"
+                      ? "bg-amber-600 text-white shadow-sm"
+                      : "bg-amber-50 text-amber-700 hover:bg-amber-100"
+                  }`}
+                >
+                  On Hold
+                  <span
+                    className={`rounded-full px-1.5 py-0.5 text-[10px] ${
+                      statusFilter === "on_hold"
+                        ? "bg-amber-700 text-amber-100"
+                        : "bg-amber-200/60 text-amber-800"
+                    }`}
+                  >
+                    {onHoldCount}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
                   onClick={() => setStatusFilter("archived")}
                   className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
                     statusFilter === "archived"
@@ -561,12 +613,16 @@ export default function ProjectsPage() {
                           <div className="flex items-center space-x-2">
                             <span
                               className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold capitalize ${
-                                isProjectActive
+                                project.status === "active"
                                   ? "bg-emerald-50 text-emerald-700 border border-emerald-200/60"
-                                  : "bg-purple-50 text-purple-700 border border-purple-200/60"
+                                  : project.status === "planning"
+                                    ? "bg-sky-50 text-sky-700 border border-sky-200/60"
+                                    : project.status === "on_hold"
+                                      ? "bg-amber-50 text-amber-700 border border-amber-200/60"
+                                      : "bg-purple-50 text-purple-700 border border-purple-200/60"
                               }`}
                             >
-                              {project.status}
+                              {project.status.replace("_", " ")}
                             </span>
 
                             {/* Kebab Action Dropdown Toggle */}
