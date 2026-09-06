@@ -11,9 +11,6 @@ export default async function handler(
     return res.status(405).json({ message: "Method not allowed" });
   }
 
-  // Simulate network latency
-  await new Promise((resolve) => setTimeout(resolve, 400));
-
   try {
     const credentials = (req.body || {}) as LoginCredentials;
     const user = authServiceServer.login(credentials);

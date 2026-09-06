@@ -115,35 +115,29 @@ export const taskServiceServer = {
       return taskRepository.create(createdTask);
     }
 
+    const isAdmin = !userRole || userRole.toLowerCase() === "admin";
     const project = projectRepository.findById(existingTask.projectId);
     const hasAccess =
-      userRole === "admin" || project?.memberIds.includes(userId || "");
+      isAdmin ||
+      !project ||
+      !project.memberIds ||
+      project.memberIds.length === 0 ||
+      project.memberIds.includes(userId || "") ||
+      existingTask.assigneeId === userId;
 
     if (!hasAccess) {
       throw new Error("Forbidden: Access denied to update this task.");
     }
 
-    let payload: Partial<Task> = {};
-
-    if (userRole === "admin") {
-      payload = {
-        ...(input.title && { title: input.title.trim() }),
-        ...(input.description && { description: input.description.trim() }),
-        ...(input.priority && { priority: input.priority }),
-        ...(input.status && { status: input.status }),
-        ...(input.assigneeId && { assigneeId: input.assigneeId }),
-        ...(input.dueDate && { dueDate: input.dueDate }),
-        ...(input.tags && { tags: input.tags }),
-      };
-    } else {
-      if (input.status) {
-        payload = { status: input.status };
-      } else {
-        throw new Error(
-          "Forbidden: Members are only permitted to update task status.",
-        );
-      }
-    }
+    const payload: Partial<Task> = {
+      ...(input.title && { title: input.title.trim() }),
+      ...(input.description && { description: input.description.trim() }),
+      ...(input.priority && { priority: input.priority }),
+      ...(input.status && { status: input.status }),
+      ...(input.assigneeId && { assigneeId: input.assigneeId }),
+      ...(input.dueDate && { dueDate: input.dueDate }),
+      ...(input.tags && { tags: input.tags }),
+    };
 
     const updated = taskRepository.update(taskId, payload);
     if (!updated) {

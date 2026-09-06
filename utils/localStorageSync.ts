@@ -5,8 +5,49 @@ import type { Task } from "@/types/task";
 const MEMBERS_KEY = "capstone_local_members";
 const PROJECTS_KEY = "capstone_local_projects";
 const TASKS_KEY = "capstone_local_tasks";
+const DELETED_PROJECTS_KEY = "capstone_deleted_projects";
+const DELETED_TASKS_KEY = "capstone_deleted_tasks";
 
 const isClient = typeof window !== "undefined";
+
+// --- DELETED TRACKING ---
+export function getDeletedProjectIds(): string[] {
+  if (!isClient) return [];
+  try {
+    const data = localStorage.getItem(DELETED_PROJECTS_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function addDeletedProjectId(id: string): void {
+  if (!isClient) return;
+  const current = getDeletedProjectIds();
+  if (!current.includes(id)) {
+    current.push(id);
+    localStorage.setItem(DELETED_PROJECTS_KEY, JSON.stringify(current));
+  }
+}
+
+export function getDeletedTaskIds(): string[] {
+  if (!isClient) return [];
+  try {
+    const data = localStorage.getItem(DELETED_TASKS_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function addDeletedTaskId(id: string): void {
+  if (!isClient) return;
+  const current = getDeletedTaskIds();
+  if (!current.includes(id)) {
+    current.push(id);
+    localStorage.setItem(DELETED_TASKS_KEY, JSON.stringify(current));
+  }
+}
 
 // --- MEMBERS ---
 export function getLocalMembers(): User[] {
@@ -102,6 +143,7 @@ export function addOrUpdateLocalProject(project: Project): void {
 }
 
 export function removeLocalProject(id: string): void {
+  addDeletedProjectId(id);
   const current = getLocalProjects();
   const updated = current.filter((p) => p.id !== id);
   saveLocalProjects(updated);
@@ -110,25 +152,27 @@ export function removeLocalProject(id: string): void {
 
 export function removeLocalTasksForProject(projectId: string): void {
   const current = getLocalTasks();
+  for (const t of current) {
+    if (t.projectId === projectId) {
+      addDeletedTaskId(t.id);
+    }
+  }
   const updated = current.filter((t) => t.projectId !== projectId);
   saveLocalTasks(updated);
 }
 
 export function mergeProjectsWithLocal(apiProjects: Project[]): Project[] {
-  const localProjects = getLocalProjects();
-  if (localProjects.length === 0) {
-    saveLocalProjects(apiProjects);
-    return apiProjects;
-  }
+  const deletedIds = new Set(getDeletedProjectIds());
+  const localProjects = getLocalProjects().filter((p) => !deletedIds.has(p.id));
 
   const map = new Map<string, Project>();
   for (const p of apiProjects) {
-    map.set(p.id, p);
-  }
-  for (const p of localProjects) {
-    if (!map.has(p.id)) {
+    if (!deletedIds.has(p.id)) {
       map.set(p.id, p);
     }
+  }
+  for (const p of localProjects) {
+    map.set(p.id, p);
   }
   const merged = Array.from(map.values());
   saveLocalProjects(merged);
@@ -167,26 +211,27 @@ export function addOrUpdateLocalTask(task: Task): void {
 }
 
 export function removeLocalTask(id: string): void {
+  addDeletedTaskId(id);
   const current = getLocalTasks();
   const updated = current.filter((t) => t.id !== id);
   saveLocalTasks(updated);
 }
 
 export function mergeTasksWithLocal(apiTasks: Task[]): Task[] {
-  const localTasks = getLocalTasks();
-  if (localTasks.length === 0) {
-    saveLocalTasks(apiTasks);
-    return apiTasks;
-  }
+  const deletedTaskIds = new Set(getDeletedTaskIds());
+  const deletedProjectIds = new Set(getDeletedProjectIds());
+  const localTasks = getLocalTasks().filter(
+    (t) => !deletedTaskIds.has(t.id) && !deletedProjectIds.has(t.projectId),
+  );
 
   const map = new Map<string, Task>();
   for (const t of apiTasks) {
-    map.set(t.id, t);
-  }
-  for (const t of localTasks) {
-    if (!map.has(t.id)) {
+    if (!deletedTaskIds.has(t.id) && !deletedProjectIds.has(t.projectId)) {
       map.set(t.id, t);
     }
+  }
+  for (const t of localTasks) {
+    map.set(t.id, t);
   }
   const merged = Array.from(map.values());
   saveLocalTasks(merged);

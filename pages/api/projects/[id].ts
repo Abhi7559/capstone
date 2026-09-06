@@ -8,8 +8,6 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Project | { message: string }>,
 ) {
-  await new Promise((resolve) => setTimeout(resolve, 400));
-
   const session = await getServerSession(req, res, authOptions);
   const userRole = (session?.user?.role ||
     req.headers["x-user-role"]) as string;

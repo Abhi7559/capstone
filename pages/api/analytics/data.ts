@@ -16,8 +16,6 @@ export default async function handler(
     return res.status(405).json({ message: "Method not allowed" });
   }
 
-  await new Promise((resolve) => setTimeout(resolve, 400));
-
   const userId = req.headers["x-user-id"] as string;
   const userRole = req.headers["x-user-role"] as string;
 
