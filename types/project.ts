@@ -1,4 +1,4 @@
-export type ProjectStatus = "active" | "archived";
+export type ProjectStatus = "active" | "archived" | "on_hold";
 
 export interface Project {
   id: string; // UUID string
@@ -15,6 +15,7 @@ export interface Project {
 export interface CreateProjectInput {
   name: string;
   description: string;
+  status?: ProjectStatus;
   memberIds?: string[];
   startDate?: string;
   dueDate?: string;

@@ -7,7 +7,7 @@ import {
   type MultiStepProjectInput,
   multiStepProjectSchema,
 } from "@/schemas/project.schema";
-import type { Project } from "@/types/project";
+import type { Project, ProjectStatus } from "@/types/project";
 
 interface MultiStepProjectModalProps {
   isOpen: boolean;
@@ -175,6 +175,13 @@ export function MultiStepProjectModal({
   const onFinalSubmit = async (data: MultiStepProjectInput) => {
     if (currentStep < 4) return;
     setSubmitError(null);
+    const mappedStatus: ProjectStatus =
+      data.projectState === "on_hold"
+        ? "on_hold"
+        : data.projectState === "completed"
+          ? "archived"
+          : (data.projectState as ProjectStatus) || "active";
+
     try {
       if (editingProject) {
         await updateProject({
@@ -182,6 +189,7 @@ export function MultiStepProjectModal({
           input: {
             name: data.name,
             description: data.description,
+            status: mappedStatus,
             memberIds: data.memberIds,
             startDate: data.startDate,
             dueDate: data.endDate,
@@ -193,6 +201,7 @@ export function MultiStepProjectModal({
         await createProject({
           name: data.name,
           description: data.description,
+          status: mappedStatus,
           memberIds: data.memberIds,
           startDate: data.startDate,
           dueDate: data.endDate,

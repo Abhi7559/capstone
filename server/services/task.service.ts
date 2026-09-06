@@ -116,17 +116,11 @@ export const taskServiceServer = {
     }
 
     const isAdmin = !userRole || userRole.toLowerCase() === "admin";
-    const project = projectRepository.findById(existingTask.projectId);
-    const hasAccess =
-      isAdmin ||
-      !project ||
-      !project.memberIds ||
-      project.memberIds.length === 0 ||
-      project.memberIds.includes(userId || "") ||
-      existingTask.assigneeId === userId;
+    const isAssignedMember = Boolean(userId) && existingTask.assigneeId === userId;
+    const hasAccess = isAdmin || isAssignedMember;
 
     if (!hasAccess) {
-      throw new Error("Forbidden: Access denied to update this task.");
+      throw new Error("Forbidden: Only Admin or the assigned team member can update this task status.");
     }
 
     const payload: Partial<Task> = {

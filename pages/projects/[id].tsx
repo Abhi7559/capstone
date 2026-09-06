@@ -792,10 +792,10 @@ export default function ProjectTaskBoardPage() {
                               </div>
                             ) : (
                               columnTasks.map((task) => {
-  const isMemberOfProject = currentProject?.memberIds
-    ? currentProject.memberIds.includes(currentUser?.id || "")
-    : true;
-  const canUserUpdateTaskStatus = isAdmin || isMemberOfProject || task.assigneeId === currentUser?.id;
+                                  const canUserUpdateTaskStatus =
+                                    isAdmin ||
+                                    (Boolean(currentUser?.id) &&
+                                      task.assigneeId === currentUser?.id);
 
                                 return (
                                   <article
