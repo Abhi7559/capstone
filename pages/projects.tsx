@@ -122,7 +122,7 @@ export default function ProjectsPage() {
   // Local state for Search, Filter, Sort, and View mode
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<
-    "all" | "active" | "planning" | "on_hold" | "completed" | "archived"
+    "all" | "active" | "archived"
   >("all");
   const [sortBy, setSortBy] = useState<"newest" | "name" | "status">("newest");
   const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
@@ -132,12 +132,6 @@ export default function ProjectsPage() {
   const totalCount = allProjectsList.length;
   const activeCount = allProjectsList.filter(
     (p) => p.status === "active",
-  ).length;
-  const planningCount = allProjectsList.filter(
-    (p) => p.status === "planning",
-  ).length;
-  const onHoldCount = allProjectsList.filter(
-    (p) => p.status === "on_hold",
   ).length;
   const completedCount = allProjectsList.filter(
     (p) => p.status === "completed",
@@ -422,82 +416,19 @@ export default function ProjectsPage() {
 
                 <button
                   type="button"
-                  onClick={() => setStatusFilter("planning")}
-                  className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
-                    statusFilter === "planning"
-                      ? "bg-sky-600 text-white shadow-sm"
-                      : "bg-sky-50 text-sky-700 hover:bg-sky-100"
-                  }`}
-                >
-                  Planning
-                  <span
-                    className={`rounded-full px-1.5 py-0.5 text-[10px] ${
-                      statusFilter === "planning"
-                        ? "bg-sky-700 text-sky-100"
-                        : "bg-sky-200/60 text-sky-800"
-                    }`}
-                  >
-                    {planningCount}
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setStatusFilter("on_hold")}
-                  className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
-                    statusFilter === "on_hold"
-                      ? "bg-amber-600 text-white shadow-sm"
-                      : "bg-amber-50 text-amber-700 hover:bg-amber-100"
-                  }`}
-                >
-                  On Hold
-                  <span
-                    className={`rounded-full px-1.5 py-0.5 text-[10px] ${
-                      statusFilter === "on_hold"
-                        ? "bg-amber-700 text-amber-100"
-                        : "bg-amber-200/60 text-amber-800"
-                    }`}
-                  >
-                    {onHoldCount}
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setStatusFilter("completed")}
-                  className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
-                    statusFilter === "completed"
-                      ? "bg-purple-600 text-white shadow-sm"
-                      : "bg-purple-50 text-purple-700 hover:bg-purple-100"
-                  }`}
-                >
-                  Completed
-                  <span
-                    className={`rounded-full px-1.5 py-0.5 text-[10px] ${
-                      statusFilter === "completed"
-                        ? "bg-purple-700 text-purple-100"
-                        : "bg-purple-200/60 text-purple-800"
-                    }`}
-                  >
-                    {completedCount}
-                  </span>
-                </button>
-
-                <button
-                  type="button"
                   onClick={() => setStatusFilter("archived")}
                   className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
                     statusFilter === "archived"
-                      ? "bg-slate-700 text-white shadow-sm"
-                      : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                      ? "bg-purple-600 text-white shadow-sm"
+                      : "bg-purple-50 text-purple-700 hover:bg-purple-100"
                   }`}
                 >
                   Archived
                   <span
                     className={`rounded-full px-1.5 py-0.5 text-[10px] ${
                       statusFilter === "archived"
-                        ? "bg-slate-800 text-slate-100"
-                        : "bg-slate-200 text-slate-800"
+                        ? "bg-purple-700 text-purple-100"
+                        : "bg-purple-200/60 text-purple-800"
                     }`}
                   >
                     {archivedCount}
