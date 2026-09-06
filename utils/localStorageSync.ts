@@ -172,7 +172,9 @@ export function mergeProjectsWithLocal(apiProjects: Project[]): Project[] {
     }
   }
   for (const p of localProjects) {
-    map.set(p.id, p);
+    if (!map.has(p.id)) {
+      map.set(p.id, p);
+    }
   }
   const merged = Array.from(map.values());
   saveLocalProjects(merged);
@@ -202,10 +204,14 @@ export function saveLocalTasks(tasks: Task[]): void {
 export function addOrUpdateLocalTask(task: Task): void {
   const current = getLocalTasks();
   const index = current.findIndex((t) => t.id === task.id);
+  const updatedTask = {
+    ...task,
+    updatedAt: new Date().toISOString(),
+  };
   if (index !== -1) {
-    current[index] = { ...current[index], ...task };
+    current[index] = { ...current[index], ...updatedTask };
   } else {
-    current.unshift(task);
+    current.unshift(updatedTask);
   }
   saveLocalTasks(current);
 }
@@ -231,7 +237,16 @@ export function mergeTasksWithLocal(apiTasks: Task[]): Task[] {
     }
   }
   for (const t of localTasks) {
-    map.set(t.id, t);
+    if (!map.has(t.id)) {
+      map.set(t.id, t);
+    } else {
+      const existing = map.get(t.id)!;
+      const apiTime = new Date(existing.updatedAt || existing.createdAt || 0).getTime();
+      const localTime = new Date(t.updatedAt || t.createdAt || 0).getTime();
+      if (localTime >= apiTime) {
+        map.set(t.id, t);
+      }
+    }
   }
   const merged = Array.from(map.values());
   saveLocalTasks(merged);
