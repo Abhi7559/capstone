@@ -122,7 +122,7 @@ export default function ProjectsPage() {
   // Local state for Search, Filter, Sort, and View mode
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<
-    "all" | "active" | "planning" | "on_hold" | "archived"
+    "all" | "active" | "planning" | "on_hold" | "completed" | "archived"
   >("all");
   const [sortBy, setSortBy] = useState<"newest" | "name" | "status">("newest");
   const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
@@ -139,8 +139,11 @@ export default function ProjectsPage() {
   const onHoldCount = allProjectsList.filter(
     (p) => p.status === "on_hold",
   ).length;
+  const completedCount = allProjectsList.filter(
+    (p) => p.status === "completed",
+  ).length;
   const archivedCount = allProjectsList.filter(
-    (p) => p.status === "archived" || p.status === "completed",
+    (p) => p.status === "archived",
   ).length;
   const avgProgress =
     totalCount > 0
@@ -159,11 +162,7 @@ export default function ProjectsPage() {
         project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         project.description.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesStatus =
-        statusFilter === "all"
-          ? true
-          : statusFilter === "archived"
-            ? project.status === "archived" || project.status === "completed"
-            : project.status === statusFilter;
+        statusFilter === "all" ? true : project.status === statusFilter;
       return matchesSearch && matchesStatus;
     })
     .sort((a, b) => {
@@ -334,22 +333,22 @@ export default function ProjectsPage() {
                 </div>
               </div>
 
-              {/* Card 3: Archived */}
+              {/* Card 3: Completed */}
               <div className="rounded-2xl border border-purple-100 bg-white p-4 shadow-sm hover:shadow-md transition">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold uppercase tracking-wider text-purple-600">
-                    Archived
+                    Completed
                   </span>
                   <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-purple-50 text-purple-600 font-bold">
-                    📁
+                    ✅
                   </div>
                 </div>
                 <div className="mt-2 flex items-baseline gap-2">
                   <span className="text-2xl font-black text-purple-700">
-                    {archivedCount}
+                    {completedCount}
                   </span>
                   <span className="text-[11px] font-medium text-purple-600/80">
-                    completed
+                    finished
                   </span>
                 </div>
               </div>
@@ -465,19 +464,40 @@ export default function ProjectsPage() {
 
                 <button
                   type="button"
+                  onClick={() => setStatusFilter("completed")}
+                  className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
+                    statusFilter === "completed"
+                      ? "bg-purple-600 text-white shadow-sm"
+                      : "bg-purple-50 text-purple-700 hover:bg-purple-100"
+                  }`}
+                >
+                  Completed
+                  <span
+                    className={`rounded-full px-1.5 py-0.5 text-[10px] ${
+                      statusFilter === "completed"
+                        ? "bg-purple-700 text-purple-100"
+                        : "bg-purple-200/60 text-purple-800"
+                    }`}
+                  >
+                    {completedCount}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
                   onClick={() => setStatusFilter("archived")}
                   className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
                     statusFilter === "archived"
-                      ? "bg-purple-600 text-white shadow-sm"
-                      : "bg-purple-50 text-purple-700 hover:bg-purple-100"
+                      ? "bg-slate-700 text-white shadow-sm"
+                      : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                   }`}
                 >
                   Archived
                   <span
                     className={`rounded-full px-1.5 py-0.5 text-[10px] ${
                       statusFilter === "archived"
-                        ? "bg-purple-700 text-purple-100"
-                        : "bg-purple-200/60 text-purple-800"
+                        ? "bg-slate-800 text-slate-100"
+                        : "bg-slate-200 text-slate-800"
                     }`}
                   >
                     {archivedCount}
