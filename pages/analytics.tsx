@@ -111,15 +111,9 @@ export default function AnalyticsPage() {
                   <div className="w-full h-80">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={tasksByAssignee}>
-                        <CartesianGrid
-                          strokeDasharray="3 3"
-                          vertical={false}
-                        />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
                         <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                        <YAxis
-                          allowDecimals={false}
-                          tick={{ fontSize: 12 }}
-                        />
+                        <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
                         <Tooltip
                           cursor={false}
                           contentStyle={{

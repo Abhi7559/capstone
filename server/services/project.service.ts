@@ -45,9 +45,7 @@ export const projectServiceServer = {
     }
 
     const assignedMembers =
-      input.memberIds && input.memberIds.length > 0
-        ? [...input.memberIds]
-        : [];
+      input.memberIds && input.memberIds.length > 0 ? [...input.memberIds] : [];
     if (userId && !assignedMembers.includes(userId)) {
       assignedMembers.push(userId);
     }

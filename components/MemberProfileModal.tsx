@@ -21,9 +21,16 @@ export function MemberProfileModal({
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [copiedPassword, setCopiedPassword] = useState(false);
 
-  const { updateMember, isLoading: isUpdating, error: updateError } =
-    useUpdateMember();
-  const { deleteMember, isLoading: isDeleting, error: deleteError } = useDeleteMember();
+  const {
+    updateMember,
+    isLoading: isUpdating,
+    error: updateError,
+  } = useUpdateMember();
+  const {
+    deleteMember,
+    isLoading: isDeleting,
+    error: deleteError,
+  } = useDeleteMember();
 
   // Form State
   const [name, setName] = useState("");
@@ -38,7 +45,9 @@ export function MemberProfileModal({
       setEmail(member.email || "");
       setDesignation(
         member.designation ||
-          (member.role === "admin" ? "System Administrator" : "Software Engineer"),
+          (member.role === "admin"
+            ? "System Administrator"
+            : "Software Engineer"),
       );
       setJoiningDate(member.joiningDate || "2026-09-01");
       setRole(member.role || "member");
@@ -138,8 +147,8 @@ export function MemberProfileModal({
               </div>
             )}
             <p className="text-xs text-red-700 leading-relaxed">
-              Are you sure you want to remove <strong>{member.name}</strong> from
-              the workspace? This action cannot be undone.
+              Are you sure you want to remove <strong>{member.name}</strong>{" "}
+              from the workspace? This action cannot be undone.
             </p>
             <div className="flex justify-end space-x-3 pt-2">
               <button

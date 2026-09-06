@@ -79,7 +79,8 @@ export const memberServiceServer = {
   },
 
   deleteMember(id: string, currentUserRole?: string): boolean {
-    const isAdmin = !currentUserRole || currentUserRole.toLowerCase() === "admin";
+    const isAdmin =
+      !currentUserRole || currentUserRole.toLowerCase() === "admin";
     if (!isAdmin) {
       throw new Error("Forbidden: Admin privileges required to delete members");
     }

@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useMembers } from "@/hooks/useMembers";
 import { useProjects } from "@/hooks/useProjects";
@@ -104,7 +104,14 @@ export function MultiStepCreateTaskModal({
       resetCreate();
       resetUpdate();
     }
-  }, [isOpen, editingTask, defaultProjectId, resetForm, resetCreate, resetUpdate]);
+  }, [
+    isOpen,
+    editingTask,
+    defaultProjectId,
+    resetForm,
+    resetCreate,
+    resetUpdate,
+  ]);
 
   // Lock background body scroll when modal is open
   useEffect(() => {
@@ -275,7 +282,9 @@ export function MultiStepCreateTaskModal({
                   >
                     Task Title *
                   </label>
-                  <span className={`text-xs font-semibold ${(formValues.title?.length || 0) >= 50 ? "text-red-600 font-bold" : "text-gray-400"}`}>
+                  <span
+                    className={`text-xs font-semibold ${(formValues.title?.length || 0) >= 50 ? "text-red-600 font-bold" : "text-gray-400"}`}
+                  >
                     {formValues.title?.length || 0}/50
                   </span>
                 </div>

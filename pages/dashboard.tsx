@@ -63,7 +63,9 @@ export default function DashboardPage() {
   useEffect(() => {
     if (router.query.loggedIn && currentUser) {
       const roleName = currentUser.role === "admin" ? "Admin" : "Member";
-      setToastMessage(`Welcome back, ${currentUser.name}! Logged in as ${roleName}.`);
+      setToastMessage(
+        `Welcome back, ${currentUser.name}! Logged in as ${roleName}.`,
+      );
       router.replace("/dashboard", undefined, { shallow: true });
     }
   }, [router.query.loggedIn, currentUser, router]);

@@ -61,13 +61,25 @@ async function fetchProjectTasks(
     if (projectId && projectId !== "all" && t.projectId !== projectId) {
       return false;
     }
-    if (filters?.status && filters.status !== "all" && t.status !== filters.status) {
+    if (
+      filters?.status &&
+      filters.status !== "all" &&
+      t.status !== filters.status
+    ) {
       return false;
     }
-    if (filters?.priority && filters.priority !== "all" && t.priority !== filters.priority) {
+    if (
+      filters?.priority &&
+      filters.priority !== "all" &&
+      t.priority !== filters.priority
+    ) {
       return false;
     }
-    if (filters?.assigneeId && filters.assigneeId !== "all" && t.assigneeId !== filters.assigneeId) {
+    if (
+      filters?.assigneeId &&
+      filters.assigneeId !== "all" &&
+      t.assigneeId !== filters.assigneeId
+    ) {
       return false;
     }
     return true;
@@ -208,12 +220,7 @@ export function useTasks(projectId?: string, filters?: TaskFilters) {
   return useQuery({
     queryKey: ["projectTasks", projectId || "all", filters, currentUser?.id],
     queryFn: () =>
-      fetchProjectTasks(
-        projectId,
-        filters,
-        currentUser?.role,
-        currentUser?.id,
-      ),
+      fetchProjectTasks(projectId, filters, currentUser?.role, currentUser?.id),
     enabled: Boolean(currentUser),
   });
 }
@@ -225,8 +232,7 @@ export function useTask(taskId: string) {
 
   return useQuery({
     queryKey: ["task", taskId, currentUser?.id],
-    queryFn: () =>
-      fetchTaskById(taskId, currentUser?.role, currentUser?.id),
+    queryFn: () => fetchTaskById(taskId, currentUser?.role, currentUser?.id),
     enabled: Boolean(taskId) && Boolean(currentUser),
   });
 }
@@ -263,8 +269,7 @@ export function useUpdateTask() {
     }: {
       taskId: string;
       input: UpdateTaskInput;
-    }) =>
-      updateTaskRequest(taskId, input, currentUser?.role, currentUser?.id),
+    }) => updateTaskRequest(taskId, input, currentUser?.role, currentUser?.id),
     onSuccess: (updatedTask) => {
       queryClient.invalidateQueries({ queryKey: ["task", updatedTask.id] });
       queryClient.invalidateQueries({ queryKey: ["projectTasks"] });

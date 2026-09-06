@@ -80,9 +80,7 @@ export function MultiStepProjectModal({
         editingProject?.createdAt?.split("T")[0] ||
         todayStr,
       endDate:
-        editingProject?.dueDate ||
-        editingProject?.endDate ||
-        defaultEndDateStr,
+        editingProject?.dueDate || editingProject?.endDate || defaultEndDateStr,
       priority: "medium",
       projectState: "active",
       category: "Engineering",
@@ -110,9 +108,7 @@ export function MultiStepProjectModal({
             editingProject.createdAt?.split("T")[0] ||
             today,
           endDate:
-            editingProject.dueDate ||
-            editingProject.endDate ||
-            defaultEnd,
+            editingProject.dueDate || editingProject.endDate || defaultEnd,
           priority: "medium",
           projectState: (editingProject.status as any) || "active",
           category: "Engineering",
@@ -421,7 +417,9 @@ export function MultiStepProjectModal({
                       >
                         Project Name <span className="text-red-500">*</span>
                       </label>
-                      <span className={`text-[11px] font-semibold ${(formValues.name?.length || 0) >= 50 ? "text-red-600 font-bold" : "text-gray-400"}`}>
+                      <span
+                        className={`text-[11px] font-semibold ${(formValues.name?.length || 0) >= 50 ? "text-red-600 font-bold" : "text-gray-400"}`}
+                      >
                         {formValues.name?.length || 0}/50
                       </span>
                     </div>

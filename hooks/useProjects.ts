@@ -1,6 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/useAuthStore";
-import type { CreateProjectInput, Project, UpdateProjectInput } from "@/types/project";
+import type {
+  CreateProjectInput,
+  Project,
+  UpdateProjectInput,
+} from "@/types/project";
 import {
   addOrUpdateLocalProject,
   getLocalProjects,
@@ -11,7 +15,10 @@ import {
 const DEFAULT_ROLE = "admin";
 const DEFAULT_USER_ID = "550e8400-e29b-41d4-a716-446655440000";
 
-async function fetchProjects(userRole?: string, userId?: string): Promise<Project[]> {
+async function fetchProjects(
+  userRole?: string,
+  userId?: string,
+): Promise<Project[]> {
   try {
     const response = await fetch("/api/projects", {
       headers: {
@@ -24,7 +31,10 @@ async function fetchProjects(userRole?: string, userId?: string): Promise<Projec
       return mergeProjectsWithLocal(data);
     }
   } catch (err) {
-    console.warn("API projects fetch failed, falling back to local storage", err);
+    console.warn(
+      "API projects fetch failed, falling back to local storage",
+      err,
+    );
   }
 
   return getLocalProjects();

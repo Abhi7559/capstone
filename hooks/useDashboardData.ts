@@ -31,7 +31,10 @@ async function fetchDashboardData(
       apiActivity = data.recentActivity || [];
     }
   } catch (err) {
-    console.warn("API dashboard stats fetch failed, relying on local storage", err);
+    console.warn(
+      "API dashboard stats fetch failed, relying on local storage",
+      err,
+    );
   }
 
   const allProjects = mergeProjectsWithLocal(getLocalProjects());
@@ -42,7 +45,10 @@ async function fetchDashboardData(
     const totalTasks = allTasks.length;
     const completedTasks = allTasks.filter((t) => t.status === "done").length;
     const overdueTasks = allTasks.filter(
-      (t) => t.status !== "done" && Boolean(t.dueDate) && (t.dueDate || "") < todayStr,
+      (t) =>
+        t.status !== "done" &&
+        Boolean(t.dueDate) &&
+        (t.dueDate || "") < todayStr,
     ).length;
 
     const recentlyCreatedTasks = [...allTasks].sort(
@@ -64,12 +70,15 @@ async function fetchDashboardData(
   // Member Dashboard Data
   const myAssignedTasks = allTasks.filter((t) => t.assigneeId === userId);
   const myOverdueTasks = myAssignedTasks.filter(
-    (t) => t.status !== "done" && Boolean(t.dueDate) && (t.dueDate || "") < todayStr,
+    (t) =>
+      t.status !== "done" && Boolean(t.dueDate) && (t.dueDate || "") < todayStr,
   );
   const tasksDueSoon = myAssignedTasks.filter(
     (t) => t.status !== "done" && (!t.dueDate || (t.dueDate || "") >= todayStr),
   );
-  const myProjects = allProjects.filter((p) => p.memberIds?.includes(userId || ""));
+  const myProjects = allProjects.filter((p) =>
+    p.memberIds?.includes(userId || ""),
+  );
 
   return {
     myAssignedTasks,

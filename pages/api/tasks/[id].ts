@@ -53,9 +53,7 @@ export default async function handler(
   if (req.method === "DELETE") {
     try {
       taskServiceServer.deleteTask(id, userRole, userId);
-      return res
-        .status(200)
-        .json({ message: "Task deleted successfully" });
+      return res.status(200).json({ message: "Task deleted successfully" });
     } catch (error) {
       const message = (error as Error).message;
       const status = message.includes("Forbidden")

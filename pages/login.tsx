@@ -5,22 +5,28 @@ import { useForm } from "react-hook-form";
 import { useChangePassword, useLogin } from "@/hooks/useLogin";
 import {
   type ChangePasswordValues,
-  type LoginCredentials,
   changePasswordSchema,
+  type LoginCredentials,
   loginSchema,
 } from "@/schemas/auth.schema";
 
 export default function LoginPage() {
   const router = useRouter();
   const { login, isLoading, error } = useLogin();
-  const { changePassword, isLoading: isChangingPassword, error: changePasswordError } = useChangePassword();
+  const {
+    changePassword,
+    isLoading: isChangingPassword,
+    error: changePasswordError,
+  } = useChangePassword();
 
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // First time login state
-  const [pendingChangeUserEmail, setPendingChangeUserEmail] = useState<string | null>(null);
+  const [pendingChangeUserEmail, setPendingChangeUserEmail] = useState<
+    string | null
+  >(null);
   const [tempPasswordUsed, setTempPasswordUsed] = useState<string>("");
 
   const {
@@ -146,7 +152,8 @@ export default function LoginPage() {
                   First-Time Login Security
                 </h4>
                 <p className="text-[11px] text-slate-400 mt-0.5 leading-normal">
-                  Enforces mandatory custom password update for auto-generated temporary credentials.
+                  Enforces mandatory custom password update for auto-generated
+                  temporary credentials.
                 </p>
               </div>
             </div>
@@ -308,7 +315,8 @@ export default function LoginPage() {
                 Update Your Password
               </h3>
               <p className="text-xs text-gray-500 leading-relaxed">
-                You are logging in with an auto-generated temporary password. Please set a new secure password to proceed.
+                You are logging in with an auto-generated temporary password.
+                Please set a new secure password to proceed.
               </p>
             </div>
 
@@ -361,7 +369,8 @@ export default function LoginPage() {
                   </p>
                 )}
                 <p className="mt-1 text-[10px] text-gray-400">
-                  Must be at least 8 chars with uppercase, lowercase, number & special char.
+                  Must be at least 8 chars with uppercase, lowercase, number &
+                  special char.
                 </p>
               </div>
 
@@ -407,7 +416,9 @@ export default function LoginPage() {
                   disabled={isChangingPassword}
                   className="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white py-2.5 text-xs font-bold transition shadow-md shadow-blue-500/20 disabled:opacity-50"
                 >
-                  {isChangingPassword ? "Updating Password..." : "Update Password & Login"}
+                  {isChangingPassword
+                    ? "Updating Password..."
+                    : "Update Password & Login"}
                 </button>
               </div>
             </form>

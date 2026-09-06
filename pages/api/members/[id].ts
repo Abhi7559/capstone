@@ -48,4 +48,3 @@ export default async function handler(
   res.setHeader("Allow", ["PUT", "DELETE"]);
   return res.status(405).end(`Method ${req.method} Not Allowed`);
 }
-

@@ -7,7 +7,11 @@ import { TaskDetailModal } from "@/components/TaskDetailModal";
 import { TopBar } from "@/components/TopBar";
 import { useMembers } from "@/hooks/useMembers";
 import { useProjects } from "@/hooks/useProjects";
-import { useDeleteTask, useTasks, useUpdateTask } from "@/hooks/useProjectTasks";
+import {
+  useDeleteTask,
+  useTasks,
+  useUpdateTask,
+} from "@/hooks/useProjectTasks";
 import { useAuthStore } from "@/store/useAuthStore";
 import type { Task, TaskFilters, TaskPriority, TaskStatus } from "@/types/task";
 
@@ -788,14 +792,17 @@ export default function ProjectTaskBoardPage() {
                           <div className="flex-1 space-y-3 flex flex-col">
                             {columnTasks.length === 0 ? (
                               <div className="flex-1 flex items-center justify-center rounded-xl border border-dashed border-gray-300 p-8 text-center text-xs text-gray-400 bg-white/50 min-h-[220px]">
-                                No tasks in {col.status === "in_progress" ? "progress" : col.label.toLowerCase()}
+                                No tasks in{" "}
+                                {col.status === "in_progress"
+                                  ? "progress"
+                                  : col.label.toLowerCase()}
                               </div>
                             ) : (
                               columnTasks.map((task) => {
-                                  const canUserUpdateTaskStatus =
-                                    isAdmin ||
-                                    (Boolean(currentUser?.id) &&
-                                      task.assigneeId === currentUser?.id);
+                                const canUserUpdateTaskStatus =
+                                  isAdmin ||
+                                  (Boolean(currentUser?.id) &&
+                                    task.assigneeId === currentUser?.id);
 
                                 return (
                                   <article
@@ -831,125 +838,137 @@ export default function ProjectTaskBoardPage() {
                                       </span>
                                     </div>
 
-                                  <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed break-all break-words">
-                                    {task.description}
-                                  </p>
+                                    <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed break-all break-words">
+                                      {task.description}
+                                    </p>
 
-                                  {/* Tags */}
-                                  {task.tags && task.tags.length > 0 && (
-                                    <div className="flex flex-wrap gap-1.5 pt-0.5">
-                                      {task.tags.map((tag) => (
-                                        <span
-                                          key={tag}
-                                          className="bg-blue-50 text-blue-700 border border-blue-100 px-2 py-0.5 rounded-md text-[10px] font-semibold break-all break-words"
-                                        >
-                                          #{tag}
-                                        </span>
-                                      ))}
-                                    </div>
-                                  )}
+                                    {/* Tags */}
+                                    {task.tags && task.tags.length > 0 && (
+                                      <div className="flex flex-wrap gap-1.5 pt-0.5">
+                                        {task.tags.map((tag) => (
+                                          <span
+                                            key={tag}
+                                            className="bg-blue-50 text-blue-700 border border-blue-100 px-2 py-0.5 rounded-md text-[10px] font-semibold break-all break-words"
+                                          >
+                                            #{tag}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    )}
 
-                                  {/* Card Footer with Edit Action */}
-                                  <div className="border-t border-gray-100 pt-3 mt-1 flex items-center justify-between gap-2 text-xs">
-                                    <div className="flex items-center space-x-1.5 min-w-0 text-gray-600">
-                                      <span className="h-5 w-5 rounded-full bg-slate-200 text-slate-700 font-bold text-[10px] flex items-center justify-center shrink-0">
-                                        {getAssigneeName(
-                                          task.assigneeId,
-                                        ).charAt(0)}
-                                      </span>
-                                      <span className="truncate text-[11px] font-semibold text-gray-700">
-                                        {
-                                          getAssigneeName(
+                                    {/* Card Footer with Edit Action */}
+                                    <div className="border-t border-gray-100 pt-3 mt-1 flex items-center justify-between gap-2 text-xs">
+                                      <div className="flex items-center space-x-1.5 min-w-0 text-gray-600">
+                                        <span className="h-5 w-5 rounded-full bg-slate-200 text-slate-700 font-bold text-[10px] flex items-center justify-center shrink-0">
+                                          {getAssigneeName(
                                             task.assigneeId,
-                                          ).split(" ")[0]
-                                        }
-                                      </span>
-                                    </div>
+                                          ).charAt(0)}
+                                        </span>
+                                        <span className="truncate text-[11px] font-semibold text-gray-700">
+                                          {
+                                            getAssigneeName(
+                                              task.assigneeId,
+                                            ).split(" ")[0]
+                                          }
+                                        </span>
+                                      </div>
 
-                                    <div className="flex items-center space-x-2 shrink-0">
-                                      <span className="inline-flex items-center text-[11px] font-medium text-gray-500 whitespace-nowrap bg-gray-50 px-2 py-0.5 rounded border border-gray-200">
-                                        📅{" "}
-                                        {task.dueDate
-                                          ? new Date(
-                                              task.dueDate,
-                                            ).toString() !== "Invalid Date"
+                                      <div className="flex items-center space-x-2 shrink-0">
+                                        <span className="inline-flex items-center text-[11px] font-medium text-gray-500 whitespace-nowrap bg-gray-50 px-2 py-0.5 rounded border border-gray-200">
+                                          📅{" "}
+                                          {task.dueDate
                                             ? new Date(
                                                 task.dueDate,
-                                              ).toLocaleDateString("en-US", {
-                                                month: "short",
-                                                day: "numeric",
-                                              })
-                                            : task.dueDate
-                                          : "No date"}
-                                      </span>
-                                      {isAdmin ? (
-                                        <>
-                                          <button
-                                            type="button"
-                                            onClick={() => setEditingTask(task)}
-                                            className="rounded-lg bg-gray-100 px-2.5 py-1 text-[11px] font-bold text-gray-700 hover:bg-blue-600 hover:text-white transition shadow-2xs"
-                                          >
-                                            Edit
-                                          </button>
-                                          <button
-                                            type="button"
-                                            onClick={() => setDeletingTask(task)}
-                                            title="Delete Task"
-                                            className="rounded-lg bg-red-50 p-1.5 text-red-600 hover:bg-red-600 hover:text-white transition"
-                                          >
-                                            <svg
-                                              className="w-3.5 h-3.5"
-                                              fill="none"
-                                              stroke="currentColor"
-                                              viewBox="0 0 24 24"
-                                              aria-hidden="true"
-                                            >
-                                              <title>Delete Task</title>
-                                              <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth="2"
-                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                              />
-                                            </svg>
-                                          </button>
-                                        </>
-                                      ) : canUserUpdateTaskStatus ? (
-                                        <select
-                                          value={task.status}
-                                          onChange={async (e) => {
-                                            const newStatus = e.target.value as TaskStatus;
-                                            try {
-                                              await updateTask({
-                                                taskId: task.id,
-                                                input: {
-                                                  status: newStatus,
-                                                  projectId: task.projectId,
-                                                },
-                                              });
-                                              showToast("Task status updated!");
-                                            } catch {
-                                              showToast("Failed to update status.");
-                                            }
-                                          }}
-                                          className="rounded-lg border border-gray-300 bg-white px-2 py-1 text-[11px] font-bold text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500 capitalize cursor-pointer hover:border-blue-400 shadow-2xs"
-                                        >
-                                          {columns.map((col) => (
-                                            <option key={col.status} value={col.status}>
-                                              {col.label}
-                                            </option>
-                                          ))}
-                                        </select>
-                                      ) : (
-                                        <span className="rounded-lg bg-gray-100 border border-gray-200 px-2 py-1 text-[11px] font-bold text-gray-600 uppercase tracking-wider">
-                                          {col.label}
+                                              ).toString() !== "Invalid Date"
+                                              ? new Date(
+                                                  task.dueDate,
+                                                ).toLocaleDateString("en-US", {
+                                                  month: "short",
+                                                  day: "numeric",
+                                                })
+                                              : task.dueDate
+                                            : "No date"}
                                         </span>
-                                      )}
+                                        {isAdmin ? (
+                                          <>
+                                            <button
+                                              type="button"
+                                              onClick={() =>
+                                                setEditingTask(task)
+                                              }
+                                              className="rounded-lg bg-gray-100 px-2.5 py-1 text-[11px] font-bold text-gray-700 hover:bg-blue-600 hover:text-white transition shadow-2xs"
+                                            >
+                                              Edit
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={() =>
+                                                setDeletingTask(task)
+                                              }
+                                              title="Delete Task"
+                                              className="rounded-lg bg-red-50 p-1.5 text-red-600 hover:bg-red-600 hover:text-white transition"
+                                            >
+                                              <svg
+                                                className="w-3.5 h-3.5"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                                aria-hidden="true"
+                                              >
+                                                <title>Delete Task</title>
+                                                <path
+                                                  strokeLinecap="round"
+                                                  strokeLinejoin="round"
+                                                  strokeWidth="2"
+                                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                                />
+                                              </svg>
+                                            </button>
+                                          </>
+                                        ) : canUserUpdateTaskStatus ? (
+                                          <select
+                                            value={task.status}
+                                            onChange={async (e) => {
+                                              const newStatus = e.target
+                                                .value as TaskStatus;
+                                              try {
+                                                await updateTask({
+                                                  taskId: task.id,
+                                                  input: {
+                                                    status: newStatus,
+                                                    projectId: task.projectId,
+                                                  },
+                                                });
+                                                showToast(
+                                                  "Task status updated!",
+                                                );
+                                              } catch {
+                                                showToast(
+                                                  "Failed to update status.",
+                                                );
+                                              }
+                                            }}
+                                            className="rounded-lg border border-gray-300 bg-white px-2 py-1 text-[11px] font-bold text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500 capitalize cursor-pointer hover:border-blue-400 shadow-2xs"
+                                          >
+                                            {columns.map((col) => (
+                                              <option
+                                                key={col.status}
+                                                value={col.status}
+                                              >
+                                                {col.label}
+                                              </option>
+                                            ))}
+                                          </select>
+                                        ) : (
+                                          <span className="rounded-lg bg-gray-100 border border-gray-200 px-2 py-1 text-[11px] font-bold text-gray-600 uppercase tracking-wider">
+                                            {col.label}
+                                          </span>
+                                        )}
+                                      </div>
                                     </div>
-                                  </div>
-                                </article>
-                              );
-                            })
+                                  </article>
+                                );
+                              })
                             )}
                           </div>
                         </section>
@@ -1011,7 +1030,8 @@ export default function ProjectTaskBoardPage() {
             <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl border border-gray-100 space-y-4">
               <h3 className="text-lg font-bold text-gray-900">Delete Task</h3>
               <p className="text-xs text-gray-600">
-                Are you sure you want to delete this task? This action cannot be undone.
+                Are you sure you want to delete this task? This action cannot be
+                undone.
               </p>
               <div className="flex justify-end space-x-3 pt-2">
                 <button

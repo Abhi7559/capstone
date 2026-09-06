@@ -263,4 +263,3 @@ export const db = globalForDb.persistentDb ?? new PersistentDatabase();
 globalForDb.persistentDb = db;
 
 export default db;
-

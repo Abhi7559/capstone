@@ -12,14 +12,15 @@ export default async function handler(
   }
 
   try {
-    const { email, currentPassword, newPassword } = (req.body || {}) as ChangePasswordValues;
+    const { email, currentPassword, newPassword } = (req.body ||
+      {}) as ChangePasswordValues;
 
     if (!email || !currentPassword || !newPassword) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
     const normalizedEmail = email.trim().toLowerCase();
-    let userMatch = userRepository.findByEmail(normalizedEmail);
+    const userMatch = userRepository.findByEmail(normalizedEmail);
 
     if (!userMatch) {
       // Create user record in repository if missing from server memory
@@ -35,7 +36,9 @@ export default async function handler(
     }
 
     if (userMatch.password && userMatch.password !== currentPassword) {
-      return res.status(400).json({ message: "Current temporary password is incorrect" });
+      return res
+        .status(400)
+        .json({ message: "Current temporary password is incorrect" });
     }
 
     // Update password and clear requiresPasswordChange flag

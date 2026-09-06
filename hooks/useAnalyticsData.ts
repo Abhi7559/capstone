@@ -42,7 +42,10 @@ async function fetchAnalyticsData(
       };
     }
   } catch (err) {
-    console.error("Failed to fetch analytics from API, using local storage", err);
+    console.error(
+      "Failed to fetch analytics from API, using local storage",
+      err,
+    );
   }
 
   return {

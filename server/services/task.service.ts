@@ -116,11 +116,14 @@ export const taskServiceServer = {
     }
 
     const isAdmin = !userRole || userRole.toLowerCase() === "admin";
-    const isAssignedMember = Boolean(userId) && existingTask.assigneeId === userId;
+    const isAssignedMember =
+      Boolean(userId) && existingTask.assigneeId === userId;
     const hasAccess = isAdmin || isAssignedMember;
 
     if (!hasAccess) {
-      throw new Error("Forbidden: Only Admin or the assigned team member can update this task status.");
+      throw new Error(
+        "Forbidden: Only Admin or the assigned team member can update this task status.",
+      );
     }
 
     const payload: Partial<Task> = {
@@ -154,7 +157,9 @@ export const taskServiceServer = {
         const project = projectRepository.findById(task.projectId);
         const isMember = project?.memberIds.includes(userId || "");
         if (!isMember && task.assigneeId !== userId) {
-          throw new Error("Forbidden: Only Admins or project members can delete tasks");
+          throw new Error(
+            "Forbidden: Only Admins or project members can delete tasks",
+          );
         }
       }
     }

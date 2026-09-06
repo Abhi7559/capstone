@@ -25,7 +25,7 @@ export const changePasswordSchema = z
       .min(8, "New password must be at least 8 characters")
       .max(64, "New password cannot exceed 64 characters")
       .regex(
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])/,
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?])/,
         "Password must contain uppercase, lowercase, number, and special character",
       ),
     confirmPassword: z.string().min(1, "Please confirm your new password"),

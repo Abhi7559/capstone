@@ -21,7 +21,10 @@ async function fetchMembers(currentUserRole?: string): Promise<User[]> {
       return mergeMembersWithLocal(data);
     }
   } catch (err) {
-    console.warn("API members fetch failed, falling back to local storage", err);
+    console.warn(
+      "API members fetch failed, falling back to local storage",
+      err,
+    );
   }
 
   return getLocalMembers();

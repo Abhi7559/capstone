@@ -37,9 +37,7 @@
       "description": "Standardize Tailwind styling, typography, and reusable component tokens. q",
       "status": "active",
       "createdAt": "2026-09-04T15:23:57.604Z",
-      "memberIds": [
-        "550e8400-e29b-41d4-a716-446655440000"
-      ]
+      "memberIds": ["550e8400-e29b-41d4-a716-446655440000"]
     }
   ],
   "tasks": [
@@ -52,10 +50,7 @@
       "status": "done",
       "assigneeId": "550e8400-e29b-41d4-a716-446655440000",
       "dueDate": "2026-09-10",
-      "tags": [
-        "Setup",
-        "Frontend"
-      ],
+      "tags": ["Setup", "Frontend"],
       "createdAt": "2026-09-04T15:23:57.604Z",
       "updatedAt": "2026-09-04T15:23:57.604Z"
     },
@@ -68,10 +63,7 @@
       "status": "in_progress",
       "assigneeId": "550e8400-e29b-41d4-a716-446655440000",
       "dueDate": "2026-09-15",
-      "tags": [
-        "Auth",
-        "Security"
-      ],
+      "tags": ["Auth", "Security"],
       "createdAt": "2026-09-04T15:23:57.604Z",
       "updatedAt": "2026-09-04T15:23:57.604Z"
     },
@@ -84,10 +76,7 @@
       "status": "todo",
       "assigneeId": "550e8400-e29b-41d4-a716-446655440000",
       "dueDate": "2026-09-20",
-      "tags": [
-        "UI",
-        "Tasks"
-      ],
+      "tags": ["UI", "Tasks"],
       "createdAt": "2026-09-04T15:23:57.604Z",
       "updatedAt": "2026-09-06T06:59:27.235Z"
     },
@@ -100,9 +89,7 @@
       "status": "todo",
       "assigneeId": "ef117a4b-231a-4ff7-bca3-2a54b218ba96",
       "dueDate": "2026-09-25",
-      "tags": [
-        "DesignSystem"
-      ],
+      "tags": ["DesignSystem"],
       "createdAt": "2026-09-04T15:23:57.604Z",
       "updatedAt": "2026-09-06T08:36:39.332Z"
     }

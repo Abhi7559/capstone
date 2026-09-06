@@ -30,4 +30,3 @@ export default async function handler(
     return res.status(status).json({ message });
   }
 }
-
