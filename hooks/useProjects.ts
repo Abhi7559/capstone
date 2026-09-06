@@ -122,6 +122,7 @@ export function useCreateProject() {
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardData"] });
     },
   });
 
@@ -147,6 +148,7 @@ export function useUpdateProject() {
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardData"] });
     },
   });
 
@@ -170,6 +172,7 @@ export function useDeleteProject() {
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardData"] });
     },
   });
 

@@ -209,10 +209,9 @@ export function useCreateTask() {
   const mutation = useMutation({
     mutationFn: (input: CreateTaskInput) =>
       createTaskRequest(input, currentUser?.role, currentUser?.id),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ["projectTasks", variables.projectId],
-      });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projectTasks"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardData"] });
     },
   });
 
@@ -239,9 +238,8 @@ export function useUpdateTask() {
       updateTaskRequest(taskId, input, currentUser?.role, currentUser?.id),
     onSuccess: (updatedTask) => {
       queryClient.invalidateQueries({ queryKey: ["task", updatedTask.id] });
-      queryClient.invalidateQueries({
-        queryKey: ["projectTasks", updatedTask.projectId],
-      });
+      queryClient.invalidateQueries({ queryKey: ["projectTasks"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardData"] });
     },
   });
 
@@ -267,6 +265,7 @@ export function useDeleteTask() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projectTasks"] });
       queryClient.invalidateQueries({ queryKey: ["task"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardData"] });
     },
   });
 
