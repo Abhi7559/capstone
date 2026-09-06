@@ -23,6 +23,25 @@ export default async function handler(
     return res.status(400).json({ message: "Project ID is required" });
   }
 
+  if (req.method === "GET") {
+    try {
+      const project = projectServiceServer.getProjectById(
+        id,
+        userRole,
+        session?.user?.id || (req.headers["x-user-id"] as string),
+      );
+      return res.status(200).json(project);
+    } catch (error) {
+      const message = (error as Error).message;
+      const status = message.includes("Forbidden")
+        ? 403
+        : message.includes("not found")
+          ? 404
+          : 400;
+      return res.status(status).json({ message });
+    }
+  }
+
   if (req.method === "PATCH" || req.method === "PUT") {
     try {
       const input = (req.body || {}) as UpdateProjectInput;

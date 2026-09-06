@@ -48,10 +48,20 @@ class PersistentDatabase {
         this.tasks = parsed.tasks || [...INITIAL_TASKS];
         this.activity = parsed.activity || [...INITIAL_ACTIVITY];
       } else {
-        this.users = [...INITIAL_USERS];
-        this.projects = [...INITIAL_PROJECTS];
-        this.tasks = [...INITIAL_TASKS];
-        this.activity = [...INITIAL_ACTIVITY];
+        const seedPath = path.join(process.cwd(), "data", "db.json");
+        if (fs.existsSync(seedPath)) {
+          const fileData = fs.readFileSync(seedPath, "utf-8");
+          const parsed: DbSchema = JSON.parse(fileData);
+          this.users = parsed.users || [...INITIAL_USERS];
+          this.projects = parsed.projects || [...INITIAL_PROJECTS];
+          this.tasks = parsed.tasks || [...INITIAL_TASKS];
+          this.activity = parsed.activity || [...INITIAL_ACTIVITY];
+        } else {
+          this.users = [...INITIAL_USERS];
+          this.projects = [...INITIAL_PROJECTS];
+          this.tasks = [...INITIAL_TASKS];
+          this.activity = [...INITIAL_ACTIVITY];
+        }
         this.saveToDisk();
       }
     } catch {
@@ -86,21 +96,25 @@ class PersistentDatabase {
 
   // User Operations
   getUsers(): User[] {
+    this.loadFromDisk();
     return this.users;
   }
 
   findUserByEmail(email: string): User | undefined {
+    this.loadFromDisk();
     const normalized = email.trim().toLowerCase();
     return this.users.find((u) => u.email.toLowerCase() === normalized);
   }
 
   addUser(user: User): User {
+    this.loadFromDisk();
     this.users.push(user);
     this.saveToDisk();
     return user;
   }
 
   updateUserPassword(email: string, newPassword: string): boolean {
+    this.loadFromDisk();
     const normalized = email.trim().toLowerCase();
     const user = this.users.find((u) => u.email.toLowerCase() === normalized);
     if (user) {
@@ -112,6 +126,7 @@ class PersistentDatabase {
   }
 
   updateUser(id: string, updatedFields: Partial<User>): User | undefined {
+    this.loadFromDisk();
     const index = this.users.findIndex((u) => u.id === id);
     if (index !== -1) {
       this.users[index] = { ...this.users[index], ...updatedFields };
@@ -122,6 +137,7 @@ class PersistentDatabase {
   }
 
   deleteUser(id: string): boolean {
+    this.loadFromDisk();
     const index = this.users.findIndex((u) => u.id === id);
     if (index !== -1) {
       this.users.splice(index, 1);
@@ -138,14 +154,17 @@ class PersistentDatabase {
 
   // Project Operations
   getProjects(): Project[] {
+    this.loadFromDisk();
     return this.projects;
   }
 
   findProjectById(id: string): Project | undefined {
+    this.loadFromDisk();
     return this.projects.find((p) => p.id === id);
   }
 
   addProject(project: Project): Project {
+    this.loadFromDisk();
     this.projects.unshift(project);
     this.saveToDisk();
     return project;
@@ -155,6 +174,7 @@ class PersistentDatabase {
     id: string,
     updatedFields: Partial<Project>,
   ): Project | undefined {
+    this.loadFromDisk();
     const index = this.projects.findIndex((p) => p.id === id);
     if (index !== -1) {
       this.projects[index] = { ...this.projects[index], ...updatedFields };
@@ -165,6 +185,7 @@ class PersistentDatabase {
   }
 
   deleteProject(id: string): boolean {
+    this.loadFromDisk();
     const index = this.projects.findIndex((p) => p.id === id);
     if (index !== -1) {
       this.projects.splice(index, 1);
@@ -177,20 +198,24 @@ class PersistentDatabase {
 
   // Task Operations
   getTasks(): Task[] {
+    this.loadFromDisk();
     return this.tasks;
   }
 
   findTaskById(id: string): Task | undefined {
+    this.loadFromDisk();
     return this.tasks.find((t) => t.id === id);
   }
 
   addTask(task: Task): Task {
+    this.loadFromDisk();
     this.tasks.unshift(task);
     this.saveToDisk();
     return task;
   }
 
   updateTask(id: string, updatedFields: Partial<Task>): Task | undefined {
+    this.loadFromDisk();
     const index = this.tasks.findIndex((t) => t.id === id);
     if (index !== -1) {
       this.tasks[index] = {
@@ -205,6 +230,7 @@ class PersistentDatabase {
   }
 
   deleteTask(id: string): boolean {
+    this.loadFromDisk();
     const index = this.tasks.findIndex((t) => t.id === id);
     if (index !== -1) {
       this.tasks.splice(index, 1);
@@ -216,25 +242,25 @@ class PersistentDatabase {
 
   // Activity Operations
   getActivity(): ActivityItem[] {
+    this.loadFromDisk();
     return this.activity;
   }
 
   addActivity(item: ActivityItem): void {
+    this.loadFromDisk();
     this.activity.unshift(item);
     this.saveToDisk();
   }
 }
 
-// Global singleton instance so state persists across hot-reloads in dev mode
+// Global singleton instance so state persists across hot-reloads and warm lambdas
 const globalForDb = globalThis as unknown as {
   persistentDb: PersistentDatabase | undefined;
 };
 
 export const db = globalForDb.persistentDb ?? new PersistentDatabase();
 
-if (process.env.NODE_ENV !== "production") {
-  globalForDb.persistentDb = db;
-}
+globalForDb.persistentDb = db;
 
 export default db;
 

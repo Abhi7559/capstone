@@ -19,16 +19,14 @@ export const taskServiceServer = {
     }
 
     const project = projectRepository.findById(projectId);
-    if (!project) {
-      throw new Error("Project not found");
-    }
-
-    const hasAccess =
-      userRole === "admin" || project.memberIds.includes(userId);
-    if (!hasAccess) {
-      throw new Error(
-        "Forbidden: You do not have access to this project's tasks.",
-      );
+    if (project) {
+      const hasAccess =
+        userRole === "admin" || project.memberIds.includes(userId);
+      if (!hasAccess) {
+        throw new Error(
+          "Forbidden: You do not have access to this project's tasks.",
+        );
+      }
     }
 
     return taskRepository.findByProjectId(projectId, filters);

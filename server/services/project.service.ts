@@ -18,6 +18,23 @@ export const projectServiceServer = {
     return projectRepository.findByMemberId(userId);
   },
 
+  getProjectById(id: string, userRole?: string, userId?: string): Project {
+    if (!userId) {
+      throw new Error("Unauthorized: User session required");
+    }
+    const project = projectRepository.findById(id);
+    if (!project) {
+      throw new Error("Project not found");
+    }
+    const hasAccess =
+      userRole === "admin" ||
+      (project.memberIds && project.memberIds.includes(userId));
+    if (!hasAccess) {
+      throw new Error("Forbidden: You do not have access to this project");
+    }
+    return project;
+  },
+
   createProject(
     input: CreateProjectInput,
     userRole?: string,
@@ -27,16 +44,21 @@ export const projectServiceServer = {
       throw new Error("Forbidden: Only Admins can create projects");
     }
 
+    const assignedMembers =
+      input.memberIds && input.memberIds.length > 0
+        ? [...input.memberIds]
+        : [];
+    if (userId && !assignedMembers.includes(userId)) {
+      assignedMembers.push(userId);
+    }
+
     const newProject: Project = {
       id: crypto.randomUUID(),
       name: input.name.trim(),
       description: input.description.trim(),
       status: "active",
       createdAt: new Date().toISOString(),
-      memberIds:
-        input.memberIds && input.memberIds.length > 0
-          ? input.memberIds
-          : [userId || ""],
+      memberIds: assignedMembers,
     };
 
     return projectRepository.create(newProject);
