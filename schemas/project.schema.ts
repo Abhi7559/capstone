@@ -19,7 +19,13 @@ export const multiStepProjectSchema = z.object({
 
   // Step 3: Additional Details
   priority: z.enum(["low", "medium", "high"]),
-  projectState: z.enum(["planning", "active", "on_hold", "completed"]),
+  projectState: z.enum([
+    "planning",
+    "active",
+    "on_hold",
+    "completed",
+    "archived",
+  ]),
   budget: z.string().optional(),
   category: z.string().min(1, "Category selection is required"),
 });

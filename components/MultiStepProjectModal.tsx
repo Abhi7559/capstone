@@ -110,7 +110,7 @@ export function MultiStepProjectModal({
           endDate:
             editingProject.dueDate || editingProject.endDate || defaultEnd,
           priority: "medium",
-          projectState: (editingProject.status as any) || "active",
+          projectState: editingProject.status || "active",
           category: "Engineering",
           budget: "",
         });

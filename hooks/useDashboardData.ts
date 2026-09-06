@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/useAuthStore";
 import type {
+  ActivityItem,
   AdminDashboardData,
   MemberDashboardData,
 } from "@/types/dashboard";
@@ -16,7 +17,7 @@ async function fetchDashboardData(
   userId?: string,
 ): Promise<AdminDashboardData | MemberDashboardData> {
   const todayStr = new Date().toISOString().split("T")[0];
-  let apiActivity: any[] = [];
+  let apiActivity: ActivityItem[] = [];
 
   try {
     const response = await fetch("/api/dashboard/stats", {

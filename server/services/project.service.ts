@@ -27,8 +27,7 @@ export const projectServiceServer = {
       throw new Error("Project not found");
     }
     const hasAccess =
-      userRole === "admin" ||
-      (project.memberIds && project.memberIds.includes(userId));
+      userRole === "admin" || project.memberIds?.includes(userId);
     if (!hasAccess) {
       throw new Error("Forbidden: You do not have access to this project");
     }
@@ -68,7 +67,7 @@ export const projectServiceServer = {
   updateProject(
     id: string,
     input: UpdateProjectInput,
-    userRole?: string,
+    _userRole?: string,
   ): Project {
     const existing = projectRepository.findById(id);
     if (!existing) {
@@ -114,7 +113,7 @@ export const projectServiceServer = {
     return updated;
   },
 
-  archiveProject(id: string, userRole?: string): Project {
+  archiveProject(id: string, _userRole?: string): Project {
     const updated = projectRepository.update(id, { status: "archived" });
     if (!updated) {
       const existing = projectRepository.findById(id);

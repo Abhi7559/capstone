@@ -258,12 +258,16 @@ export function mergeTasksWithLocal(apiTasks: Task[]): Task[] {
     if (!map.has(t.id)) {
       map.set(t.id, t);
     } else {
-      const existing = map.get(t.id)!;
-      const apiTime = new Date(
-        existing.updatedAt || existing.createdAt || 0,
-      ).getTime();
-      const localTime = new Date(t.updatedAt || t.createdAt || 0).getTime();
-      if (localTime >= apiTime) {
+      const existing = map.get(t.id);
+      if (existing) {
+        const apiTime = new Date(
+          existing.updatedAt || existing.createdAt || 0,
+        ).getTime();
+        const localTime = new Date(t.updatedAt || t.createdAt || 0).getTime();
+        if (localTime >= apiTime) {
+          map.set(t.id, t);
+        }
+      } else {
         map.set(t.id, t);
       }
     }
