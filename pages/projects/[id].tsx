@@ -171,11 +171,6 @@ export default function ProjectTaskBoardPage() {
   };
 
   const handleDragStart = (e: React.DragEvent, task: Task) => {
-    if (!isAdmin && task.assigneeId !== currentUser?.id) {
-      e.preventDefault();
-      showToast("You can only move tasks assigned to you.");
-      return;
-    }
     setDraggedTaskId(task.id);
     e.dataTransfer.setData("text/plain", task.id);
   };
@@ -191,12 +186,6 @@ export default function ProjectTaskBoardPage() {
 
     const targetTask = tasks?.find((t) => t.id === taskId);
     if (targetTask && targetTask.status !== targetStatus) {
-      if (!isAdmin && targetTask.assigneeId !== currentUser?.id) {
-        showToast("You can only update status for tasks assigned to you.");
-        setDraggedTaskId(null);
-        return;
-      }
-
       try {
         await updateTask({
           taskId: targetTask.id,
@@ -803,18 +792,20 @@ export default function ProjectTaskBoardPage() {
                               </div>
                             ) : (
                               columnTasks.map((task) => {
-                                const canUserMoveTask =
-                                  isAdmin || task.assigneeId === currentUser?.id;
+  const isMemberOfProject = currentProject?.memberIds
+    ? currentProject.memberIds.includes(currentUser?.id || "")
+    : true;
+  const canUserUpdateTaskStatus = isAdmin || isMemberOfProject || task.assigneeId === currentUser?.id;
 
                                 return (
                                   <article
                                     key={task.id}
-                                    draggable={canUserMoveTask}
+                                    draggable={canUserUpdateTaskStatus}
                                     onDragStart={(e) =>
                                       handleDragStart(e, task)
                                     }
                                     className={`group rounded-xl border border-gray-200 bg-white p-4 shadow-sm space-y-3 transition-all ${
-                                      canUserMoveTask
+                                      canUserUpdateTaskStatus
                                         ? "hover:shadow-md hover:border-blue-300 cursor-grab active:cursor-grabbing"
                                         : "cursor-default opacity-95"
                                     }`}
@@ -923,7 +914,7 @@ export default function ProjectTaskBoardPage() {
                                             </svg>
                                           </button>
                                         </>
-                                      ) : task.assigneeId === currentUser?.id ? (
+                                      ) : canUserUpdateTaskStatus ? (
                                         <select
                                           value={task.status}
                                           onChange={async (e) => {
