@@ -123,6 +123,9 @@ export const projectServiceServer = {
   },
 
   deleteProject(id: string, userRole?: string): void {
+    if (userRole && userRole.toLowerCase() !== "admin") {
+      throw new Error("Forbidden: Only admin can delete projects");
+    }
     projectRepository.delete(id);
   },
 };

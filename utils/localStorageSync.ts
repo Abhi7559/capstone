@@ -105,6 +105,13 @@ export function removeLocalProject(id: string): void {
   const current = getLocalProjects();
   const updated = current.filter((p) => p.id !== id);
   saveLocalProjects(updated);
+  removeLocalTasksForProject(id);
+}
+
+export function removeLocalTasksForProject(projectId: string): void {
+  const current = getLocalTasks();
+  const updated = current.filter((t) => t.projectId !== projectId);
+  saveLocalTasks(updated);
 }
 
 export function mergeProjectsWithLocal(apiProjects: Project[]): Project[] {

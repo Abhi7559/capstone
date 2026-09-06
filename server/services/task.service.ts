@@ -159,8 +159,15 @@ export const taskServiceServer = {
   },
 
   deleteTask(taskId: string, userRole?: string, userId?: string): void {
-    if (userRole && userRole !== "admin") {
-      throw new Error("Forbidden: Only Admins can delete tasks");
+    if (userRole && userRole.toLowerCase() !== "admin") {
+      const task = taskRepository.findById(taskId);
+      if (task) {
+        const project = projectRepository.findById(task.projectId);
+        const isMember = project?.memberIds.includes(userId || "");
+        if (!isMember && task.assigneeId !== userId) {
+          throw new Error("Forbidden: Only Admins or project members can delete tasks");
+        }
+      }
     }
 
     taskRepository.delete(taskId);
