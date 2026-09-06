@@ -170,9 +170,14 @@ export default function ProjectTaskBoardPage() {
     return memberMatch ? memberMatch.name : "System User";
   };
 
-  const handleDragStart = (e: React.DragEvent, taskId: string) => {
-    setDraggedTaskId(taskId);
-    e.dataTransfer.setData("text/plain", taskId);
+  const handleDragStart = (e: React.DragEvent, task: Task) => {
+    if (!isAdmin && task.assigneeId !== currentUser?.id) {
+      e.preventDefault();
+      showToast("You can only move tasks assigned to you.");
+      return;
+    }
+    setDraggedTaskId(task.id);
+    e.dataTransfer.setData("text/plain", task.id);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -797,35 +802,43 @@ export default function ProjectTaskBoardPage() {
                                 No tasks in {col.status === "in_progress" ? "progress" : col.label.toLowerCase()}
                               </div>
                             ) : (
-                              columnTasks.map((task) => (
-                                <article
-                                  key={task.id}
-                                  draggable
-                                  onDragStart={(e) =>
-                                    handleDragStart(e, task.id)
-                                  }
-                                  className="group rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md hover:border-blue-300 transition-all cursor-grab active:cursor-grabbing space-y-3"
-                                >
-                                  <div className="flex justify-between items-start gap-2 min-w-0">
-                                    <button
-                                      type="button"
-                                      onClick={() => setViewingTask(task)}
-                                      className="text-left text-sm font-bold text-gray-900 leading-snug hover:text-blue-600 transition flex-1 focus:outline-none break-all break-words min-w-0"
-                                    >
-                                      {task.title}
-                                    </button>
-                                    <span
-                                      className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md shrink-0 ${
-                                        task.priority === "high"
-                                          ? "bg-red-100 text-red-700 border border-red-200"
-                                          : task.priority === "medium"
-                                            ? "bg-amber-100 text-amber-700 border border-amber-200"
-                                            : "bg-gray-100 text-gray-600 border border-gray-200"
-                                      }`}
-                                    >
-                                      {task.priority}
-                                    </span>
-                                  </div>
+                              columnTasks.map((task) => {
+                                const canUserMoveTask =
+                                  isAdmin || task.assigneeId === currentUser?.id;
+
+                                return (
+                                  <article
+                                    key={task.id}
+                                    draggable={canUserMoveTask}
+                                    onDragStart={(e) =>
+                                      handleDragStart(e, task)
+                                    }
+                                    className={`group rounded-xl border border-gray-200 bg-white p-4 shadow-sm space-y-3 transition-all ${
+                                      canUserMoveTask
+                                        ? "hover:shadow-md hover:border-blue-300 cursor-grab active:cursor-grabbing"
+                                        : "cursor-default opacity-95"
+                                    }`}
+                                  >
+                                    <div className="flex justify-between items-start gap-2 min-w-0">
+                                      <button
+                                        type="button"
+                                        onClick={() => setViewingTask(task)}
+                                        className="text-left text-sm font-bold text-gray-900 leading-snug hover:text-blue-600 transition flex-1 focus:outline-none break-all break-words min-w-0"
+                                      >
+                                        {task.title}
+                                      </button>
+                                      <span
+                                        className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md shrink-0 ${
+                                          task.priority === "high"
+                                            ? "bg-red-100 text-red-700 border border-red-200"
+                                            : task.priority === "medium"
+                                              ? "bg-amber-100 text-amber-700 border border-amber-200"
+                                              : "bg-gray-100 text-gray-600 border border-gray-200"
+                                        }`}
+                                      >
+                                        {task.priority}
+                                      </span>
+                                    </div>
 
                                   <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed break-all break-words">
                                     {task.description}
@@ -941,7 +954,8 @@ export default function ProjectTaskBoardPage() {
                                     </div>
                                   </div>
                                 </article>
-                              ))
+                              );
+                            })
                             )}
                           </div>
                         </section>

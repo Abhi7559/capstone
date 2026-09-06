@@ -124,6 +124,11 @@ export const taskServiceServer = {
       };
     } else {
       if (input.status) {
+        if (existingTask.assigneeId && existingTask.assigneeId !== userId) {
+          throw new Error(
+            "Forbidden: You can only update status for tasks assigned to you.",
+          );
+        }
         payload = { status: input.status };
       } else {
         throw new Error(
