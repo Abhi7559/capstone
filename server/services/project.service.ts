@@ -56,7 +56,7 @@ export const projectServiceServer = {
       id: crypto.randomUUID(),
       name: input.name.trim(),
       description: input.description.trim(),
-      status: "active",
+      status: input.status || "active",
       createdAt: new Date().toISOString(),
       memberIds: assignedMembers,
       startDate: input.startDate,
