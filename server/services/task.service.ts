@@ -101,7 +101,7 @@ export const taskServiceServer = {
     if (!existingTask) {
       const createdTask: Task = {
         id: taskId,
-        projectId: input.projectId || "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+        projectId: input.projectId || "",
         title: input.title?.trim() || "Untitled Task",
         description: input.description?.trim() || "",
         priority: input.priority || "medium",
@@ -130,6 +130,7 @@ export const taskServiceServer = {
     }
 
     const payload: Partial<Task> = {
+      ...(input.projectId && { projectId: input.projectId }),
       ...(input.title && { title: input.title.trim() }),
       ...(input.description && { description: input.description.trim() }),
       ...(input.priority && { priority: input.priority }),

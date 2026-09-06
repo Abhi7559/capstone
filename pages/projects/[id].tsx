@@ -118,7 +118,7 @@ export default function ProjectTaskBoardPage() {
       try {
         await updateTask({
           taskId: t.id,
-          input: { status: "backlog" },
+          input: { status: "backlog", projectId: t.projectId },
         });
       } catch {
         // Ignored
@@ -189,7 +189,7 @@ export default function ProjectTaskBoardPage() {
       try {
         await updateTask({
           taskId: targetTask.id,
-          input: { status: targetStatus },
+          input: { status: targetStatus, projectId: targetTask.projectId },
         });
         const colLabel =
           columns.find((c) => c.status === targetStatus)?.label || targetStatus;
@@ -922,7 +922,10 @@ export default function ProjectTaskBoardPage() {
                                             try {
                                               await updateTask({
                                                 taskId: task.id,
-                                                input: { status: newStatus },
+                                                input: {
+                                                  status: newStatus,
+                                                  projectId: task.projectId,
+                                                },
                                               });
                                               showToast("Task status updated!");
                                             } catch {

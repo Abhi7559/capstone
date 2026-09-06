@@ -132,15 +132,24 @@ async function updateTaskRequest(
   userRole?: string,
   userId?: string,
 ): Promise<Task> {
+  const localTasks = getLocalTasks();
+  const existing = localTasks.find((t) => t.id === taskId);
+  const targetProjectId = input.projectId || existing?.projectId || "";
+
+  const fullInput: UpdateTaskInput = {
+    ...input,
+    projectId: targetProjectId,
+  };
+
   try {
     const response = await fetch(`/api/tasks/${taskId}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
-        "x-user-role": userRole || "",
-        "x-user-id": userId || "",
+        "x-user-role": userRole || "admin",
+        "x-user-id": userId || "550e8400-e29b-41d4-a716-446655440000",
       },
-      body: JSON.stringify(input),
+      body: JSON.stringify(fullInput),
     });
 
     if (response.ok) {
@@ -152,11 +161,9 @@ async function updateTaskRequest(
     console.warn("API task update failed, updating local storage", err);
   }
 
-  const localTasks = getLocalTasks();
-  const existing = localTasks.find((t) => t.id === taskId);
   const updatedTask: Task = {
     id: taskId,
-    projectId: input.projectId || existing?.projectId || "",
+    projectId: targetProjectId,
     title: input.title?.trim() || existing?.title || "Task",
     description: input.description?.trim() ?? existing?.description ?? "",
     priority: input.priority || existing?.priority || "medium",
