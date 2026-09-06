@@ -55,6 +55,11 @@ export function MultiStepProjectModal({
     };
   }, [isMemberDropdownOpen]);
 
+  const todayStr = new Date().toISOString().split("T")[0];
+  const defaultEndDateStr = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .split("T")[0];
+
   const {
     register,
     handleSubmit,
@@ -70,8 +75,14 @@ export function MultiStepProjectModal({
       name: editingProject?.name || "",
       description: editingProject?.description || "",
       memberIds: editingProject?.memberIds || [],
-      startDate: "",
-      endDate: "",
+      startDate:
+        editingProject?.startDate ||
+        editingProject?.createdAt?.split("T")[0] ||
+        todayStr,
+      endDate:
+        editingProject?.dueDate ||
+        editingProject?.endDate ||
+        defaultEndDateStr,
       priority: "medium",
       projectState: "active",
       category: "Engineering",
@@ -84,13 +95,24 @@ export function MultiStepProjectModal({
   // Reset form state when editing target changes
   useEffect(() => {
     if (isOpen) {
+      const today = new Date().toISOString().split("T")[0];
+      const defaultEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split("T")[0];
+
       if (editingProject) {
         reset({
           name: editingProject.name,
           description: editingProject.description,
           memberIds: editingProject.memberIds || [],
-          startDate: editingProject.createdAt?.split("T")[0] || "",
-          endDate: "",
+          startDate:
+            editingProject.startDate ||
+            editingProject.createdAt?.split("T")[0] ||
+            today,
+          endDate:
+            editingProject.dueDate ||
+            editingProject.endDate ||
+            defaultEnd,
           priority: "medium",
           projectState:
             editingProject.status === "archived"
@@ -104,8 +126,8 @@ export function MultiStepProjectModal({
           name: "",
           description: "",
           memberIds: [],
-          startDate: "",
-          endDate: "",
+          startDate: today,
+          endDate: defaultEnd,
           priority: "medium",
           projectState: "active",
           category: "Engineering",
@@ -161,6 +183,9 @@ export function MultiStepProjectModal({
             name: data.name,
             description: data.description,
             memberIds: data.memberIds,
+            startDate: data.startDate,
+            dueDate: data.endDate,
+            endDate: data.endDate,
           },
         });
         onSuccess?.("Project updated successfully!");
@@ -169,6 +194,9 @@ export function MultiStepProjectModal({
           name: data.name,
           description: data.description,
           memberIds: data.memberIds,
+          startDate: data.startDate,
+          dueDate: data.endDate,
+          endDate: data.endDate,
         });
         onSuccess?.("Project created successfully!");
       }

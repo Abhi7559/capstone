@@ -7,12 +7,18 @@ export interface Project {
   status: ProjectStatus;
   createdAt: string; // ISO date string
   memberIds: string[]; // UUIDs of assigned members
+  startDate?: string;
+  dueDate?: string;
+  endDate?: string;
 }
 
 export interface CreateProjectInput {
   name: string;
   description: string;
   memberIds?: string[];
+  startDate?: string;
+  dueDate?: string;
+  endDate?: string;
 }
 
 export interface UpdateProjectInput {
@@ -20,4 +26,7 @@ export interface UpdateProjectInput {
   description?: string;
   status?: ProjectStatus;
   memberIds?: string[];
+  startDate?: string;
+  dueDate?: string;
+  endDate?: string;
 }

@@ -59,6 +59,9 @@ export const projectServiceServer = {
       status: "active",
       createdAt: new Date().toISOString(),
       memberIds: assignedMembers,
+      startDate: input.startDate,
+      dueDate: input.dueDate || input.endDate,
+      endDate: input.endDate || input.dueDate,
     };
 
     return projectRepository.create(newProject);
@@ -78,6 +81,9 @@ export const projectServiceServer = {
         status: input.status || "active",
         createdAt: new Date().toISOString(),
         memberIds: input.memberIds || [],
+        startDate: input.startDate,
+        dueDate: input.dueDate || input.endDate,
+        endDate: input.endDate || input.dueDate,
       };
       return projectRepository.create(createdProject);
     }
@@ -87,6 +93,9 @@ export const projectServiceServer = {
       ...(input.description && { description: input.description.trim() }),
       ...(input.status && { status: input.status }),
       ...(input.memberIds && { memberIds: input.memberIds }),
+      ...(input.startDate && { startDate: input.startDate }),
+      ...(input.dueDate && { dueDate: input.dueDate }),
+      ...(input.endDate && { endDate: input.endDate }),
     });
 
     if (!updated) {
@@ -97,6 +106,9 @@ export const projectServiceServer = {
         status: input.status || existing.status,
         createdAt: existing.createdAt || new Date().toISOString(),
         memberIds: input.memberIds || existing.memberIds || [],
+        startDate: input.startDate || existing.startDate,
+        dueDate: input.dueDate || input.endDate || existing.dueDate,
+        endDate: input.endDate || input.dueDate || existing.endDate,
       };
       return projectRepository.create(fallbackProject);
     }
