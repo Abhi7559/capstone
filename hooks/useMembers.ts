@@ -1,20 +1,30 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/useAuthStore";
 import type { InviteMemberInput, User } from "@/types/auth";
+import {
+  addOrUpdateLocalMember,
+  getLocalMembers,
+  mergeMembersWithLocal,
+  removeLocalMember,
+} from "@/utils/localStorageSync";
 
 async function fetchMembers(currentUserRole?: string): Promise<User[]> {
-  const response = await fetch("/api/members", {
-    headers: {
-      "x-user-role": currentUserRole || "",
-    },
-  });
+  try {
+    const response = await fetch("/api/members", {
+      headers: {
+        "x-user-role": currentUserRole || "",
+      },
+    });
 
-  if (!response.ok) {
-    const err = await response.json();
-    throw new Error(err.message || "Failed to fetch members");
+    if (response.ok) {
+      const data: User[] = await response.json();
+      return mergeMembersWithLocal(data);
+    }
+  } catch (err) {
+    console.warn("API members fetch failed, falling back to local storage", err);
   }
 
-  return response.json();
+  return getLocalMembers();
 }
 
 async function inviteMemberRequest(
@@ -35,7 +45,11 @@ async function inviteMemberRequest(
     throw new Error(err.message || "Failed to invite member");
   }
 
-  return response.json();
+  const result = await response.json();
+  if (result.member) {
+    addOrUpdateLocalMember(result.member);
+  }
+  return result;
 }
 
 async function updateMemberRequest(
@@ -57,7 +71,9 @@ async function updateMemberRequest(
     throw new Error(err.message || "Failed to update member");
   }
 
-  return response.json();
+  const updated: User = await response.json();
+  addOrUpdateLocalMember(updated);
+  return updated;
 }
 
 async function deleteMemberRequest(
@@ -76,6 +92,7 @@ async function deleteMemberRequest(
     throw new Error(err.message || "Failed to delete member");
   }
 
+  removeLocalMember(id);
   return response.json();
 }
 

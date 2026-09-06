@@ -1,22 +1,33 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/useAuthStore";
 import type { CreateProjectInput, Project, UpdateProjectInput } from "@/types/project";
+import {
+  addOrUpdateLocalProject,
+  getLocalProjects,
+  mergeProjectsWithLocal,
+  removeLocalProject,
+} from "@/utils/localStorageSync";
 
 const DEFAULT_ROLE = "admin";
 const DEFAULT_USER_ID = "550e8400-e29b-41d4-a716-446655440000";
 
 async function fetchProjects(userRole?: string, userId?: string): Promise<Project[]> {
-  const response = await fetch("/api/projects", {
-    headers: {
-      "x-user-role": userRole || "",
-      "x-user-id": userId || "",
-    },
-  });
-  if (!response.ok) {
-    const err = await response.json();
-    throw new Error(err.message || "Failed to fetch projects");
+  try {
+    const response = await fetch("/api/projects", {
+      headers: {
+        "x-user-role": userRole || "",
+        "x-user-id": userId || "",
+      },
+    });
+    if (response.ok) {
+      const data: Project[] = await response.json();
+      return mergeProjectsWithLocal(data);
+    }
+  } catch (err) {
+    console.warn("API projects fetch failed, falling back to local storage", err);
   }
-  return response.json();
+
+  return getLocalProjects();
 }
 
 async function createProjectRequest(
@@ -37,7 +48,9 @@ async function createProjectRequest(
     const err = await response.json();
     throw new Error(err.message || "Failed to create project");
   }
-  return response.json();
+  const created: Project = await response.json();
+  addOrUpdateLocalProject(created);
+  return created;
 }
 
 async function updateProjectRequest(
@@ -59,7 +72,9 @@ async function updateProjectRequest(
     const err = await response.json();
     throw new Error(err.message || "Failed to update project");
   }
-  return response.json();
+  const updated: Project = await response.json();
+  addOrUpdateLocalProject(updated);
+  return updated;
 }
 
 async function deleteProjectRequest(
@@ -78,6 +93,7 @@ async function deleteProjectRequest(
     const err = await response.json();
     throw new Error(err.message || "Failed to delete project");
   }
+  removeLocalProject(id);
   return response.json();
 }
 
