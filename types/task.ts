@@ -34,6 +34,7 @@ export interface CreateTaskInput {
 }
 
 export interface UpdateTaskInput {
+  projectId?: string;
   title?: string;
   description?: string;
   priority?: TaskPriority;

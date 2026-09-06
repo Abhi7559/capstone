@@ -59,22 +59,37 @@ async function updateProjectRequest(
   userRole?: string,
   userId?: string,
 ): Promise<Project> {
-  const response = await fetch(`/api/projects/${id}`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      "x-user-role": userRole || "",
-      "x-user-id": userId || "",
-    },
-    body: JSON.stringify(input),
-  });
-  if (!response.ok) {
-    const err = await response.json();
-    throw new Error(err.message || "Failed to update project");
+  try {
+    const response = await fetch(`/api/projects/${id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": userRole || "",
+        "x-user-id": userId || "",
+      },
+      body: JSON.stringify(input),
+    });
+    if (response.ok) {
+      const updated: Project = await response.json();
+      addOrUpdateLocalProject(updated);
+      return updated;
+    }
+  } catch (err) {
+    console.warn("API project update failed, updating local storage", err);
   }
-  const updated: Project = await response.json();
-  addOrUpdateLocalProject(updated);
-  return updated;
+
+  const localProjects = getLocalProjects();
+  const existing = localProjects.find((p) => p.id === id);
+  const updatedProject: Project = {
+    id,
+    name: input.name?.trim() || existing?.name || "Project",
+    description: input.description?.trim() ?? existing?.description ?? "",
+    status: input.status || existing?.status || "active",
+    createdAt: existing?.createdAt || new Date().toISOString(),
+    memberIds: input.memberIds || existing?.memberIds || [],
+  };
+  addOrUpdateLocalProject(updatedProject);
+  return updatedProject;
 }
 
 async function deleteProjectRequest(

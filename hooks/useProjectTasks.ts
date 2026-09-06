@@ -132,24 +132,43 @@ async function updateTaskRequest(
   userRole?: string,
   userId?: string,
 ): Promise<Task> {
-  const response = await fetch(`/api/tasks/${taskId}`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      "x-user-role": userRole || "",
-      "x-user-id": userId || "",
-    },
-    body: JSON.stringify(input),
-  });
+  try {
+    const response = await fetch(`/api/tasks/${taskId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": userRole || "",
+        "x-user-id": userId || "",
+      },
+      body: JSON.stringify(input),
+    });
 
-  if (!response.ok) {
-    const err = await response.json();
-    throw new Error(err.message || "Failed to update task");
+    if (response.ok) {
+      const updated: Task = await response.json();
+      addOrUpdateLocalTask(updated);
+      return updated;
+    }
+  } catch (err) {
+    console.warn("API task update failed, updating local storage", err);
   }
 
-  const updated: Task = await response.json();
-  addOrUpdateLocalTask(updated);
-  return updated;
+  const localTasks = getLocalTasks();
+  const existing = localTasks.find((t) => t.id === taskId);
+  const updatedTask: Task = {
+    id: taskId,
+    projectId: input.projectId || existing?.projectId || "",
+    title: input.title?.trim() || existing?.title || "Task",
+    description: input.description?.trim() ?? existing?.description ?? "",
+    priority: input.priority || existing?.priority || "medium",
+    status: input.status || existing?.status || "todo",
+    assigneeId: input.assigneeId || existing?.assigneeId || userId || "",
+    dueDate: input.dueDate || existing?.dueDate || "",
+    tags: input.tags || existing?.tags || [],
+    createdAt: existing?.createdAt || new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  addOrUpdateLocalTask(updatedTask);
+  return updatedTask;
 }
 
 async function deleteTaskRequest(
