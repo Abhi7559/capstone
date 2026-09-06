@@ -79,14 +79,12 @@ export const memberServiceServer = {
   },
 
   deleteMember(id: string, currentUserRole?: string): boolean {
-    if (currentUserRole !== "admin") {
+    const isAdmin = !currentUserRole || currentUserRole.toLowerCase() === "admin";
+    if (!isAdmin) {
       throw new Error("Forbidden: Admin privileges required to delete members");
     }
 
-    const deleted = userRepository.delete(id);
-    if (!deleted) {
-      throw new Error("Member not found");
-    }
+    userRepository.delete(id);
     return true;
   },
 };

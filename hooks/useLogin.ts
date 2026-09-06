@@ -4,6 +4,7 @@ import { signIn } from "next-auth/react";
 import type { LoginCredentials } from "@/schemas/auth.schema";
 import { useAuthStore } from "@/store/useAuthStore";
 import type { User } from "@/types/auth";
+import { addOrUpdateLocalMember } from "@/utils/localStorageSync";
 
 async function loginRequest(credentials: LoginCredentials): Promise<User> {
   const response = await fetch("/api/auth/login", {
@@ -82,6 +83,7 @@ export function useChangePassword() {
     mutationFn: changePasswordRequest,
     onSuccess: (user) => {
       setLogin(user);
+      addOrUpdateLocalMember(user);
     },
   });
 

@@ -7,10 +7,30 @@ const PROJECTS_KEY = "capstone_local_projects";
 const TASKS_KEY = "capstone_local_tasks";
 const DELETED_PROJECTS_KEY = "capstone_deleted_projects";
 const DELETED_TASKS_KEY = "capstone_deleted_tasks";
+const DELETED_MEMBERS_KEY = "capstone_deleted_members";
 
 const isClient = typeof window !== "undefined";
 
 // --- DELETED TRACKING ---
+export function getDeletedMemberIds(): string[] {
+  if (!isClient) return [];
+  try {
+    const data = localStorage.getItem(DELETED_MEMBERS_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function addDeletedMemberId(id: string): void {
+  if (!isClient) return;
+  const current = getDeletedMemberIds();
+  if (!current.includes(id)) {
+    current.push(id);
+    localStorage.setItem(DELETED_MEMBERS_KEY, JSON.stringify(current));
+  }
+}
+
 export function getDeletedProjectIds(): string[] {
   if (!isClient) return [];
   try {
@@ -85,26 +105,24 @@ export function addOrUpdateLocalMember(member: User): void {
 }
 
 export function removeLocalMember(id: string): void {
+  addDeletedMemberId(id);
   const current = getLocalMembers();
   const updated = current.filter((m) => m.id !== id);
   saveLocalMembers(updated);
 }
 
 export function mergeMembersWithLocal(apiMembers: User[]): User[] {
-  const localMembers = getLocalMembers();
-  if (localMembers.length === 0) {
-    saveLocalMembers(apiMembers);
-    return apiMembers;
-  }
+  const deletedIds = new Set(getDeletedMemberIds());
+  const localMembers = getLocalMembers().filter((m) => !deletedIds.has(m.id));
 
   const map = new Map<string, User>();
   for (const m of apiMembers) {
-    map.set(m.id, m);
-  }
-  for (const m of localMembers) {
-    if (!map.has(m.id)) {
+    if (!deletedIds.has(m.id)) {
       map.set(m.id, m);
     }
+  }
+  for (const m of localMembers) {
+    map.set(m.id, m);
   }
   const merged = Array.from(map.values());
   saveLocalMembers(merged);
