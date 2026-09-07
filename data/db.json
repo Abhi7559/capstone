@@ -9,17 +9,6 @@
       "status": "active",
       "designation": "System Administrator",
       "joiningDate": "2026-09-01"
-    },
-    {
-      "id": "c03963f8-f5b8-411c-823a-97b96f9bfb1d",
-      "name": "Tast",
-      "email": "tast@gmail.com",
-      "role": "member",
-      "status": "active",
-      "password": "Abhi@@0099",
-      "designation": "Software Engineer",
-      "joiningDate": "2026-09-07",
-      "requiresPasswordChange": false
     }
   ],
   "projects": [],
