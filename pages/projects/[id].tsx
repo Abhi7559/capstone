@@ -1,6 +1,7 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { MultiStepCreateTaskModal } from "@/components/MultiStepCreateTaskModal";
+import { ErrorLayout } from "@/components/ErrorLayout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Sidebar } from "@/components/Sidebar";
 import { TaskDetailModal } from "@/components/TaskDetailModal";
@@ -248,6 +249,21 @@ export default function ProjectTaskBoardPage() {
 
   const projectTasks = tasks || [];
 
+  if (projects && !currentProject) {
+    return (
+      <ProtectedRoute>
+        <ErrorLayout
+          code="404"
+          title="Project Not Found"
+          description={`The requested project ID "${projectId}" does not exist or may have been removed.`}
+          icon="📁"
+          iconBgColor="bg-red-50"
+          iconTextColor="text-red-600"
+        />
+      </ProtectedRoute>
+    );
+  }
+
   return (
     <ProtectedRoute>
       <div className="flex min-h-screen bg-gray-100 font-sans">
@@ -273,24 +289,7 @@ export default function ProjectTaskBoardPage() {
           />
 
           <main className="flex-1 p-8 overflow-y-auto">
-            {/* Invalid / Not Found Project State */}
-            {projects && !currentProject ? (
-              <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-red-100 text-red-600 mb-4 shadow-sm">
-                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                </div>
-                <h1 className="text-xl font-bold text-gray-900 mb-2">
-                  Project Not Found
-                </h1>
-                <p className="text-xs text-gray-500 max-w-md leading-relaxed">
-                  The project ID <code className="bg-gray-200 px-1.5 py-0.5 rounded text-red-600 font-mono">{projectId}</code> does not exist or may have been deleted.
-                </p>
-              </div>
-            ) : (
-              <>
-                {/* Header */}
+            {/* Header */}
             <div className="mb-6">
               <button
                 type="button"
@@ -1066,8 +1065,6 @@ export default function ProjectTaskBoardPage() {
                 )}
               </>
             )}
-            </>
-          )}
           </main>
         </div>
 
