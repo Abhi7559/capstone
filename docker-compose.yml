@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  taskboard-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: taskboard_app_container
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    restart: unless-stopped
+    volumes:
+      - ./data:/app/data
