@@ -1,52 +1,28 @@
-import { useState } from "react";
-import { Sidebar } from "@/components/Sidebar";
-import { TopBar } from "@/components/TopBar";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
+import Link from "next/link";
 
-export default function Error404() {
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-
+export default function Custom404() {
   return (
-    <ProtectedRoute>
-      <div className="flex min-h-screen bg-gray-100 font-sans">
-        <Sidebar
-          activeTab="projects"
-          isOpen={isMobileSidebarOpen}
-          onClose={() => setIsMobileSidebarOpen(false)}
-        />
-
-        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          <TopBar
-            title="Page Not Found"
-            onMobileMenuToggle={() => setIsMobileSidebarOpen(true)}
-          />
-
-          <main className="flex-1 p-8 flex items-center justify-center">
-            <div className="max-w-md w-full rounded-2xl bg-white p-8 shadow-xl border border-gray-200 text-center space-y-6">
-              <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">
-                🔍
-              </div>
-              <div className="space-y-2">
-                <h1 className="text-4xl font-extrabold text-gray-900">404</h1>
-                <h2 className="text-lg font-bold text-gray-800">Resource Not Found</h2>
-                <p className="text-sm text-gray-500 leading-relaxed">
-                  The requested page or project resource does not exist or may have been removed.
-                </p>
-              </div>
-
-              <div className="pt-2">
-                <button
-                  type="button"
-                  onClick={() => window.location.reload()}
-                  className="w-full rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 active:scale-[0.98] cursor-pointer"
-                >
-                  Retry Page
-                </button>
-              </div>
-            </div>
-          </main>
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 px-4 py-12 font-sans text-center">
+      <div className="max-w-md w-full rounded-2xl bg-white p-8 shadow-lg border border-gray-100 space-y-6">
+        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-blue-50 text-blue-600 text-3xl font-bold">
+          🔍
+        </div>
+        <div className="space-y-2">
+          <span className="text-5xl font-extrabold text-gray-900 tracking-tight">404</span>
+          <h1 className="text-xl font-bold text-gray-800">Page Not Found</h1>
+          <p className="text-sm text-gray-500 leading-relaxed">
+            The page or project resource you are looking for doesn't exist or has been moved.
+          </p>
+        </div>
+        <div className="pt-2">
+          <Link
+            href="/dashboard"
+            className="inline-flex w-full items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-blue-700 active:scale-[0.98]"
+          >
+            Back to Dashboard
+          </Link>
         </div>
       </div>
-    </ProtectedRoute>
+    </div>
   );
 }
