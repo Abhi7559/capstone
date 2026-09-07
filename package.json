@@ -9,7 +9,7 @@
     "test": "echo \"No tests specified\" && exit 0",
     "lint": "biome check",
     "format": "biome format --write",
-    "prepare": "husky"
+    "prepare": "husky || true"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
