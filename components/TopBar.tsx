@@ -155,15 +155,15 @@ export function TopBar({
             <button
               type="button"
               onClick={() => setShowProfileMenu((prev) => !prev)}
-              className="flex items-center space-x-3 border-l pl-4 border-gray-200 focus:outline-none group text-left"
+              className="flex items-center space-x-3 border-l pl-4 border-gray-200 focus:outline-none group text-left cursor-pointer"
             >
               {/* User Avatar */}
-              <div className="h-9 w-9 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center font-bold text-xs uppercase shadow-sm ring-2 ring-blue-500/20">
+              <div className="h-9 w-9 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center font-bold text-xs uppercase shadow-sm ring-2 ring-blue-500/20 flex-shrink-0">
                 {getInitials(currentUser?.name)}
               </div>
 
-              <div className="hidden sm:block">
-                <p className="text-xs font-bold text-gray-900 leading-tight group-hover:text-blue-600 transition">
+              <div className="hidden sm:block min-w-0 max-w-[160px]">
+                <p className="text-xs font-bold text-gray-900 leading-tight group-hover:text-blue-600 transition truncate" title={currentUser?.name || "User"}>
                   {currentUser?.name || "User"}
                 </p>
                 <span
@@ -180,22 +180,25 @@ export function TopBar({
 
             {/* Profile Dropdown */}
             {showProfileMenu && (
-              <div className="absolute right-0 mt-2 w-48 rounded-xl bg-white p-2 shadow-lg border border-gray-100 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-                <div className="px-3 py-2 border-b border-gray-100 mb-1">
-                  <p className="text-xs font-bold text-gray-900">
+              <div className="absolute right-0 mt-2 w-64 rounded-xl bg-white p-2.5 shadow-lg border border-gray-100 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="px-3 py-2 border-b border-gray-100 mb-1 overflow-hidden">
+                  <p className="text-xs font-bold text-gray-900 truncate" title={currentUser?.name}>
                     {currentUser?.name}
                   </p>
-                  <p className="text-[11px] text-gray-500 truncate">
+                  <p className="text-[11px] text-gray-500 truncate mt-0.5" title={currentUser?.email}>
                     {currentUser?.email}
                   </p>
                 </div>
                 <button
                   type="button"
-                  onClick={handleLogout}
-                  className="w-full flex items-center px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 rounded-lg transition"
+                  onClick={() => {
+                    setShowProfileMenu(false);
+                    handleLogout();
+                  }}
+                  className="w-full flex items-center px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 rounded-lg transition cursor-pointer"
                 >
                   <svg
-                    className="w-4 h-4 mr-2"
+                    className="w-4 h-4 mr-2 flex-shrink-0"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"

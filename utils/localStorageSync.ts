@@ -190,7 +190,7 @@ export function mergeProjectsWithLocal(apiProjects: Project[]): Project[] {
     }
   }
   for (const p of localProjects) {
-    if (!map.has(p.id)) {
+    if (!deletedIds.has(p.id)) {
       map.set(p.id, p);
     }
   }
@@ -255,9 +255,7 @@ export function mergeTasksWithLocal(apiTasks: Task[]): Task[] {
     }
   }
   for (const t of localTasks) {
-    if (!map.has(t.id)) {
-      map.set(t.id, t);
-    } else {
+    if (apiTasks.some((at) => at.id === t.id)) {
       const existing = map.get(t.id);
       if (existing) {
         const apiTime = new Date(
@@ -267,8 +265,6 @@ export function mergeTasksWithLocal(apiTasks: Task[]): Task[] {
         if (localTime >= apiTime) {
           map.set(t.id, t);
         }
-      } else {
-        map.set(t.id, t);
       }
     }
   }

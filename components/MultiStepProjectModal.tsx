@@ -177,24 +177,28 @@ export function MultiStepProjectModal({
           id: editingProject.id,
           input: {
             name: data.name,
-            description: data.description,
+            description: data.description || "",
             status: mappedStatus,
             memberIds: data.memberIds,
             startDate: data.startDate,
             dueDate: data.endDate,
             endDate: data.endDate,
+            category: data.category,
+            priority: data.priority,
           },
         });
         onSuccess?.("Project updated successfully!");
       } else {
         await createProject({
           name: data.name,
-          description: data.description,
+          description: data.description || "",
           status: mappedStatus,
           memberIds: data.memberIds,
           startDate: data.startDate,
           dueDate: data.endDate,
           endDate: data.endDate,
+          category: data.category,
+          priority: data.priority,
         });
         onSuccess?.("Project created successfully!");
       }
@@ -258,31 +262,39 @@ export function MultiStepProjectModal({
         <div className="px-7 py-3.5 bg-slate-50/70 flex-shrink-0">
           <div className="flex items-center justify-between max-w-2xl mx-auto">
             {/* Step 1 */}
-            <button
-              type="button"
-              onClick={() => currentStep > 1 && setCurrentStep(1)}
-              disabled={currentStep <= 1}
-              className={`flex items-center space-x-2 text-xs font-semibold transition ${
-                currentStep === 1
-                  ? "text-blue-600 font-bold"
-                  : currentStep > 1
-                    ? "text-blue-700 cursor-pointer"
-                    : "text-gray-400"
-              }`}
-            >
-              <span
-                className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] ${
-                  currentStep > 1
-                    ? "bg-blue-600 text-white font-bold"
-                    : currentStep === 1
-                      ? "bg-blue-600 text-white font-bold"
-                      : "bg-gray-200 text-gray-600"
-                }`}
-              >
-                {currentStep > 1 ? "✓" : "1"}
-              </span>
-              <span>Basic Info</span>
-            </button>
+            {(() => {
+              const isNameValid = Boolean(formValues.name && formValues.name.trim().length >= 3);
+              const isStep1Active = currentStep > 1 || isNameValid;
+              return (
+                <button
+                  type="button"
+                  onClick={() => currentStep > 1 && setCurrentStep(1)}
+                  disabled={currentStep <= 1}
+                  className={`flex items-center space-x-2 text-xs font-semibold transition ${
+                    currentStep === 1
+                      ? isStep1Active
+                        ? "text-blue-600 font-bold"
+                        : "text-gray-700 font-medium"
+                      : currentStep > 1
+                        ? "text-blue-700 cursor-pointer"
+                        : "text-gray-400"
+                  }`}
+                >
+                  <span
+                    className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] ${
+                      currentStep > 1
+                        ? "bg-blue-600 text-white font-bold"
+                        : currentStep === 1 && isStep1Active
+                          ? "bg-blue-600 text-white font-bold"
+                          : "bg-gray-200 text-gray-600 font-bold"
+                    }`}
+                  >
+                    {currentStep > 1 ? "✓" : "1"}
+                  </span>
+                  <span>Basic Info</span>
+                </button>
+              );
+            })()}
 
             <div
               className={`h-[2px] flex-1 mx-3 ${currentStep > 1 ? "bg-blue-600" : "bg-gray-200"}`}
@@ -525,12 +537,15 @@ export function MultiStepProjectModal({
 
                 {/* Team Member Searchable Selector */}
                 <div className="relative" ref={dropdownContainerRef}>
-                  <label
-                    htmlFor="memberSelectBtn"
-                    className="block text-xs font-semibold text-gray-700 mb-1"
-                  >
-                    Assign Team Members <span className="text-red-500">*</span>
-                  </label>
+                  <div className="flex justify-between items-center mb-1">
+                    <label
+                      htmlFor="memberSelectBtn"
+                      className="block text-xs font-semibold text-gray-700"
+                    >
+                      Assign Team Members
+                    </label>
+                    <span className="text-[11px] text-gray-400">Optional</span>
+                  </div>
                   <button
                     id="memberSelectBtn"
                     type="button"
@@ -576,9 +591,9 @@ export function MultiStepProjectModal({
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                const updated = formValues.memberIds.filter(
-                                  (id) => id !== mId,
-                                );
+                                const updated = (
+                                  formValues.memberIds || []
+                                ).filter((id) => id !== mId);
                                 setValue("memberIds", updated, {
                                   shouldValidate: true,
                                 });
@@ -705,6 +720,7 @@ export function MultiStepProjectModal({
                     <input
                       id="endDateIn"
                       type="date"
+                      min={formValues.startDate || undefined}
                       className="w-full rounded-lg border border-gray-300 h-11 px-3.5 text-xs outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                       {...register("endDate")}
                     />

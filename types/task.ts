@@ -8,7 +8,7 @@ export interface Task {
   description: string;
   priority: TaskPriority;
   status: TaskStatus;
-  assigneeId: string; // UUID string of assigned User
+  assigneeId?: string; // UUID string of assigned User (optional)
   dueDate: string; // YYYY-MM-DD format
   tags: string[];
   createdAt: string; // ISO date string
@@ -28,7 +28,7 @@ export interface CreateTaskInput {
   description: string;
   priority: TaskPriority;
   status?: TaskStatus;
-  assigneeId: string;
+  assigneeId?: string;
   dueDate: string;
   tags?: string[];
 }

@@ -67,10 +67,12 @@ export function transformTasksByAssignee(
   }
 
   for (const t of tasks) {
-    if (t.assigneeId in map) {
-      map[t.assigneeId]++;
-    } else {
-      map[t.assigneeId] = 1;
+    if (t.assigneeId) {
+      if (t.assigneeId in map) {
+        map[t.assigneeId]++;
+      } else {
+        map[t.assigneeId] = 1;
+      }
     }
   }
 

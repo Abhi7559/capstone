@@ -512,8 +512,19 @@ export default function ProjectsPage() {
                 Loading projects...
               </div>
             ) : isError ? (
-              <div className="rounded-2xl bg-red-50 p-6 text-center border border-red-200 text-red-700">
-                {error ? (error as Error).message : "Failed to load projects."}
+              <div className="rounded-2xl bg-red-50 p-6 text-center border border-red-200 text-red-700 flex flex-col items-center justify-center space-y-3">
+                <p className="text-sm font-semibold">
+                  {error
+                    ? (error as Error).message
+                    : "Unable to retrieve project workspace list at this time. Please try again."}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => window.location.reload()}
+                  className="rounded-lg bg-red-600 px-4 py-2 text-xs font-bold text-white hover:bg-red-700 transition cursor-pointer shadow-xs"
+                >
+                  Retry Page
+                </button>
               </div>
             ) : filteredProjects.length === 0 ? (
               /* Empty State */

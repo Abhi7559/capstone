@@ -31,7 +31,8 @@ export default function DashboardPage() {
     return p ? p.name : "Project";
   };
 
-  const getAssigneeName = (assigneeId: string) => {
+  const getAssigneeName = (assigneeId?: string) => {
+    if (!assigneeId) return "Unassigned";
     if (assigneeId === currentUser?.id) return `${currentUser.name} (You)`;
     const m = members?.find((mem) => mem.id === assigneeId);
     return m ? m.name : "Unassigned";
@@ -115,10 +116,19 @@ export default function DashboardPage() {
                 Loading dashboard metrics...
               </div>
             ) : isError ? (
-              <div className="rounded-xl bg-red-50 p-6 text-center border border-red-200 text-red-700 font-medium">
-                {error
-                  ? (error as Error).message
-                  : "Failed to load dashboard data."}
+              <div className="rounded-xl bg-red-50 p-6 text-center border border-red-200 text-red-700 flex flex-col items-center justify-center space-y-3">
+                <p className="text-sm font-semibold">
+                  {error
+                    ? (error as Error).message
+                    : "Unable to load workspace dashboard data at this time. Please try again."}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => window.location.reload()}
+                  className="rounded-lg bg-red-600 px-4 py-2 text-xs font-bold text-white hover:bg-red-700 transition cursor-pointer shadow-xs"
+                >
+                  Retry Page
+                </button>
               </div>
             ) : isAdmin && adminData ? (
               /* ADMIN DASHBOARD UI */

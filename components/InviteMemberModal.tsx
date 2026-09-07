@@ -61,7 +61,7 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl border border-gray-100 font-sans">
+      <div className="w-full max-w-lg rounded-2xl bg-white p-6 md:p-7 shadow-xl border border-gray-100 font-sans">
         <div className="flex justify-between items-center mb-4 pb-3 border-b border-gray-100">
           <div>
             <h2 className="text-xl font-bold text-gray-900">Add Team Member</h2>
@@ -146,7 +146,7 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
         ) : (
           <form
             onSubmit={handleSubmit(onSubmit)}
-            className="space-y-4"
+            className="space-y-2.5"
             noValidate
           >
             {inviteError && (
@@ -175,11 +175,13 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
                 }`}
                 {...register("name")}
               />
-              {errors.name && (
-                <p className="mt-1 text-[11px] text-red-600 font-medium">
-                  {errors.name.message}
-                </p>
-              )}
+              <div className="min-h-[18px] mt-1">
+                {errors.name && (
+                  <p className="text-[11px] text-red-600 font-medium">
+                    {errors.name.message}
+                  </p>
+                )}
+              </div>
             </div>
 
             <div>
@@ -200,11 +202,13 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
                 }`}
                 {...register("email")}
               />
-              {errors.email && (
-                <p className="mt-1 text-[11px] text-red-600 font-medium">
-                  {errors.email.message}
-                </p>
-              )}
+              <div className="min-h-[18px] mt-1">
+                {errors.email && (
+                  <p className="text-[11px] text-red-600 font-medium">
+                    {errors.email.message}
+                  </p>
+                )}
+              </div>
             </div>
 
             <div>
@@ -221,6 +225,7 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
                 className="w-full rounded-lg border border-gray-300 h-11 px-3.5 text-xs outline-none focus:border-gray-500 focus:ring-2 focus:ring-gray-100"
                 {...register("designation")}
               />
+              <div className="min-h-[18px] mt-1" />
             </div>
 
             <div>
@@ -236,13 +241,14 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
                 className="w-full rounded-lg border border-gray-300 h-11 px-3.5 text-xs text-gray-700 outline-none focus:border-gray-500 focus:ring-2 focus:ring-gray-100"
                 {...register("joiningDate")}
               />
+              <div className="min-h-[18px] mt-1" />
             </div>
 
             <div className="pt-2">
               <button
                 type="submit"
                 disabled={isInviting}
-                className="w-full rounded-full bg-gray-200 text-gray-900 hover:bg-gray-300 h-11 text-xs font-bold transition disabled:opacity-50"
+                className="w-full rounded-full bg-gray-200 text-gray-900 hover:bg-gray-300 h-11 text-xs font-bold transition disabled:opacity-50 cursor-pointer"
               >
                 {isInviting ? "Adding Member..." : "Add Member"}
               </button>

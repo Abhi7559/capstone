@@ -39,13 +39,13 @@ export function TaskDetailModal({
 
   const assignee = members?.find((m) => m.id === task.assigneeId);
   const assigneeName =
-    task.assigneeId === currentUser?.id
+    currentUser && task.assigneeId === currentUser.id
       ? `${currentUser.name} (You)`
       : assignee
         ? assignee.name
         : "Unassigned";
   const assigneeEmail =
-    task.assigneeId === currentUser?.id
+    currentUser && task.assigneeId === currentUser.id
       ? currentUser.email
       : assignee?.email || "N/A";
 

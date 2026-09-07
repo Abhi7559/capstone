@@ -25,12 +25,6 @@ interface KanbanColumn {
 
 const DEFAULT_COLUMNS: KanbanColumn[] = [
   {
-    id: "col_backlog",
-    label: "BACKLOG",
-    status: "backlog",
-    color: "bg-gray-100 border-gray-300 text-gray-700",
-  },
-  {
     id: "col_todo",
     label: "TO DO",
     status: "todo",
@@ -74,23 +68,50 @@ export default function ProjectTaskBoardPage() {
   // Dynamic Custom Columns State
   const [columns, setColumns] = useState<KanbanColumn[]>(DEFAULT_COLUMNS);
   const [isAddColumnModalOpen, setIsAddColumnModalOpen] = useState(false);
+  const [isBacklogModalOpen, setIsBacklogModalOpen] = useState(false);
   const [newColumnName, setNewColumnName] = useState("");
+  const [columnError, setColumnError] = useState<string | null>(null);
+
+  const handleOpenAddColumnModal = () => {
+    setNewColumnName("");
+    setColumnError(null);
+    setIsAddColumnModalOpen(true);
+  };
 
   const handleAddColumn = () => {
-    if (!newColumnName.trim()) return;
-    const colStatus = newColumnName
-      .trim()
+    const trimmedName = newColumnName.trim();
+    if (!trimmedName) {
+      setColumnError("Please enter a column name.");
+      return;
+    }
+
+    const isDuplicate = columns.some(
+      (col) =>
+        col.label.toLowerCase() === trimmedName.toLowerCase() ||
+        col.status.toLowerCase() ===
+          trimmedName.toLowerCase().replace(/[^a-z0-9]+/g, "_"),
+    );
+
+    if (isDuplicate) {
+      setColumnError(
+        "A column with this name already exists. Please choose a different name.",
+      );
+      return;
+    }
+
+    const colStatus = trimmedName
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "_");
     const newCol: KanbanColumn = {
       id: `col_${Date.now()}`,
-      label: newColumnName.trim().toUpperCase(),
+      label: trimmedName.toUpperCase(),
       status: colStatus,
       color: "bg-purple-50 border-purple-200 text-purple-800",
       isCustom: true,
     };
     setColumns((prev) => [...prev, newCol]);
     setNewColumnName("");
+    setColumnError(null);
     setIsAddColumnModalOpen(false);
     showToast("Column added successfully!");
   };
@@ -129,7 +150,11 @@ export default function ProjectTaskBoardPage() {
       }
     }
     setColumns((prev) => prev.filter((c) => c.id !== colToDelete.id));
-    showToast(`Column ${colToDelete.label} deleted!`);
+    const toastMsg =
+      tasksInColumn.length > 0
+        ? `Column ${colToDelete.label} deleted! ${tasksInColumn.length} task${tasksInColumn.length === 1 ? "" : "s"} moved to Backlog.`
+        : `Column ${colToDelete.label} deleted!`;
+    showToast(toastMsg);
   };
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -168,10 +193,11 @@ export default function ProjectTaskBoardPage() {
 
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
 
-  const getAssigneeName = (assigneeId: string) => {
+  const getAssigneeName = (assigneeId?: string) => {
+    if (!assigneeId) return "Unassigned";
     if (assigneeId === currentUser?.id) return `${currentUser.name} (You)`;
     const memberMatch = members?.find((m) => m.id === assigneeId);
-    return memberMatch ? memberMatch.name : "System User";
+    return memberMatch ? memberMatch.name : "Unassigned";
   };
 
   const handleDragStart = (e: React.DragEvent, task: Task) => {
@@ -312,22 +338,37 @@ export default function ProjectTaskBoardPage() {
                     </button>
                   </div>
 
-                  {isAdmin && activeTab === "kanban" && (
+                  {activeTab === "kanban" && (
                     <div className="flex items-center space-x-2">
                       <button
                         type="button"
-                        onClick={() => setIsAddColumnModalOpen(true)}
-                        className="rounded-lg border border-gray-300 bg-white px-3.5 py-2 text-xs font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none"
+                        onClick={() => setIsBacklogModalOpen(true)}
+                        className="rounded-lg border border-gray-300 bg-white px-3.5 py-2 text-xs font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none cursor-pointer flex items-center space-x-2"
                       >
-                        + Add Column
+                        <span className="text-sm">📦</span>
+                        <span>Backlog</span>
+                        <span className="rounded-full bg-amber-100 border border-amber-200 px-2 py-0.5 text-[10px] font-bold text-amber-800">
+                          {(tasks || []).filter((t) => t.status === "backlog").length}
+                        </span>
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => setIsTaskModalOpen(true)}
-                        className="rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none"
-                      >
-                        + Create Task
-                      </button>
+                      {isAdmin && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={handleOpenAddColumnModal}
+                            className="rounded-lg border border-gray-300 bg-white px-3.5 py-2 text-xs font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none cursor-pointer"
+                          >
+                            + Add Column
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setIsTaskModalOpen(true)}
+                            className="rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none"
+                          >
+                            + Create Task
+                          </button>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>
@@ -337,30 +378,48 @@ export default function ProjectTaskBoardPage() {
             {activeTab === "overview" ? (
               /* PROJECT OVERVIEW INFORMATION VIEW */
               <div className="space-y-6">
-                <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
+                {/* Compact Project Information Header Card */}
+                <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center space-x-3">
                       <h2 className="text-lg font-bold text-gray-900">
-                        Project Information
+                        Project Overview
                       </h2>
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        Overview of key milestones, progress metrics, and team
-                        members.
-                      </p>
+                      {currentProject?.category && (
+                        <span className="inline-flex items-center rounded-md bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700 border border-slate-200">
+                          📁 {currentProject.category}
+                        </span>
+                      )}
                     </div>
-                    <span
-                      className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold capitalize ${
-                        currentProject?.status === "active"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-gray-100 text-gray-700"
-                      }`}
-                    >
-                      {currentProject?.status || "Active"}
-                    </span>
+
+                    <div className="flex items-center space-x-2">
+                      <span
+                        className={`inline-flex items-center rounded-full px-3 py-0.5 text-xs font-bold uppercase tracking-wider ${
+                          currentProject?.priority === "high"
+                            ? "bg-red-50 text-red-700 border border-red-200"
+                            : currentProject?.priority === "medium"
+                              ? "bg-amber-50 text-amber-700 border border-amber-200"
+                              : "bg-blue-50 text-blue-700 border border-blue-200"
+                        }`}
+                      >
+                        ⚡ {currentProject?.priority || "Medium"} Priority
+                      </span>
+                      <span
+                        className={`inline-flex items-center rounded-full px-3 py-0.5 text-xs font-bold uppercase tracking-wider ${
+                          currentProject?.status === "active"
+                            ? "bg-green-100 text-green-800 border border-green-200"
+                            : currentProject?.status === "completed"
+                              ? "bg-blue-100 text-blue-800 border border-blue-200"
+                              : "bg-gray-100 text-gray-700 border border-gray-200"
+                        }`}
+                      >
+                        {currentProject?.status || "Active"}
+                      </span>
+                    </div>
                   </div>
-                  <p className="text-sm text-gray-600 leading-relaxed">
-                    {currentProject?.description ||
-                      "No project description provided."}
+
+                  <p className="text-sm text-gray-600 leading-relaxed pt-1">
+                    {currentProject?.description || "No project description provided."}
                   </p>
                 </div>
 
@@ -405,6 +464,34 @@ export default function ProjectTaskBoardPage() {
                           </div>
 
                           <div className="divide-y divide-gray-100 text-xs text-gray-600 pt-2">
+                            {currentProject?.startDate && (
+                              <div className="flex justify-between py-2">
+                                <span className="font-medium text-gray-500">
+                                  Start Date:
+                                </span>
+                                <span className="font-semibold text-gray-900">
+                                  {new Date(currentProject.startDate).toLocaleDateString("en-US", {
+                                    month: "short",
+                                    day: "numeric",
+                                    year: "numeric",
+                                  })}
+                                </span>
+                              </div>
+                            )}
+                            {(currentProject?.dueDate || currentProject?.endDate) && (
+                              <div className="flex justify-between py-2">
+                                <span className="font-medium text-gray-500">
+                                  Target Completion:
+                                </span>
+                                <span className="font-semibold text-gray-900">
+                                  {new Date(currentProject.dueDate || currentProject.endDate || "").toLocaleDateString("en-US", {
+                                    month: "short",
+                                    day: "numeric",
+                                    year: "numeric",
+                                  })}
+                                </span>
+                              </div>
+                            )}
                             <div className="flex justify-between py-2">
                               <span className="font-medium text-gray-500">
                                 Created Date:
@@ -454,7 +541,7 @@ export default function ProjectTaskBoardPage() {
                           currentProject?.memberIds &&
                           currentProject.memberIds.length > 0
                             ? currentProject.memberIds.includes(m.id)
-                            : true,
+                            : false,
                         );
 
                         if (assigned.length === 0) {
@@ -508,9 +595,10 @@ export default function ProjectTaskBoardPage() {
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {(() => {
                     const assignedMembers = (members || []).filter((m) =>
-                      currentProject?.memberIds
+                      currentProject?.memberIds &&
+                      currentProject.memberIds.length > 0
                         ? currentProject.memberIds.includes(m.id)
-                        : true,
+                        : false,
                     );
                     if (assignedMembers.length === 0) {
                       return (
@@ -651,32 +739,6 @@ export default function ProjectTaskBoardPage() {
                       </select>
                     </div>
 
-                    {/* Assignee Filter */}
-                    <div>
-                      <select
-                        value={filters.assigneeId || "all"}
-                        onChange={(e) =>
-                          setFilters((prev) => ({
-                            ...prev,
-                            assigneeId: e.target.value,
-                          }))
-                        }
-                        className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 outline-none focus:ring-2 focus:ring-blue-100"
-                      >
-                        <option value="all">All Assignees</option>
-                        {currentUser && (
-                          <option value={currentUser.id}>
-                            {currentUser.name} (You)
-                          </option>
-                        )}
-                        {members?.map((member) => (
-                          <option key={member.id} value={member.id}>
-                            {member.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
                     {/* Only My Tasks Radio Button Toggle */}
                     <label
                       htmlFor="myTasksRadio"
@@ -727,10 +789,19 @@ export default function ProjectTaskBoardPage() {
                     Loading project tasks...
                   </div>
                 ) : isError ? (
-                  <div className="rounded-xl bg-red-50 p-6 text-center border border-red-200 text-red-700 font-medium">
-                    {error
-                      ? (error as Error).message
-                      : "Failed to load project tasks."}
+                  <div className="rounded-xl bg-red-50 p-6 text-center border border-red-200 text-red-700 flex flex-col items-center justify-center space-y-3">
+                    <p className="text-sm font-semibold">
+                      {error
+                        ? (error as Error).message
+                        : "Unable to load project tasks at this time. Please try again."}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => window.location.reload()}
+                      className="rounded-lg bg-red-600 px-4 py-2 text-xs font-bold text-white hover:bg-red-700 transition cursor-pointer shadow-xs"
+                    >
+                      Retry Page
+                    </button>
                   </div>
                 ) : (
                   <div className="flex flex-wrap lg:flex-nowrap gap-6 overflow-x-auto pb-4">
@@ -1085,10 +1156,24 @@ export default function ProjectTaskBoardPage() {
                   id="newColumnNameInput"
                   type="text"
                   value={newColumnName}
-                  onChange={(e) => setNewColumnName(e.target.value)}
+                  onChange={(e) => {
+                    setNewColumnName(e.target.value);
+                    if (columnError) setColumnError(null);
+                  }}
                   placeholder="e.g. Testing / QA"
-                  className="w-full rounded-lg border border-gray-300 px-3.5 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  className={`w-full rounded-lg border px-3.5 py-2 text-sm outline-none transition focus:ring-2 ${
+                    columnError
+                      ? "border-red-500 focus:ring-red-200"
+                      : "border-gray-300 focus:border-blue-500 focus:ring-blue-100"
+                  }`}
                 />
+                <div className="min-h-[18px] mt-1">
+                  {columnError && (
+                    <p className="text-xs text-red-600 font-medium">
+                      {columnError}
+                    </p>
+                  )}
+                </div>
               </div>
               <div className="flex justify-end space-x-3 pt-2">
                 <button
@@ -1104,6 +1189,138 @@ export default function ProjectTaskBoardPage() {
                   className="rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700"
                 >
                   Create Column
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Backlog Drawer / Modal Component */}
+        {isBacklogModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+            <div className="w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl">
+              <div className="flex justify-between items-center pb-4 border-b border-gray-200 flex-shrink-0">
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <h3 className="text-lg font-bold text-gray-900">
+                      Project Backlog
+                    </h3>
+                    <span className="rounded-full bg-amber-100 border border-amber-200 px-2.5 py-0.5 text-xs font-bold text-amber-800">
+                      {(tasks || []).filter((t) => t.status === "backlog").length} tasks
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Tasks in backlog or moved from deleted columns.
+                  </p>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsBacklogModalOpen(false);
+                      setIsTaskModalOpen(true);
+                    }}
+                    className="rounded-lg bg-amber-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-amber-700 transition flex items-center space-x-1"
+                  >
+                    <span>+ Create Task in Backlog</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsBacklogModalOpen(false)}
+                    className="text-gray-400 hover:text-gray-600 font-bold p-1 text-base"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto py-4 space-y-3">
+                {(() => {
+                  const backlogTasks = (tasks || []).filter(
+                    (t) => t.status === "backlog",
+                  );
+                  if (backlogTasks.length === 0) {
+                    return (
+                      <div className="p-12 text-center text-xs text-gray-400 rounded-xl border border-dashed border-gray-200">
+                        No tasks in backlog. All tasks are currently assigned to active Kanban columns!
+                      </div>
+                    );
+                  }
+
+                  return backlogTasks.map((bTask) => (
+                    <div
+                      key={bTask.id}
+                      className="rounded-xl border border-gray-200 bg-amber-50/40 p-4 space-y-2 hover:border-amber-300 transition"
+                    >
+                      <div className="flex justify-between items-start">
+                        <h4 className="text-sm font-bold text-gray-900">
+                          {bTask.title}
+                        </h4>
+                        <span
+                          className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md ${
+                            bTask.priority === "high"
+                              ? "bg-red-100 text-red-700"
+                              : bTask.priority === "medium"
+                                ? "bg-amber-100 text-amber-700"
+                                : "bg-gray-100 text-gray-600"
+                          }`}
+                        >
+                          {bTask.priority}
+                        </span>
+                      </div>
+                      {bTask.description && (
+                        <p className="text-xs text-gray-600 leading-relaxed">
+                          {bTask.description}
+                        </p>
+                      )}
+                      <div className="flex items-center justify-between pt-2 border-t border-amber-100/80 text-xs">
+                        <span className="text-[11px] text-gray-500">
+                          Assignee: <strong className="text-gray-800">{getAssigneeName(bTask.assigneeId)}</strong>
+                        </span>
+                        <div className="flex items-center space-x-2">
+                          <label className="text-[11px] font-semibold text-gray-600">
+                            Move to Column:
+                          </label>
+                          <select
+                            value={bTask.status}
+                            onChange={async (e) => {
+                              const newStatus = e.target.value as TaskStatus;
+                              try {
+                                await updateTask({
+                                  taskId: bTask.id,
+                                  input: {
+                                    status: newStatus,
+                                    projectId: bTask.projectId,
+                                  },
+                                });
+                                showToast(`Moved task to ${columns.find((c) => c.status === newStatus)?.label || newStatus}!`);
+                              } catch {
+                                showToast("Failed to reassign backlog task.");
+                              }
+                            }}
+                            className="rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-100 cursor-pointer"
+                          >
+                            <option value="backlog" disabled>Select Column...</option>
+                            {columns.map((col) => (
+                              <option key={col.status} value={col.status}>
+                                {col.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  ));
+                })()}
+              </div>
+
+              <div className="flex justify-end pt-3 border-t border-gray-200 flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setIsBacklogModalOpen(false)}
+                  className="rounded-lg bg-gray-900 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-gray-800 transition"
+                >
+                  Close Backlog
                 </button>
               </div>
             </div>

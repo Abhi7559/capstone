@@ -32,6 +32,17 @@ export default function AnalyticsPage() {
 
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
+  const renderPieLabel = ({
+    name,
+    value,
+  }: {
+    name?: string;
+    value?: number;
+  }) => {
+    if (!value || value <= 0) return null;
+    return `${name}: ${value}`;
+  };
+
   return (
     <ProtectedRoute>
       <div className="flex min-h-screen bg-gray-100 font-sans">
@@ -55,8 +66,17 @@ export default function AnalyticsPage() {
                 Loading analytics charts...
               </div>
             ) : isError ? (
-              <div className="rounded-xl bg-red-50 p-6 text-center border border-red-200 text-red-700 font-medium">
-                {error ? error : "Failed to load analytics data."}
+              <div className="rounded-xl bg-red-50 p-6 text-center border border-red-200 text-red-700 flex flex-col items-center justify-center space-y-3">
+                <p className="text-sm font-semibold">
+                  {error ? error : "Unable to load analytics metrics data at this time. Please try again."}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => window.location.reload()}
+                  className="rounded-lg bg-red-600 px-4 py-2 text-xs font-bold text-white hover:bg-red-700 transition cursor-pointer shadow-xs"
+                >
+                  Retry Page
+                </button>
               </div>
             ) : !hasTasks ? (
               <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-12 text-center text-gray-500 font-medium">
@@ -76,25 +96,41 @@ export default function AnalyticsPage() {
                     </p>
                   </div>
                   <div className="w-full h-80">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={tasksByStatus}
-                          dataKey="value"
-                          nameKey="name"
-                          cx="50%"
-                          cy="50%"
-                          outerRadius={100}
-                          label={({ name, value }) => `${name}: ${value}`}
-                        >
-                          {tasksByStatus.map((entry) => (
-                            <Cell key={entry.name} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                        <Legend />
-                      </PieChart>
-                    </ResponsiveContainer>
+                    {(() => {
+                      const activeStatusSlices = tasksByStatus.filter(
+                        (s) => s.value > 0,
+                      );
+
+                      if (activeStatusSlices.length === 0) {
+                        return (
+                          <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50/50 p-8 text-center text-xs text-gray-500">
+                            No tasks created yet in this workspace. Create tasks to view status distribution.
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={activeStatusSlices}
+                              dataKey="value"
+                              nameKey="name"
+                              cx="50%"
+                              cy="50%"
+                              outerRadius={100}
+                              label={renderPieLabel}
+                            >
+                              {activeStatusSlices.map((entry) => (
+                                <Cell key={entry.name} fill={entry.color} />
+                              ))}
+                            </Pie>
+                            <Tooltip />
+                            <Legend />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      );
+                    })()}
                   </div>
                 </div>
 

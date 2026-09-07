@@ -53,17 +53,18 @@ export default function LoginPage() {
     mode: "onTouched",
   });
 
-  const onSubmit = (data: LoginCredentials) => {
-    login(data, {
-      onSuccess: (user) => {
-        if (user.requiresPasswordChange) {
-          setPendingChangeUserEmail(user.email);
-          setTempPasswordUsed(data.password);
-          setChangeValue("email", user.email);
-          setChangeValue("currentPassword", data.password);
-        }
-      },
-    });
+  const onSubmit = async (data: LoginCredentials) => {
+    try {
+      const user = await login(data);
+      if (user.requiresPasswordChange) {
+        setPendingChangeUserEmail(user.email);
+        setTempPasswordUsed(data.password);
+        setChangeValue("email", user.email);
+        setChangeValue("currentPassword", data.password);
+      }
+    } catch {
+      // Error is caught cleanly and rendered in UI error banner
+    }
   };
 
   const onChangePasswordSubmit = async (data: ChangePasswordValues) => {

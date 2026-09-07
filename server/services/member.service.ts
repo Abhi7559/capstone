@@ -54,10 +54,8 @@ export const memberServiceServer = {
 
     userRepository.create(newMember);
 
-    const { password: _, ...safeMember } = newMember;
-
     return {
-      member: safeMember,
+      member: newMember,
       temporaryPassword: tempPassword,
     };
   },

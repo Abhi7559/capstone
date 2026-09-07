@@ -36,12 +36,13 @@ export function ErrorLayout({
 
         <div className="pt-2">
           {actionButton || (
-            <Link
-              href="/dashboard"
-              className="inline-block w-full rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 active:scale-[0.98]"
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="inline-block w-full rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 active:scale-[0.98] cursor-pointer"
             >
-              Back to Dashboard
-            </Link>
+              Refresh & Try Again
+            </button>
           )}
         </div>
       </div>

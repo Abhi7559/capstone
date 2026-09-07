@@ -19,7 +19,6 @@ export function MemberProfileModal({
 }: MemberProfileModalProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
-  const [copiedPassword, setCopiedPassword] = useState(false);
 
   const {
     updateMember,
@@ -53,7 +52,6 @@ export function MemberProfileModal({
       setRole(member.role || "member");
       setIsEditing(false);
       setIsConfirmingDelete(false);
-      setCopiedPassword(false);
     }
   }, [member, isOpen]);
 
@@ -70,13 +68,6 @@ export function MemberProfileModal({
   }, [isOpen, member]);
 
   if (!isOpen || !member) return null;
-
-  const handleCopyPassword = () => {
-    const passwordToCopy = member.password || "Admin@123";
-    navigator.clipboard.writeText(passwordToCopy);
-    setCopiedPassword(true);
-    setTimeout(() => setCopiedPassword(false), 2000);
-  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -338,30 +329,6 @@ export function MemberProfileModal({
                       : joiningDate
                     : "Sep 1, 2026"}
                 </p>
-              </div>
-            </div>
-
-            {/* Password Section */}
-            <div className="rounded-xl border border-gray-200 bg-gray-50/70 p-4 space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
-                  Generated Account Password
-                </span>
-                <span className="text-[10px] font-semibold text-gray-400">
-                  Admin Access Only
-                </span>
-              </div>
-              <div className="flex items-center justify-between bg-white p-2.5 rounded-lg border border-gray-200">
-                <code className="font-mono text-xs font-bold text-gray-800 select-all">
-                  {member.password || "Admin@123"}
-                </code>
-                <button
-                  type="button"
-                  onClick={handleCopyPassword}
-                  className="rounded-md bg-gray-900 px-3 py-1 text-[11px] font-semibold text-white hover:bg-gray-800 transition"
-                >
-                  {copiedPassword ? "Copied! ✓" : "Copy"}
-                </button>
               </div>
             </div>
 

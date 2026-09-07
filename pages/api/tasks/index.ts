@@ -54,7 +54,6 @@ export default async function handler(
         !input.title ||
         !input.description ||
         !input.priority ||
-        !input.assigneeId ||
         !input.dueDate
       ) {
         return res

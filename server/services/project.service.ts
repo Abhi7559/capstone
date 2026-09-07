@@ -37,7 +37,7 @@ export const projectServiceServer = {
   createProject(
     input: CreateProjectInput,
     userRole?: string,
-    userId?: string,
+    _userId?: string,
   ): Project {
     if (userRole !== "admin") {
       throw new Error("Forbidden: Only Admins can create projects");
@@ -45,14 +45,11 @@ export const projectServiceServer = {
 
     const assignedMembers =
       input.memberIds && input.memberIds.length > 0 ? [...input.memberIds] : [];
-    if (userId && !assignedMembers.includes(userId)) {
-      assignedMembers.push(userId);
-    }
 
     const newProject: Project = {
       id: crypto.randomUUID(),
       name: input.name.trim(),
-      description: input.description.trim(),
+      description: (input.description || "").trim(),
       status: input.status || "active",
       createdAt: new Date().toISOString(),
       memberIds: assignedMembers,

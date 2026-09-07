@@ -37,10 +37,8 @@ export default async function handler(
 
     try {
       const input = (req.body || {}) as CreateProjectInput;
-      if (!input.name || !input.description) {
-        return res
-          .status(400)
-          .json({ message: "Project name and description are required." });
+      if (!input.name) {
+        return res.status(400).json({ message: "Project name is required." });
       }
 
       const newProject = projectServiceServer.createProject(

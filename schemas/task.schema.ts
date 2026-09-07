@@ -13,7 +13,7 @@ export const step1Schema = z.object({
 });
 
 export const step2Schema = z.object({
-  assigneeId: z.string().min(1, "Assignee is required"),
+  assigneeId: z.string().optional(),
   projectId: z.string().min(1, "Project is required"),
 });
 

@@ -15,6 +15,8 @@ export interface Project {
   startDate?: string;
   dueDate?: string;
   endDate?: string;
+  category?: string;
+  priority?: string;
 }
 
 export interface CreateProjectInput {
@@ -25,6 +27,8 @@ export interface CreateProjectInput {
   startDate?: string;
   dueDate?: string;
   endDate?: string;
+  category?: string;
+  priority?: string;
 }
 
 export interface UpdateProjectInput {
@@ -35,4 +39,6 @@ export interface UpdateProjectInput {
   startDate?: string;
   dueDate?: string;
   endDate?: string;
+  category?: string;
+  priority?: string;
 }
