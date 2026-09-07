@@ -222,6 +222,7 @@ export function useTasks(projectId?: string, filters?: TaskFilters) {
     queryFn: () =>
       fetchProjectTasks(projectId, filters, currentUser?.role, currentUser?.id),
     enabled: Boolean(currentUser),
+    refetchInterval: 3000, // Poll every 3 seconds for real-time updates
   });
 }
 

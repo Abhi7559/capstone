@@ -255,7 +255,7 @@ export function mergeTasksWithLocal(apiTasks: Task[]): Task[] {
     }
   }
   for (const t of localTasks) {
-    if (apiTasks.some((at) => at.id === t.id)) {
+    if (map.has(t.id)) {
       const existing = map.get(t.id);
       if (existing) {
         const apiTime = new Date(
@@ -266,6 +266,9 @@ export function mergeTasksWithLocal(apiTasks: Task[]): Task[] {
           map.set(t.id, t);
         }
       }
+    } else {
+      // Keep local task if it hasn't been explicitly deleted
+      map.set(t.id, t);
     }
   }
   const merged = Array.from(map.values());

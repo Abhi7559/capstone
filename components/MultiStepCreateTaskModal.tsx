@@ -593,6 +593,7 @@ export function MultiStepCreateTaskModal({
                         className="w-3.5 h-3.5 text-purple-600 shrink-0"
                         fill="currentColor"
                         viewBox="0 0 20 20"
+                        aria-hidden="true"
                       >
                         <path
                           fillRule="evenodd"

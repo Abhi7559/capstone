@@ -1294,10 +1294,14 @@ export default function ProjectTaskBoardPage() {
                           Assignee: <strong className="text-gray-800">{getAssigneeName(bTask.assigneeId)}</strong>
                         </span>
                         <div className="flex items-center space-x-2">
-                          <label className="text-[11px] font-semibold text-gray-600">
+                          <label
+                            htmlFor={`move-to-column-${bTask.id}`}
+                            className="text-[11px] font-semibold text-gray-600"
+                          >
                             Move to Column:
                           </label>
                           <select
+                            id={`move-to-column-${bTask.id}`}
                             value={bTask.status}
                             onChange={async (e) => {
                               const newStatus = e.target.value as TaskStatus;
