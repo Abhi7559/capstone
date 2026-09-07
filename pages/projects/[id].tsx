@@ -284,18 +284,9 @@ export default function ProjectTaskBoardPage() {
                 <h1 className="text-xl font-bold text-gray-900 mb-2">
                   Project Not Found
                 </h1>
-                <p className="text-xs text-gray-500 max-w-md mb-6 leading-relaxed">
-                  The project ID <code className="bg-gray-200 px-1.5 py-0.5 rounded text-red-600 font-mono">{projectId}</code> does not exist or may have been deleted. Please check the URL or return to your projects list.
+                <p className="text-xs text-gray-500 max-w-md leading-relaxed">
+                  The project ID <code className="bg-gray-200 px-1.5 py-0.5 rounded text-red-600 font-mono">{projectId}</code> does not exist or may have been deleted.
                 </p>
-                <div className="flex items-center space-x-3">
-                  <button
-                    type="button"
-                    onClick={() => window.location.reload()}
-                    className="rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition cursor-pointer"
-                  >
-                    Retry Page
-                  </button>
-                </div>
               </div>
             ) : (
               <>
