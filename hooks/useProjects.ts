@@ -5,12 +5,6 @@ import type {
   Project,
   UpdateProjectInput,
 } from "@/types/project";
-import {
-  addOrUpdateLocalProject,
-  getLocalProjects,
-  mergeProjectsWithLocal,
-  removeLocalProject,
-} from "@/utils/localStorageSync";
 
 const DEFAULT_ROLE = "admin";
 const DEFAULT_USER_ID = "550e8400-e29b-41d4-a716-446655440000";
@@ -21,25 +15,19 @@ async function fetchProjects(
 ): Promise<Project[]> {
   const role = userRole || DEFAULT_ROLE;
   const id = userId || DEFAULT_USER_ID;
-  try {
-    const response = await fetch("/api/projects", {
-      headers: {
-        "x-user-role": role,
-        "x-user-id": id,
-      },
-    });
-    if (response.ok) {
-      const data: Project[] = await response.json();
-      return mergeProjectsWithLocal(data);
-    }
-  } catch (err) {
-    console.warn(
-      "API projects fetch failed, falling back to local storage",
-      err,
-    );
+
+  const response = await fetch("/api/projects", {
+    headers: {
+      "x-user-role": role,
+      "x-user-id": id,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch projects from server");
   }
 
-  return getLocalProjects();
+  return response.json();
 }
 
 async function createProjectRequest(
@@ -50,50 +38,22 @@ async function createProjectRequest(
   const role = userRole || DEFAULT_ROLE;
   const id = userId || DEFAULT_USER_ID;
 
-  try {
-    const response = await fetch("/api/projects", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-user-role": role,
-        "x-user-id": id,
-      },
-      body: JSON.stringify(input),
-    });
+  const response = await fetch("/api/projects", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-user-role": role,
+      "x-user-id": id,
+    },
+    body: JSON.stringify(input),
+  });
 
-    if (response.ok) {
-      const created: Project = await response.json();
-      addOrUpdateLocalProject(created);
-      return created;
-    }
-    
+  if (!response.ok) {
     const errData = await response.json().catch(() => ({}));
-    if (response.status === 403) {
-      throw new Error(errData.message || "Forbidden: Only admins can create projects.");
-    }
-  } catch (err) {
-    if (err instanceof Error && err.message.includes("Forbidden")) {
-      throw err;
-    }
-    console.warn("API project creation failed, persisting to local state", err);
+    throw new Error(errData.message || "Failed to create project on server.");
   }
 
-  // Resilient creation for admin session
-  const created: Project = {
-    id: `proj_${Date.now()}`,
-    name: input.name,
-    description: input.description || "",
-    status: input.status || "active",
-    createdAt: new Date().toISOString(),
-    memberIds: input.memberIds || [],
-    startDate: input.startDate,
-    dueDate: input.endDate || input.dueDate,
-    endDate: input.endDate || input.dueDate,
-    category: input.category,
-    priority: input.priority,
-  };
-  addOrUpdateLocalProject(created);
-  return created;
+  return response.json();
 }
 
 async function updateProjectRequest(
@@ -104,42 +64,23 @@ async function updateProjectRequest(
 ): Promise<Project> {
   const role = userRole || DEFAULT_ROLE;
   const uId = userId || DEFAULT_USER_ID;
-  try {
-    const response = await fetch(`/api/projects/${id}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        "x-user-role": role,
-        "x-user-id": uId,
-      },
-      body: JSON.stringify(input),
-    });
-    if (response.ok) {
-      const updated: Project = await response.json();
-      addOrUpdateLocalProject(updated);
-      return updated;
-    }
-  } catch (err) {
-    console.warn("API project update failed, updating local storage", err);
+
+  const response = await fetch(`/api/projects/${id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      "x-user-role": role,
+      "x-user-id": uId,
+    },
+    body: JSON.stringify(input),
+  });
+
+  if (!response.ok) {
+    const errData = await response.json().catch(() => ({}));
+    throw new Error(errData.message || "Failed to update project on server.");
   }
 
-  const localProjects = getLocalProjects();
-  const existing = localProjects.find((p) => p.id === id);
-  const updatedProject: Project = {
-    id,
-    name: input.name?.trim() || existing?.name || "Project",
-    description: input.description?.trim() ?? existing?.description ?? "",
-    status: input.status || existing?.status || "active",
-    createdAt: existing?.createdAt || new Date().toISOString(),
-    memberIds: input.memberIds || existing?.memberIds || [],
-    startDate: input.startDate || existing?.startDate,
-    dueDate: input.endDate || input.dueDate || existing?.dueDate,
-    endDate: input.endDate || input.dueDate || existing?.endDate,
-    category: input.category || existing?.category,
-    priority: input.priority || existing?.priority,
-  };
-  addOrUpdateLocalProject(updatedProject);
-  return updatedProject;
+  return response.json();
 }
 
 async function deleteProjectRequest(
@@ -147,27 +88,23 @@ async function deleteProjectRequest(
   userRole?: string,
   userId?: string,
 ): Promise<{ message: string }> {
-  removeLocalProject(id);
   const role = userRole || DEFAULT_ROLE;
   const uId = userId || DEFAULT_USER_ID;
 
-  try {
-    const response = await fetch(`/api/projects/${id}`, {
-      method: "DELETE",
-      headers: {
-        "x-user-role": role,
-        "x-user-id": uId,
-      },
-    });
+  const response = await fetch(`/api/projects/${id}`, {
+    method: "DELETE",
+    headers: {
+      "x-user-role": role,
+      "x-user-id": uId,
+    },
+  });
 
-    if (response.ok) {
-      return response.json();
-    }
-  } catch (err) {
-    console.error("Server project deletion failed, deleted locally", err);
+  if (!response.ok) {
+    const errData = await response.json().catch(() => ({}));
+    throw new Error(errData.message || "Failed to delete project on server.");
   }
 
-  return { message: "Project deleted successfully" };
+  return response.json();
 }
 
 export function useProjects() {

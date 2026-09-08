@@ -6,12 +6,6 @@ import type {
   TaskFilters,
   UpdateTaskInput,
 } from "@/types/task";
-import {
-  addOrUpdateLocalTask,
-  getLocalTasks,
-  mergeTasksWithLocal,
-  removeLocalTask,
-} from "@/utils/localStorageSync";
 
 async function fetchProjectTasks(
   projectId?: string,
@@ -36,54 +30,18 @@ async function fetchProjectTasks(
     params.append("dueDate", filters.dueDate);
   }
 
-  let tasks: Task[] = [];
-  try {
-    const response = await fetch(`/api/tasks?${params.toString()}`, {
-      headers: {
-        "x-user-role": userRole || "",
-        "x-user-id": userId || "",
-      },
-    });
+  const response = await fetch(`/api/tasks?${params.toString()}`, {
+    headers: {
+      "x-user-role": userRole || "",
+      "x-user-id": userId || "",
+    },
+  });
 
-    if (response.ok) {
-      const data: Task[] = await response.json();
-      tasks = mergeTasksWithLocal(data);
-    } else {
-      tasks = getLocalTasks();
-    }
-  } catch (err) {
-    console.warn("API tasks fetch failed, falling back to local storage", err);
-    tasks = getLocalTasks();
+  if (!response.ok) {
+    throw new Error("Failed to fetch tasks from server");
   }
 
-  // Filter tasks locally to ensure consistency
-  return tasks.filter((t) => {
-    if (projectId && projectId !== "all" && t.projectId !== projectId) {
-      return false;
-    }
-    if (
-      filters?.status &&
-      filters.status !== "all" &&
-      t.status !== filters.status
-    ) {
-      return false;
-    }
-    if (
-      filters?.priority &&
-      filters.priority !== "all" &&
-      t.priority !== filters.priority
-    ) {
-      return false;
-    }
-    if (
-      filters?.assigneeId &&
-      filters.assigneeId !== "all" &&
-      t.assigneeId !== filters.assigneeId
-    ) {
-      return false;
-    }
-    return true;
-  });
+  return response.json();
 }
 
 async function fetchTaskById(
@@ -91,26 +49,18 @@ async function fetchTaskById(
   userRole?: string,
   userId?: string,
 ): Promise<Task> {
-  try {
-    const response = await fetch(`/api/tasks/${taskId}`, {
-      headers: {
-        "x-user-role": userRole || "",
-        "x-user-id": userId || "",
-      },
-    });
+  const response = await fetch(`/api/tasks/${taskId}`, {
+    headers: {
+      "x-user-role": userRole || "",
+      "x-user-id": userId || "",
+    },
+  });
 
-    if (response.ok) {
-      const data: Task = await response.json();
-      addOrUpdateLocalTask(data);
-      return data;
-    }
-  } catch (err) {
-    console.warn("API task fetch failed, checking local storage", err);
+  if (!response.ok) {
+    throw new Error("Task not found");
   }
 
-  const localTask = getLocalTasks().find((t) => t.id === taskId);
-  if (localTask) return localTask;
-  throw new Error("Task not found");
+  return response.json();
 }
 
 async function createTaskRequest(
@@ -129,13 +79,11 @@ async function createTaskRequest(
   });
 
   if (!response.ok) {
-    const err = await response.json();
-    throw new Error(err.message || "Failed to create task");
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || "Failed to create task on server");
   }
 
-  const created: Task = await response.json();
-  addOrUpdateLocalTask(created);
-  return created;
+  return response.json();
 }
 
 async function updateTaskRequest(
@@ -144,50 +92,22 @@ async function updateTaskRequest(
   userRole?: string,
   userId?: string,
 ): Promise<Task> {
-  const localTasks = getLocalTasks();
-  const existing = localTasks.find((t) => t.id === taskId);
-  const targetProjectId = input.projectId || existing?.projectId || "";
+  const response = await fetch(`/api/tasks/${taskId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      "x-user-role": userRole || "admin",
+      "x-user-id": userId || "550e8400-e29b-41d4-a716-446655440000",
+    },
+    body: JSON.stringify(input),
+  });
 
-  const fullInput: UpdateTaskInput = {
-    ...input,
-    projectId: targetProjectId,
-  };
-
-  try {
-    const response = await fetch(`/api/tasks/${taskId}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        "x-user-role": userRole || "admin",
-        "x-user-id": userId || "550e8400-e29b-41d4-a716-446655440000",
-      },
-      body: JSON.stringify(fullInput),
-    });
-
-    if (response.ok) {
-      const updated: Task = await response.json();
-      addOrUpdateLocalTask(updated);
-      return updated;
-    }
-  } catch (err) {
-    console.warn("API task update failed, updating local storage", err);
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || "Failed to update task on server");
   }
 
-  const updatedTask: Task = {
-    id: taskId,
-    projectId: targetProjectId,
-    title: input.title?.trim() || existing?.title || "Task",
-    description: input.description?.trim() ?? existing?.description ?? "",
-    priority: input.priority || existing?.priority || "medium",
-    status: input.status || existing?.status || "todo",
-    assigneeId: input.assigneeId || existing?.assigneeId || userId || "",
-    dueDate: input.dueDate || existing?.dueDate || "",
-    tags: input.tags || existing?.tags || [],
-    createdAt: existing?.createdAt || new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
-  addOrUpdateLocalTask(updatedTask);
-  return updatedTask;
+  return response.json();
 }
 
 async function deleteTaskRequest(
@@ -195,22 +115,17 @@ async function deleteTaskRequest(
   userRole?: string,
   userId?: string,
 ): Promise<void> {
-  removeLocalTask(taskId);
+  const response = await fetch(`/api/tasks/${taskId}`, {
+    method: "DELETE",
+    headers: {
+      "x-user-role": userRole || "admin",
+      "x-user-id": userId || "550e8400-e29b-41d4-a716-446655440000",
+    },
+  });
 
-  try {
-    const response = await fetch(`/api/tasks/${taskId}`, {
-      method: "DELETE",
-      headers: {
-        "x-user-role": userRole || "admin",
-        "x-user-id": userId || "550e8400-e29b-41d4-a716-446655440000",
-      },
-    });
-
-    if (response.ok) {
-      return;
-    }
-  } catch (err) {
-    console.error("Server task deletion failed, deleted locally", err);
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || "Failed to delete task on server");
   }
 }
 
@@ -222,7 +137,7 @@ export function useTasks(projectId?: string, filters?: TaskFilters) {
     queryFn: () =>
       fetchProjectTasks(projectId, filters, currentUser?.role, currentUser?.id),
     enabled: Boolean(currentUser),
-    refetchInterval: 3000, // Poll every 3 seconds for real-time updates
+    refetchInterval: 3000,
   });
 }
 

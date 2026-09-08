@@ -7,12 +7,6 @@ import {
   transformTasksByAssignee,
   transformTasksByStatus,
 } from "@/utils/analyticsTransformations";
-import {
-  getLocalMembers,
-  getLocalTasks,
-  mergeMembersWithLocal,
-  mergeTasksWithLocal,
-} from "@/utils/localStorageSync";
 
 export interface RawAnalyticsData {
   tasks: Task[];
@@ -26,31 +20,21 @@ async function fetchAnalyticsData(
   const role = userRole || "admin";
   const id = userId || "550e8400-e29b-41d4-a716-446655440000";
 
-  try {
-    const response = await fetch("/api/analytics/data", {
-      headers: {
-        "x-user-role": role,
-        "x-user-id": id,
-      },
-    });
+  const response = await fetch("/api/analytics/data", {
+    headers: {
+      "x-user-role": role,
+      "x-user-id": id,
+    },
+  });
 
-    if (response.ok) {
-      const data = await response.json();
-      return {
-        tasks: mergeTasksWithLocal(data.tasks || []),
-        members: mergeMembersWithLocal(data.members || []),
-      };
-    }
-  } catch (err) {
-    console.error(
-      "Failed to fetch analytics from API, using local storage",
-      err,
-    );
+  if (!response.ok) {
+    throw new Error("Failed to fetch analytics from server");
   }
 
+  const data = await response.json();
   return {
-    tasks: getLocalTasks(),
-    members: getLocalMembers(),
+    tasks: data.tasks || [],
+    members: data.members || [],
   };
 }
 

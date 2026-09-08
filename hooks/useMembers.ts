@@ -1,33 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/useAuthStore";
 import type { InviteMemberInput, User } from "@/types/auth";
-import {
-  addOrUpdateLocalMember,
-  getLocalMembers,
-  mergeMembersWithLocal,
-  removeLocalMember,
-} from "@/utils/localStorageSync";
 
 async function fetchMembers(currentUserRole?: string): Promise<User[]> {
-  try {
-    const response = await fetch("/api/members", {
-      headers: {
-        "x-user-role": currentUserRole || "",
-      },
-    });
+  const response = await fetch("/api/members", {
+    headers: {
+      "x-user-role": currentUserRole || "",
+    },
+  });
 
-    if (response.ok) {
-      const data: User[] = await response.json();
-      return mergeMembersWithLocal(data);
-    }
-  } catch (err) {
-    console.warn(
-      "API members fetch failed, falling back to local storage",
-      err,
-    );
+  if (!response.ok) {
+    throw new Error("Failed to fetch members from server");
   }
 
-  return getLocalMembers();
+  return response.json();
 }
 
 async function inviteMemberRequest(
@@ -44,15 +30,11 @@ async function inviteMemberRequest(
   });
 
   if (!response.ok) {
-    const err = await response.json();
+    const err = await response.json().catch(() => ({}));
     throw new Error(err.message || "Failed to invite member");
   }
 
-  const result = await response.json();
-  if (result.member) {
-    addOrUpdateLocalMember(result.member);
-  }
-  return result;
+  return response.json();
 }
 
 async function updateMemberRequest(
@@ -70,37 +52,30 @@ async function updateMemberRequest(
   });
 
   if (!response.ok) {
-    const err = await response.json();
+    const err = await response.json().catch(() => ({}));
     throw new Error(err.message || "Failed to update member");
   }
 
-  const updated: User = await response.json();
-  addOrUpdateLocalMember(updated);
-  return updated;
+  return response.json();
 }
 
 async function deleteMemberRequest(
   id: string,
   currentUserRole?: string,
 ): Promise<{ message: string }> {
-  removeLocalMember(id);
+  const response = await fetch(`/api/members/${id}`, {
+    method: "DELETE",
+    headers: {
+      "x-user-role": currentUserRole || "admin",
+    },
+  });
 
-  try {
-    const response = await fetch(`/api/members/${id}`, {
-      method: "DELETE",
-      headers: {
-        "x-user-role": currentUserRole || "admin",
-      },
-    });
-
-    if (response.ok) {
-      return response.json();
-    }
-  } catch (err) {
-    console.error("Server member deletion failed, removed locally", err);
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || "Failed to delete member on server");
   }
 
-  return { message: "Member removed successfully" };
+  return response.json();
 }
 
 export function useMembers() {
