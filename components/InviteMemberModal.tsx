@@ -168,11 +168,10 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
                 id="modalMemberName"
                 type="text"
                 placeholder="Name of the member"
-                className={`w-full rounded-lg border h-11 px-3.5 text-xs outline-none transition ${
-                  errors.name
+                className={`w-full rounded-lg border h-11 px-3.5 text-xs outline-none transition ${errors.name
                     ? "border-red-500 focus:ring-2 focus:ring-red-100"
                     : "border-gray-300 focus:border-gray-500 focus:ring-2 focus:ring-gray-100"
-                }`}
+                  }`}
                 {...register("name")}
               />
               <div className="min-h-[18px] mt-1">
@@ -195,11 +194,10 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
                 id="modalMemberEmail"
                 type="email"
                 placeholder="example@email.com"
-                className={`w-full rounded-lg border h-11 px-3.5 text-xs outline-none transition ${
-                  errors.email
+                className={`w-full rounded-lg border h-11 px-3.5 text-xs outline-none transition ${errors.email
                     ? "border-red-500 focus:ring-2 focus:ring-red-100"
                     : "border-gray-300 focus:border-gray-500 focus:ring-2 focus:ring-gray-100"
-                }`}
+                  }`}
                 {...register("email")}
               />
               <div className="min-h-[18px] mt-1">

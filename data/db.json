@@ -11,7 +11,33 @@
       "joiningDate": "2026-09-01"
     }
   ],
-  "projects": [],
-  "tasks": [],
+  "projects": [
+    {
+      "id": "f02f67a3-3966-459d-99a4-b8aad13d8954",
+      "name": "Abhishek",
+      "description": "",
+      "status": "active",
+      "createdAt": "2026-09-08T08:50:42.228Z",
+      "memberIds": [],
+      "startDate": "2026-09-08",
+      "dueDate": "2026-10-08",
+      "endDate": "2026-10-08"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "387ae15a-a1ce-4230-a467-28246858bbee",
+      "projectId": "f02f67a3-3966-459d-99a4-b8aad13d8954",
+      "title": "tgtr",
+      "description": "yhdbhdrdtnhf",
+      "priority": "medium",
+      "status": "in_progress",
+      "assigneeId": "550e8400-e29b-41d4-a716-446655440000",
+      "dueDate": "2026-09-16",
+      "tags": [],
+      "createdAt": "2026-09-08T08:52:02.114Z",
+      "updatedAt": "2026-09-08T08:52:16.077Z"
+    }
+  ],
   "activity": []
 }
