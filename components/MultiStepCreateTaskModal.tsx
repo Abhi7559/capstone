@@ -69,7 +69,7 @@ export function MultiStepCreateTaskModal({
       assigneeId: "",
       dueDate: "",
       tags: "",
-      status: "todo",
+      status: "backlog",
     },
   });
 
@@ -98,7 +98,7 @@ export function MultiStepCreateTaskModal({
           assigneeId: "",
           dueDate: "",
           tags: "",
-          status: "todo",
+          status: "backlog",
         });
       }
       setCurrentStep(1);

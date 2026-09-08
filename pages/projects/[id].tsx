@@ -1232,16 +1232,6 @@ export default function ProjectTaskBoardPage() {
                 <div className="flex items-center space-x-3">
                   <button
                     type="button"
-                    onClick={() => {
-                      setIsBacklogModalOpen(false);
-                      setIsTaskModalOpen(true);
-                    }}
-                    className="rounded-lg bg-amber-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-amber-700 transition flex items-center space-x-1"
-                  >
-                    <span>+ Create Task in Backlog</span>
-                  </button>
-                  <button
-                    type="button"
                     onClick={() => setIsBacklogModalOpen(false)}
                     className="text-gray-400 hover:text-gray-600 font-bold p-1 text-base"
                   >
