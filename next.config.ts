@@ -12,8 +12,28 @@ const nextConfig: NextConfig = {
     backendUrl = backendUrl.replace(/\/+$/, "");
     return [
       {
-        source: "/api/:path*",
-        destination: `${backendUrl}/api/:path*`,
+        source: "/api/projects/:path*",
+        destination: `${backendUrl}/api/projects/:path*`,
+      },
+      {
+        source: "/api/tasks/:path*",
+        destination: `${backendUrl}/api/tasks/:path*`,
+      },
+      {
+        source: "/api/members/:path*",
+        destination: `${backendUrl}/api/members/:path*`,
+      },
+      {
+        source: "/api/analytics/:path*",
+        destination: `${backendUrl}/api/analytics/:path*`,
+      },
+      {
+        source: "/api/dashboard/:path*",
+        destination: `${backendUrl}/api/dashboard/:path*`,
+      },
+      {
+        source: "/api/health",
+        destination: `${backendUrl}/api/health`,
       },
     ];
   },
