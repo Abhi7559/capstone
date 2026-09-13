@@ -9,35 +9,306 @@
       "status": "active",
       "designation": "System Administrator",
       "joiningDate": "2026-09-01"
+    },
+    {
+      "id": "b733e169-49d4-4d66-b4ef-2460da7a3a30",
+      "name": "Abhishek",
+      "email": "abhishek@gmail.com",
+      "role": "member",
+      "status": "active",
+      "password": "ABhi@@0099",
+      "designation": "Developer",
+      "joiningDate": "2026-09-09",
+      "requiresPasswordChange": false
+    },
+    {
+      "id": "2b058b10-c252-45b7-abba-cdcb3fa91937",
+      "name": "capstone1",
+      "email": "test1@gmail.com",
+      "role": "member",
+      "status": "active",
+      "password": "lBsLTKk$F^fe",
+      "designation": "Developer",
+      "joiningDate": "2026-09-09",
+      "requiresPasswordChange": true
+    },
+    {
+      "id": "ac2ef6ec-0562-4d48-b5c9-43b25b1fe264",
+      "name": "capstone",
+      "email": "tewest1@gmail.com",
+      "role": "member",
+      "status": "active",
+      "password": "&VUpDi9o4Ht4",
+      "designation": "Developer",
+      "joiningDate": "2026-09-09",
+      "requiresPasswordChange": true
+    },
+    {
+      "id": "7822874f-40ad-4f7a-b7ec-742e38f1da8e",
+      "name": "Priya Nair",
+      "email": "priya@company.com",
+      "role": "member",
+      "status": "active",
+      "password": "Abhi1@@0099",
+      "designation": "Software Engineer",
+      "joiningDate": "2026-09-10",
+      "requiresPasswordChange": false
     }
   ],
   "projects": [
     {
-      "id": "f02f67a3-3966-459d-99a4-b8aad13d8954",
+      "id": "6cb2d97f-2872-46dd-852d-59234f7caa5b",
+      "name": "Abhishek",
+      "description": "r3whjvasrgdb",
+      "status": "planning",
+      "createdAt": "2026-09-13T06:19:47.614Z",
+      "memberIds": ["2b058b10-c252-45b7-abba-cdcb3fa91937"],
+      "startDate": "2026-09-13",
+      "dueDate": "2026-09-29",
+      "endDate": "2026-09-29"
+    },
+    {
+      "id": "1fcab206-da21-452e-a99e-32d9881fb2ba",
       "name": "Abhishek",
       "description": "",
       "status": "active",
-      "createdAt": "2026-09-08T08:50:42.228Z",
-      "memberIds": [],
-      "startDate": "2026-09-08",
-      "dueDate": "2026-10-08",
-      "endDate": "2026-10-08"
+      "createdAt": "2026-09-09T12:56:58.371Z",
+      "memberIds": ["b733e169-49d4-4d66-b4ef-2460da7a3a30"],
+      "startDate": "2026-09-09",
+      "dueDate": "2026-10-09",
+      "endDate": "2026-10-09"
+    },
+    {
+      "id": "6ebbcba4-cb8e-4d91-929b-89bca204d510",
+      "name": "team",
+      "description": "",
+      "status": "active",
+      "createdAt": "2026-09-09T07:40:11.401Z",
+      "memberIds": ["b733e169-49d4-4d66-b4ef-2460da7a3a30"],
+      "startDate": "2026-09-09",
+      "dueDate": "2026-10-09",
+      "endDate": "2026-10-09"
+    },
+    {
+      "id": "e0e691d6-b835-4893-9e16-52a6c91b8868",
+      "name": "TeamHub",
+      "description": "",
+      "status": "active",
+      "createdAt": "2026-09-09T05:47:05.769Z",
+      "memberIds": ["b733e169-49d4-4d66-b4ef-2460da7a3a30"],
+      "startDate": "2026-09-09",
+      "dueDate": "2026-10-09",
+      "endDate": "2026-10-09"
+    },
+    {
+      "id": "519acbd5-e6b3-4e7f-87ea-ef13500c6a82",
+      "name": "TaskFlow",
+      "description": "",
+      "status": "active",
+      "createdAt": "2026-09-09T05:46:38.658Z",
+      "memberIds": [
+        "2b058b10-c252-45b7-abba-cdcb3fa91937",
+        "ac2ef6ec-0562-4d48-b5c9-43b25b1fe264"
+      ],
+      "startDate": "2026-09-09",
+      "dueDate": "2026-10-09",
+      "endDate": "2026-10-09"
+    },
+    {
+      "id": "8e50124d-efd2-414e-bbde-777f8d866480",
+      "name": "Capstone",
+      "description": "",
+      "status": "active",
+      "createdAt": "2026-09-09T05:36:12.639Z",
+      "memberIds": [
+        "b733e169-49d4-4d66-b4ef-2460da7a3a30",
+        "2b058b10-c252-45b7-abba-cdcb3fa91937",
+        "ac2ef6ec-0562-4d48-b5c9-43b25b1fe264"
+      ],
+      "startDate": "2026-09-09",
+      "dueDate": "2026-10-09",
+      "endDate": "2026-10-09"
     }
   ],
   "tasks": [
     {
-      "id": "387ae15a-a1ce-4230-a467-28246858bbee",
-      "projectId": "f02f67a3-3966-459d-99a4-b8aad13d8954",
-      "title": "tgtr",
-      "description": "yhdbhdrdtnhf",
+      "id": "da7a61ad-cbfc-48f7-9581-b74d12bfb3f0",
+      "projectId": "8e50124d-efd2-414e-bbde-777f8d866480",
+      "title": "Task 1",
+      "description": "ehbcjvoubuor",
       "priority": "medium",
       "status": "in_progress",
-      "assigneeId": "550e8400-e29b-41d4-a716-446655440000",
-      "dueDate": "2026-09-16",
+      "assigneeId": "",
+      "dueDate": "2026-09-11",
       "tags": [],
-      "createdAt": "2026-09-08T08:52:02.114Z",
-      "updatedAt": "2026-09-08T08:52:16.077Z"
+      "createdAt": "2026-09-10T12:26:35.552Z",
+      "updatedAt": "2026-09-10T12:26:35.552Z"
+    },
+    {
+      "id": "a6ddb288-fe8c-4b01-8b87-cea6fa64485d",
+      "projectId": "e0e691d6-b835-4893-9e16-52a6c91b8868",
+      "title": "mplement Role-Based Access",
+      "description": "Test Task Creation Workflow",
+      "priority": "medium",
+      "status": "in_progress",
+      "assigneeId": "2b058b10-c252-45b7-abba-cdcb3fa91937",
+      "dueDate": "2026-09-10",
+      "tags": [],
+      "createdAt": "2026-09-09T06:09:29.954Z",
+      "updatedAt": "2026-09-09T12:36:37.243Z"
+    },
+    {
+      "id": "f997614d-c590-49bc-9f77-83e52ce30bb6",
+      "projectId": "8e50124d-efd2-414e-bbde-777f8d866480",
+      "title": "Test Task Creation Workflow",
+      "description": "Test Task Creation Workflow",
+      "priority": "medium",
+      "status": "done",
+      "assigneeId": "b733e169-49d4-4d66-b4ef-2460da7a3a30",
+      "dueDate": "2026-09-10",
+      "tags": ["backend"],
+      "createdAt": "2026-09-09T06:01:17.225Z",
+      "updatedAt": "2026-09-10T12:25:58.943Z"
+    },
+    {
+      "id": "a2a2aeb9-add9-44a2-9649-d67c7e3da3a1",
+      "projectId": "e0e691d6-b835-4893-9e16-52a6c91b8868",
+      "title": "Create Analytics Charts",
+      "description": "Create Analytics Charts",
+      "priority": "medium",
+      "status": "done",
+      "assigneeId": "b733e169-49d4-4d66-b4ef-2460da7a3a30",
+      "dueDate": "2026-09-10",
+      "tags": ["backend"],
+      "createdAt": "2026-09-09T05:59:45.294Z",
+      "updatedAt": "2026-09-09T06:24:49.453Z"
+    },
+    {
+      "id": "7bb0a6cf-6781-44b2-8e0c-5d9b9e277b2c",
+      "projectId": "519acbd5-e6b3-4e7f-87ea-ef13500c6a82",
+      "title": "Add Task Search and Filters",
+      "description": "Add Task Search and Filters",
+      "priority": "medium",
+      "status": "done",
+      "assigneeId": "b733e169-49d4-4d66-b4ef-2460da7a3a30",
+      "dueDate": "2026-09-10",
+      "tags": [],
+      "createdAt": "2026-09-09T05:53:32.951Z",
+      "updatedAt": "2026-09-09T06:23:19.509Z"
+    },
+    {
+      "id": "353541a7-6801-49e3-b00a-a0caafa0d834",
+      "projectId": "8e50124d-efd2-414e-bbde-777f8d866480",
+      "title": "Build Kanban Board",
+      "description": "Build Kanban Board",
+      "priority": "medium",
+      "status": "todo",
+      "assigneeId": "b733e169-49d4-4d66-b4ef-2460da7a3a30",
+      "dueDate": "2026-09-10",
+      "tags": ["backend"],
+      "createdAt": "2026-09-09T05:52:50.955Z",
+      "updatedAt": "2026-09-10T12:11:44.536Z"
+    },
+    {
+      "id": "8dd35243-5eef-4177-b886-fe75389bf6ca",
+      "projectId": "519acbd5-e6b3-4e7f-87ea-ef13500c6a82",
+      "title": "Create Task Management API",
+      "description": "Create Task Management API",
+      "priority": "medium",
+      "status": "in_progress",
+      "assigneeId": "2b058b10-c252-45b7-abba-cdcb3fa91937",
+      "dueDate": "2026-09-10",
+      "tags": ["backend"],
+      "createdAt": "2026-09-09T05:51:20.155Z",
+      "updatedAt": "2026-09-09T06:03:58.053Z"
+    },
+    {
+      "id": "5c6d5576-b4b8-4490-a7d8-b58dd9f8874e",
+      "projectId": "519acbd5-e6b3-4e7f-87ea-ef13500c6a82",
+      "title": "Design Dashboard Layout",
+      "description": "Design Dashboard Layout",
+      "priority": "medium",
+      "status": "todo",
+      "assigneeId": "b733e169-49d4-4d66-b4ef-2460da7a3a30",
+      "dueDate": "2026-09-11",
+      "tags": [],
+      "createdAt": "2026-09-09T05:50:52.621Z",
+      "updatedAt": "2026-09-09T06:23:31.055Z"
+    },
+    {
+      "id": "ebf68ae0-9154-4ca9-920c-1aeee945e5cb",
+      "projectId": "e0e691d6-b835-4893-9e16-52a6c91b8868",
+      "title": "Implement User Authentication",
+      "description": "Implement User Authentication",
+      "priority": "medium",
+      "status": "in_progress",
+      "assigneeId": "b733e169-49d4-4d66-b4ef-2460da7a3a30",
+      "dueDate": "2026-09-10",
+      "tags": ["backend"],
+      "createdAt": "2026-09-09T05:48:58.230Z",
+      "updatedAt": "2026-09-09T05:54:37.488Z"
+    },
+    {
+      "id": "69b2e0b0-ceb7-4c70-8bf1-85acade6bb02",
+      "projectId": "e0e691d6-b835-4893-9e16-52a6c91b8868",
+      "title": "Create Login Page UI",
+      "description": "Create Login Page UI",
+      "priority": "medium",
+      "status": "in_progress",
+      "assigneeId": "2b058b10-c252-45b7-abba-cdcb3fa91937",
+      "dueDate": "2026-09-10",
+      "tags": ["backend"],
+      "createdAt": "2026-09-09T05:48:18.929Z",
+      "updatedAt": "2026-09-09T06:25:10.096Z"
+    },
+    {
+      "id": "d4a9d1af-47bb-4fb4-b6c1-021b38ce5d70",
+      "projectId": "8e50124d-efd2-414e-bbde-777f8d866480",
+      "title": "Task 1",
+      "description": "creat task",
+      "priority": "low",
+      "status": "todo",
+      "assigneeId": "b733e169-49d4-4d66-b4ef-2460da7a3a30",
+      "dueDate": "2026-09-10",
+      "tags": ["backend"],
+      "createdAt": "2026-09-09T05:37:16.770Z",
+      "updatedAt": "2026-09-13T06:20:34.537Z"
     }
   ],
-  "activity": []
+  "activity": [],
+  "projectActivities": [
+    {
+      "id": "40ce50bb-d7ca-4852-998e-af21c32acb59",
+      "projectId": "8e50124d-efd2-414e-bbde-777f8d866480",
+      "taskId": "d4a9d1af-47bb-4fb4-b6c1-021b38ce5d70",
+      "taskTitle": "Task 1",
+      "userId": "550e8400-e29b-41d4-a716-446655440000",
+      "userName": "System Admin",
+      "fromStatus": "in_progress",
+      "toStatus": "todo",
+      "createdAt": "2026-09-13T06:20:34.539Z"
+    },
+    {
+      "id": "act-1",
+      "projectId": "8e50124d-efd2-414e-bbde-777f8d866480",
+      "taskId": "d4a9d1af-47bb-4fb4-b6c1-021b38ce5d70",
+      "taskTitle": "Task 1",
+      "userId": "b733e169-49d4-4d66-b4ef-2460da7a3a30",
+      "userName": "Abhishek",
+      "fromStatus": "todo",
+      "toStatus": "in_progress",
+      "createdAt": "2026-09-10T10:30:00.000Z"
+    },
+    {
+      "id": "act-2",
+      "projectId": "8e50124d-efd2-414e-bbde-777f8d866480",
+      "taskId": "d4a9d1af-47bb-4fb4-b6c1-021b38ce5d70",
+      "taskTitle": "Task 1",
+      "userId": "b733e169-49d4-4d66-b4ef-2460da7a3a30",
+      "userName": "Abhishek",
+      "fromStatus": "in_progress",
+      "toStatus": "done",
+      "createdAt": "2026-09-10T12:12:00.000Z"
+    }
+  ]
 }

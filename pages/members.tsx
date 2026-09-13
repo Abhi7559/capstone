@@ -44,9 +44,9 @@ export default function MembersPage() {
             onMobileMenuToggle={() => setIsMobileSidebarOpen(true)}
           />
 
-          <main className="flex-1 p-8 overflow-y-auto">
+          <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto">
             {/* Page Header */}
-            <div className="mb-6 flex justify-between items-center">
+            <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">
                   Team Members
@@ -60,13 +60,13 @@ export default function MembersPage() {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(true)}
-                  className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none"
+                  className="w-full sm:w-auto rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none cursor-pointer"
                 >
                   + Add Member
                 </button>
               )}
             </div>
-            {/* Members Table */}
+            {/* Members Table / Mobile Cards */}
             <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
               {isMembersLoading ? (
                 <div className="p-8 text-center text-gray-500">
@@ -75,7 +75,8 @@ export default function MembersPage() {
               ) : isMembersError ? (
                 <div className="p-8 text-center bg-red-50 text-red-700 flex flex-col items-center justify-center space-y-3">
                   <p className="text-sm font-semibold">
-                    Unable to load workspace members list at this time. Please try again.
+                    Unable to load workspace members list at this time. Please
+                    try again.
                   </p>
                   <button
                     type="button"
@@ -90,80 +91,159 @@ export default function MembersPage() {
                   No members yet.
                 </div>
               ) : (
-                <table className="w-full text-left text-sm text-gray-600">
-                  <thead className="bg-gray-50 text-xs uppercase text-gray-400 font-semibold border-b border-gray-200">
-                    <tr>
-                      <th className="px-6 py-3.5">Name</th>
-                      <th className="px-6 py-3.5">Email</th>
-                      <th className="px-6 py-3.5">Role</th>
-                      <th className="px-6 py-3.5">Designation</th>
-                      <th className="px-6 py-3.5">Joining Date</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
+                <>
+                  {/* Mobile Stacked Card View */}
+                  <div className="sm:hidden space-y-3 p-4 bg-gray-50/50">
                     {members.map((member) => (
-                      <tr
+                      <button
+                        type="button"
                         key={member.id}
+                        disabled={!isAdmin}
                         onClick={() => isAdmin && setSelectedMember(member)}
-                        className={`transition ${
+                        className={`w-full text-left rounded-xl border border-gray-200 bg-white p-4 space-y-3 shadow-xs transition ${
                           isAdmin
-                            ? "hover:bg-blue-50/50 cursor-pointer"
-                            : "hover:bg-gray-50/50"
+                            ? "hover:border-blue-300 cursor-pointer"
+                            : "cursor-default"
                         }`}
                       >
-                        <td className="px-6 py-4 font-semibold text-gray-900">
-                          {isAdmin ? (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedMember(member);
-                              }}
-                              className="hover:text-blue-600 text-left font-bold"
-                            >
-                              {member.name}
-                            </button>
-                          ) : (
-                            member.name
-                          )}
-                        </td>
-                        <td className="px-6 py-4">{member.email}</td>
-                        <td className="px-6 py-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3 min-w-0">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-white uppercase flex-shrink-0">
+                              {member.name.charAt(0)}
+                            </div>
+                            <div className="min-w-0">
+                              <h3 className="font-bold text-gray-900 text-sm truncate">
+                                {member.name}
+                              </h3>
+                              <p className="text-xs text-gray-500 truncate">
+                                {member.email}
+                              </p>
+                            </div>
+                          </div>
                           <span
-                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize ${
+                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold capitalize flex-shrink-0 ${
                               member.role === "admin"
-                                ? "bg-purple-100 text-purple-800"
-                                : "bg-blue-100 text-blue-800"
+                                ? "bg-purple-100 text-purple-800 border border-purple-200"
+                                : "bg-blue-100 text-blue-800 border border-blue-200"
                             }`}
                           >
                             {member.role}
                           </span>
-                        </td>
-                        <td className="px-6 py-4 font-medium text-gray-700">
-                          {member.designation ||
-                            (member.role === "admin"
-                              ? "System Administrator"
-                              : "Software Engineer")}
-                        </td>
-                        <td className="px-6 py-4 text-xs font-medium text-gray-500">
-                          {member.joiningDate
-                            ? new Date(member.joiningDate).toString() !==
-                              "Invalid Date"
-                              ? new Date(member.joiningDate).toLocaleDateString(
-                                  "en-US",
-                                  {
-                                    month: "short",
-                                    day: "numeric",
-                                    year: "numeric",
-                                  },
-                                )
-                              : member.joiningDate
-                            : "Sep 1, 2026"}
-                        </td>
-                      </tr>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-gray-100">
+                          <div>
+                            <span className="text-[10px] text-gray-400 block uppercase font-bold">
+                              Designation
+                            </span>
+                            <span className="font-medium text-gray-700 truncate block">
+                              {member.designation ||
+                                (member.role === "admin"
+                                  ? "System Administrator"
+                                  : "Software Engineer")}
+                            </span>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-[10px] text-gray-400 block uppercase font-bold">
+                              Joining Date
+                            </span>
+                            <span className="font-medium text-gray-600 block">
+                              {member.joiningDate
+                                ? new Date(member.joiningDate).toString() !==
+                                  "Invalid Date"
+                                  ? new Date(
+                                      member.joiningDate,
+                                    ).toLocaleDateString("en-US", {
+                                      month: "short",
+                                      day: "numeric",
+                                      year: "numeric",
+                                    })
+                                  : member.joiningDate
+                                : "Sep 1, 2026"}
+                            </span>
+                          </div>
+                        </div>
+                      </button>
                     ))}
-                  </tbody>
-                </table>
+                  </div>
+
+                  {/* Desktop/Tablet Table View */}
+                  <div className="hidden sm:block overflow-x-auto">
+                    <table className="w-full min-w-[640px] text-left text-sm text-gray-600">
+                      <thead className="bg-gray-50 text-xs uppercase text-gray-400 font-semibold border-b border-gray-200">
+                        <tr>
+                          <th className="px-6 py-3.5">Name</th>
+                          <th className="px-6 py-3.5">Email</th>
+                          <th className="px-6 py-3.5">Role</th>
+                          <th className="px-6 py-3.5">Designation</th>
+                          <th className="px-6 py-3.5">Joining Date</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {members.map((member) => (
+                          <tr
+                            key={member.id}
+                            onClick={() => isAdmin && setSelectedMember(member)}
+                            className={`transition ${
+                              isAdmin
+                                ? "hover:bg-blue-50/50 cursor-pointer"
+                                : "hover:bg-gray-50/50"
+                            }`}
+                          >
+                            <td className="px-6 py-4 font-semibold text-gray-900">
+                              {isAdmin ? (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedMember(member);
+                                  }}
+                                  className="hover:text-blue-600 text-left font-bold"
+                                >
+                                  {member.name}
+                                </button>
+                              ) : (
+                                member.name
+                              )}
+                            </td>
+                            <td className="px-6 py-4">{member.email}</td>
+                            <td className="px-6 py-4">
+                              <span
+                                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize ${
+                                  member.role === "admin"
+                                    ? "bg-purple-100 text-purple-800"
+                                    : "bg-blue-100 text-blue-800"
+                                }`}
+                              >
+                                {member.role}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 font-medium text-gray-700">
+                              {member.designation ||
+                                (member.role === "admin"
+                                  ? "System Administrator"
+                                  : "Software Engineer")}
+                            </td>
+                            <td className="px-6 py-4 text-xs font-medium text-gray-500">
+                              {member.joiningDate
+                                ? new Date(member.joiningDate).toString() !==
+                                  "Invalid Date"
+                                  ? new Date(
+                                      member.joiningDate,
+                                    ).toLocaleDateString("en-US", {
+                                      month: "short",
+                                      day: "numeric",
+                                      year: "numeric",
+                                    })
+                                  : member.joiningDate
+                                : "Sep 1, 2026"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
               )}
             </div>
           </main>

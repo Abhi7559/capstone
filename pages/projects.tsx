@@ -12,6 +12,11 @@ import {
 import { useTasks } from "@/hooks/useProjectTasks";
 import { useAuthStore } from "@/store/useAuthStore";
 import type { Project } from "@/types/project";
+import {
+  formatProjectStatusLabel,
+  getNextProjectStatus,
+  getProjectLifecycleAction,
+} from "@/utils/projectUtils";
 
 export default function ProjectsPage() {
   const currentUser = useAuthStore((state) => state.currentUser);
@@ -25,16 +30,16 @@ export default function ProjectsPage() {
 
   const handleArchiveToggle = async (project: Project) => {
     setActiveDropdownId(null);
-    const newStatus = project.status === "active" ? "archived" : "active";
+    const { status: newStatus, previousStatus } = getNextProjectStatus(project);
     try {
       await updateProject({
         id: project.id,
-        input: { status: newStatus },
+        input: { status: newStatus, previousStatus },
       });
       showToast(
         newStatus === "archived"
           ? "Project archived successfully!"
-          : "Project restored to active status!",
+          : `Project restored to ${formatProjectStatusLabel(newStatus)} status!`,
       );
     } catch {
       showToast("Failed to update project status.");
@@ -646,9 +651,11 @@ export default function ProjectsPage() {
                                         }
                                         className="w-full flex items-center px-3 py-2 rounded-lg text-amber-700 hover:bg-amber-50 transition text-left font-medium"
                                       >
-                                        {project.status === "active"
-                                          ? "📦 Archive Project"
-                                          : "🔄 Restore Project"}
+                                        {getProjectLifecycleAction(
+                                          project.status,
+                                        ) === "restore"
+                                          ? "🔄 Restore Project"
+                                          : "📦 Archive Project"}
                                       </button>
                                       <button
                                         type="button"
@@ -717,8 +724,8 @@ export default function ProjectsPage() {
               </div>
             ) : (
               /* TABLE VIEW */
-              <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-visible">
-                <table className="w-full text-left text-sm text-gray-600">
+              <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-x-auto">
+                <table className="w-full min-w-[680px] text-left text-sm text-gray-600">
                   <thead className="bg-gray-50/80 text-[11px] uppercase text-gray-400 font-bold border-b border-gray-200">
                     <tr>
                       <th className="px-6 py-3.5">Project Name</th>
@@ -822,9 +829,11 @@ export default function ProjectsPage() {
                                           }
                                           className="w-full flex items-center px-3 py-2 rounded-xl text-amber-700 hover:bg-amber-50 font-medium transition text-left"
                                         >
-                                          {project.status === "active"
-                                            ? "📦 Archive Project"
-                                            : "🔄 Restore Project"}
+                                          {getProjectLifecycleAction(
+                                            project.status,
+                                          ) === "restore"
+                                            ? "🔄 Restore Project"
+                                            : "📦 Archive Project"}
                                         </button>
                                         <button
                                           type="button"

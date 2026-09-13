@@ -1,11 +1,14 @@
+import type { ProjectActivity } from "@/types/project";
 import type {
   CreateTaskInput,
   Task,
   TaskFilters,
   UpdateTaskInput,
 } from "@/types/task";
+import { db } from "../database/db";
 import { projectRepository } from "../repositories/project.repository";
 import { taskRepository } from "../repositories/task.repository";
+import { userRepository } from "../repositories/user.repository";
 
 export const taskServiceServer = {
   getProjectTasks(
@@ -74,6 +77,18 @@ export const taskServiceServer = {
       throw new Error("Forbidden: Admin privileges required to create tasks.");
     }
 
+    if (!input.projectId || !input.projectId.trim()) {
+      throw new Error("Cannot create task: Project ID is required.");
+    }
+
+    const targetProject = projectRepository.findById(input.projectId);
+    if (!targetProject) {
+      throw new Error("Cannot create task: Selected project does not exist.");
+    }
+    if (targetProject.status === "archived") {
+      throw new Error("Cannot create task: Target project is archived.");
+    }
+
     const newTask: Task = {
       id: crypto.randomUUID(),
       projectId: input.projectId,
@@ -99,20 +114,7 @@ export const taskServiceServer = {
   ): Task {
     const existingTask = taskRepository.findById(taskId);
     if (!existingTask) {
-      const createdTask: Task = {
-        id: taskId,
-        projectId: input.projectId || "",
-        title: input.title?.trim() || "Untitled Task",
-        description: input.description?.trim() || "",
-        priority: input.priority || "medium",
-        status: input.status || "todo",
-        assigneeId: input.assigneeId || userId || "",
-        dueDate: input.dueDate || new Date().toISOString().split("T")[0],
-        tags: input.tags || [],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      return taskRepository.create(createdTask);
+      throw new Error("Task not found");
     }
 
     const isAdmin = !userRole || userRole.toLowerCase() === "admin";
@@ -124,6 +126,19 @@ export const taskServiceServer = {
       throw new Error(
         "Forbidden: Only Admin or the assigned team member can update this task status.",
       );
+    }
+
+    if (input.status) {
+      const currentStatusNorm = (existingTask.status || "").toLowerCase();
+      const targetStatusNorm = input.status.toLowerCase();
+      if (
+        currentStatusNorm === "todo" &&
+        (targetStatusNorm === "done" || targetStatusNorm === "completed")
+      ) {
+        throw new Error(
+          "Task must be moved to In Progress before it can be completed.",
+        );
+      }
     }
 
     const payload: Partial<Task> = {
@@ -139,15 +154,30 @@ export const taskServiceServer = {
 
     const updated = taskRepository.update(taskId, payload);
     if (!updated) {
-      const fallbackTask: Task = {
-        ...existingTask,
-        ...payload,
-        updatedAt: new Date().toISOString(),
+      throw new Error("Failed to update task");
+    }
+    const finalTask = updated;
+
+    if (input.status && input.status !== existingTask.status) {
+      const activeUser = userId ? userRepository.findById(userId) : undefined;
+      const userName =
+        activeUser?.name ||
+        (userRole?.toLowerCase() === "admin" ? "System Admin" : "Team Member");
+      const activity: ProjectActivity = {
+        id: crypto.randomUUID(),
+        projectId: finalTask.projectId,
+        taskId: finalTask.id,
+        taskTitle: finalTask.title,
+        userId: userId || "550e8400-e29b-41d4-a716-446655440000",
+        userName,
+        fromStatus: existingTask.status,
+        toStatus: input.status,
+        createdAt: new Date().toISOString(),
       };
-      return taskRepository.create(fallbackTask);
+      db.addProjectActivity(activity);
     }
 
-    return updated;
+    return finalTask;
   },
 
   deleteTask(taskId: string, userRole?: string, userId?: string): void {

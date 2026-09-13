@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ChangePasswordModal } from "@/components/ChangePasswordModal";
 import { useDeleteMember, useUpdateMember } from "@/hooks/useMembers";
 import type { User } from "@/types/auth";
 
@@ -19,6 +20,7 @@ export function MemberProfileModal({
 }: MemberProfileModalProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
 
   const {
     updateMember,
@@ -346,6 +348,15 @@ export function MemberProfileModal({
                 )}
               </div>
               <div className="flex items-center space-x-2.5">
+                {isSelf && (
+                  <button
+                    type="button"
+                    onClick={() => setIsChangePasswordOpen(true)}
+                    className="rounded-lg border border-gray-300 bg-white px-3.5 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition"
+                  >
+                    🔑 Change Password
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => setIsEditing(true)}
@@ -358,6 +369,11 @@ export function MemberProfileModal({
           </div>
         )}
       </div>
+
+      <ChangePasswordModal
+        isOpen={isChangePasswordOpen}
+        onClose={() => setIsChangePasswordOpen(false)}
+      />
     </div>
   );
 }

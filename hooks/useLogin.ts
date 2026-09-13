@@ -71,18 +71,14 @@ async function changePasswordRequest(data: {
 }
 
 export function useChangePassword() {
-  const setLogin = useAuthStore((state) => state.login);
-
   const mutation = useMutation({
     mutationFn: changePasswordRequest,
-    onSuccess: (user) => {
-      setLogin(user);
-    },
   });
 
   return {
     changePassword: mutation.mutateAsync,
     isLoading: mutation.isPending,
     error: mutation.error ? (mutation.error as Error).message : null,
+    isSuccess: mutation.isSuccess,
   };
 }

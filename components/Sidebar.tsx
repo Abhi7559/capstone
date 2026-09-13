@@ -9,7 +9,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ activeTab, isOpen = false, onClose }: SidebarProps) {
-  const { currentUser, logout } = useAuthStore();
+  const currentUser = useAuthStore((state) => state.currentUser);
   const router = useRouter();
   const isAdmin = currentUser?.role === "admin";
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -176,11 +176,6 @@ export function Sidebar({ activeTab, isOpen = false, onClose }: SidebarProps) {
 
   const navItems = isAdmin ? adminNavItems : memberNavItems;
 
-  const handleLogout = () => {
-    logout();
-    router.push("/login");
-  };
-
   return (
     <>
       {/* Mobile Drawer Backdrop Overlay */}
@@ -188,7 +183,7 @@ export function Sidebar({ activeTab, isOpen = false, onClose }: SidebarProps) {
         <button
           type="button"
           onClick={onClose}
-          className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-sm md:hidden w-full h-full border-none cursor-default"
+          className="fixed inset-0 z-40 bg-slate-900/30 backdrop-blur-xs md:hidden w-full h-full border-none cursor-default transition-opacity"
           aria-label="Close Mobile Sidebar"
         />
       )}
@@ -282,35 +277,6 @@ export function Sidebar({ activeTab, isOpen = false, onClose }: SidebarProps) {
               );
             })}
           </nav>
-        </div>
-
-        {/* Logout Action Footer */}
-        <div className="border-t border-slate-800 pt-4">
-          <button
-            type="button"
-            onClick={handleLogout}
-            title={isCollapsed ? "Logout" : undefined}
-            className={`w-full flex items-center justify-center ${
-              isCollapsed ? "px-2" : "space-x-2"
-            } rounded-lg bg-slate-800/80 py-2.5 text-xs font-semibold text-slate-300 transition hover:bg-red-950/80 hover:text-red-300 border border-slate-700/50`}
-          >
-            <svg
-              className="w-4 h-4 flex-shrink-0"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-              />
-            </svg>
-            {!isCollapsed && <span>Logout</span>}
-          </button>
         </div>
       </aside>
     </>

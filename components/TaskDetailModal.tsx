@@ -8,6 +8,8 @@ interface TaskDetailModalProps {
   onClose: () => void;
   onEdit?: (task: Task) => void;
   onDelete?: (task: Task) => void;
+  onUpdateStatus?: (task: Task, newStatus: string) => Promise<void>;
+  availableColumns?: { status: string; label: string }[];
   members?: User[];
   projectName?: string;
   currentUser?: User | null;
@@ -19,6 +21,8 @@ export function TaskDetailModal({
   onClose,
   onEdit,
   onDelete,
+  onUpdateStatus,
+  availableColumns,
   members,
   projectName,
   currentUser,
@@ -36,6 +40,11 @@ export function TaskDetailModal({
   }, [isOpen, task]);
 
   if (!isOpen || !task) return null;
+
+  const isAdmin = currentUser?.role === "admin";
+  const canUserUpdateTaskStatus =
+    isAdmin ||
+    (Boolean(currentUser?.id) && task.assigneeId === currentUser?.id);
 
   const assignee = members?.find((m) => m.id === task.assigneeId);
   const assigneeName =
@@ -106,9 +115,34 @@ export function TaskDetailModal({
         {/* Badges Row */}
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <span className="font-semibold text-gray-500">Status:</span>
-          <span className="rounded-full bg-blue-100 text-blue-800 px-3 py-0.5 text-xs font-bold uppercase tracking-wider border border-blue-200">
-            {task.status.replace("_", " ")}
-          </span>
+          {canUserUpdateTaskStatus && onUpdateStatus ? (
+            <select
+              value={task.status}
+              onChange={async (e) => {
+                await onUpdateStatus(task, e.target.value);
+              }}
+              className="rounded-full bg-blue-50 text-blue-800 px-3 py-0.5 text-xs font-bold uppercase tracking-wider border border-blue-200 focus:outline-none cursor-pointer hover:border-blue-400"
+            >
+              {availableColumns ? (
+                availableColumns.map((col) => (
+                  <option key={col.status} value={col.status}>
+                    {col.label}
+                  </option>
+                ))
+              ) : (
+                <>
+                  <option value="backlog">BACKLOG</option>
+                  <option value="todo">TO DO</option>
+                  <option value="in_progress">IN PROGRESS</option>
+                  <option value="done">COMPLETED</option>
+                </>
+              )}
+            </select>
+          ) : (
+            <span className="rounded-full bg-blue-100 text-blue-800 px-3 py-0.5 text-xs font-bold uppercase tracking-wider border border-blue-200">
+              {task.status.replace("_", " ")}
+            </span>
+          )}
 
           <span className="font-semibold text-gray-500 ml-2">Priority:</span>
           <span

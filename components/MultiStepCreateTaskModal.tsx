@@ -165,6 +165,16 @@ export function MultiStepCreateTaskModal({
         : [];
 
       if (editingTask) {
+        const currentNorm = (editingTask.status || "").toLowerCase();
+        const targetNorm = (data.status || "").toLowerCase();
+
+        if (
+          currentNorm === "todo" &&
+          (targetNorm === "done" || targetNorm === "completed")
+        ) {
+          return;
+        }
+
         await updateTask({
           taskId: editingTask.id,
           input: {
@@ -200,8 +210,16 @@ export function MultiStepCreateTaskModal({
 
   if (!isOpen) return null;
 
-  const selectedProject = projects?.find((p) => p.id === formValues.projectId);
+  const activeProjects = (projects || []).filter(
+    (p) => p.status !== "archived",
+  );
+  const hasActiveProjects = activeProjects.length > 0;
+  const targetProjectId = formValues.projectId || defaultProjectId;
+  const selectedProject = projects?.find((p) => p.id === targetProjectId);
   const selectedAssignee = members?.find((m) => m.id === formValues.assigneeId);
+  const isTargetArchived = selectedProject?.status === "archived";
+  const isTaskCreationBlocked =
+    (!editingTask && !hasActiveProjects) || isTargetArchived;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -235,8 +253,13 @@ export function MultiStepCreateTaskModal({
         {/* Step Progress Indicator Bar */}
         <div className="flex items-center space-x-2 mb-6">
           {[1, 2, 3, 4].map((stepNum) => {
-            const isTaskTitleValid = Boolean(formValues.title && formValues.title.trim().length >= 3);
-            const isActive = stepNum < currentStep || (stepNum === currentStep && (currentStep > 1 || isTaskTitleValid));
+            const isTaskTitleValid = Boolean(
+              formValues.title && formValues.title.trim().length >= 3,
+            );
+            const isActive =
+              stepNum < currentStep ||
+              (stepNum === currentStep &&
+                (currentStep > 1 || isTaskTitleValid));
             return (
               <div
                 key={stepNum}
@@ -248,7 +271,27 @@ export function MultiStepCreateTaskModal({
           })}
         </div>
 
-        {/* Error Notification Banner */}
+        {/* Warning/Error Banners */}
+        {!editingTask && !hasActiveProjects && (
+          <div className="mb-4 rounded-lg bg-amber-50 p-3 border border-amber-200 text-xs font-semibold text-amber-900 flex items-center gap-2">
+            <span>⚠️</span>
+            <span>
+              Task creation is disabled because no active projects exist. Please
+              create an active project first.
+            </span>
+          </div>
+        )}
+
+        {isTargetArchived && (
+          <div className="mb-4 rounded-lg bg-red-50 p-3 border border-red-200 text-xs font-semibold text-red-800 flex items-center gap-2">
+            <span>⛔</span>
+            <span>
+              Selected project &quot;{selectedProject?.name}&quot; is archived.
+              Task creation is disabled for archived projects.
+            </span>
+          </div>
+        )}
+
         {error && (
           <div className="mb-4 rounded-lg bg-red-50 p-3 border border-red-200">
             <p className="text-xs font-semibold text-red-800">{error}</p>
@@ -409,29 +452,52 @@ export function MultiStepCreateTaskModal({
                 >
                   Target Project *
                 </label>
-                <select
-                  id="taskProject"
-                  className={`w-full rounded-lg border px-3.5 py-2 text-sm outline-none focus:ring-2 ${
-                    errors.projectId
-                      ? "border-red-500 focus:ring-red-200"
-                      : "border-gray-300 focus:border-gray-500 focus:ring-gray-100"
-                  }`}
-                  {...register("projectId")}
-                >
-                  <option value="">Select a project...</option>
-                  {projects?.map((proj) => (
-                    <option key={proj.id} value={proj.id}>
-                      {proj.name} ({proj.status})
-                    </option>
-                  ))}
-                </select>
-                <div className="min-h-[18px] mt-1">
-                  {errors.projectId && (
-                    <p className="text-xs text-red-600 font-medium">
-                      {errors.projectId.message}
+
+                {defaultProjectId ? (
+                  <div>
+                    <div className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-sm font-semibold text-gray-800 flex items-center justify-between shadow-xs">
+                      <span className="flex items-center space-x-2">
+                        <span>📁</span>
+                        <span>
+                          {selectedProject?.name || "Current Project"}
+                        </span>
+                      </span>
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider bg-blue-100 text-blue-700 px-2.5 py-0.5 rounded-full border border-blue-200">
+                        Kanban Context
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-gray-500 mt-1">
+                      Task is automatically associated with this board&apos;s
+                      project.
                     </p>
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <div>
+                    <select
+                      id="taskProject"
+                      className={`w-full rounded-lg border px-3.5 py-2 text-sm outline-none focus:ring-2 ${
+                        errors.projectId
+                          ? "border-red-500 focus:ring-red-200"
+                          : "border-gray-300 focus:border-gray-500 focus:ring-gray-100"
+                      }`}
+                      {...register("projectId")}
+                    >
+                      <option value="">Select an active project...</option>
+                      {activeProjects.map((proj) => (
+                        <option key={proj.id} value={proj.id}>
+                          {proj.name}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="min-h-[18px] mt-1">
+                      {errors.projectId && (
+                        <p className="text-xs text-red-600 font-medium">
+                          {errors.projectId.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -439,7 +505,8 @@ export function MultiStepCreateTaskModal({
                   htmlFor="taskAssignee"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                  Assignee <span className="text-gray-400 font-normal">(Optional)</span>
+                  Assignee{" "}
+                  <span className="text-gray-400 font-normal">(Optional)</span>
                 </label>
                 <select
                   id="taskAssignee"
@@ -498,10 +565,13 @@ export function MultiStepCreateTaskModal({
               </div>
 
               <div>
-                <label htmlFor="tagInput" className="block text-sm font-semibold text-gray-800 mb-2">
+                <label
+                  htmlFor="tagInput"
+                  className="block text-sm font-semibold text-gray-800 mb-2"
+                >
                   Categorization Tags
                 </label>
-                
+
                 {/* Input + Add Button */}
                 <div className="flex items-center gap-2 mb-3">
                   <input
@@ -516,11 +586,20 @@ export function MultiStepCreateTaskModal({
                         const val = inputEl.value.trim();
                         if (val) {
                           const currentTags = formValues.tags
-                            ? formValues.tags.split(",").map((t) => t.trim()).filter(Boolean)
+                            ? formValues.tags
+                                .split(",")
+                                .map((t) => t.trim())
+                                .filter(Boolean)
                             : [];
                           if (!currentTags.includes(val.toLowerCase())) {
-                            const newTags = [...currentTags, val.toLowerCase()].join(", ");
-                            setValue("tags", newTags, { shouldValidate: true, shouldDirty: true });
+                            const newTags = [
+                              ...currentTags,
+                              val.toLowerCase(),
+                            ].join(", ");
+                            setValue("tags", newTags, {
+                              shouldValidate: true,
+                              shouldDirty: true,
+                            });
                           }
                           inputEl.value = "";
                         }
@@ -530,15 +609,26 @@ export function MultiStepCreateTaskModal({
                   <button
                     type="button"
                     onClick={() => {
-                      const inputEl = document.getElementById("tagInput") as HTMLInputElement | null;
+                      const inputEl = document.getElementById(
+                        "tagInput",
+                      ) as HTMLInputElement | null;
                       if (inputEl?.value.trim()) {
                         const val = inputEl.value.trim();
                         const currentTags = formValues.tags
-                          ? formValues.tags.split(",").map((t) => t.trim()).filter(Boolean)
+                          ? formValues.tags
+                              .split(",")
+                              .map((t) => t.trim())
+                              .filter(Boolean)
                           : [];
                         if (!currentTags.includes(val.toLowerCase())) {
-                          const newTags = [...currentTags, val.toLowerCase()].join(", ");
-                          setValue("tags", newTags, { shouldValidate: true, shouldDirty: true });
+                          const newTags = [
+                            ...currentTags,
+                            val.toLowerCase(),
+                          ].join(", ");
+                          setValue("tags", newTags, {
+                            shouldValidate: true,
+                            shouldDirty: true,
+                          });
                         }
                         inputEl.value = "";
                       }
@@ -551,10 +641,15 @@ export function MultiStepCreateTaskModal({
 
                 {/* Quick Add Pills */}
                 <div className="flex items-center gap-2 mb-3">
-                  <span className="text-xs font-semibold text-gray-500">Quick Add:</span>
+                  <span className="text-xs font-semibold text-gray-500">
+                    Quick Add:
+                  </span>
                   {["ui", "backend", "docs"].map((quickTag) => {
                     const currentTagsList = formValues.tags
-                      ? formValues.tags.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean)
+                      ? formValues.tags
+                          .split(",")
+                          .map((t) => t.trim().toLowerCase())
+                          .filter(Boolean)
                       : [];
                     const isAdded = currentTagsList.includes(quickTag);
                     return (
@@ -563,8 +658,13 @@ export function MultiStepCreateTaskModal({
                         type="button"
                         onClick={() => {
                           if (!isAdded) {
-                            const updated = [...currentTagsList, quickTag].join(", ");
-                            setValue("tags", updated, { shouldValidate: true, shouldDirty: true });
+                            const updated = [...currentTagsList, quickTag].join(
+                              ", ",
+                            );
+                            setValue("tags", updated, {
+                              shouldValidate: true,
+                              shouldDirty: true,
+                            });
                           }
                         }}
                         className={`rounded-lg border border-dashed px-2.5 py-1 text-xs font-medium transition ${
@@ -582,7 +682,10 @@ export function MultiStepCreateTaskModal({
                 {/* Active Tag Badges */}
                 <div className="flex flex-wrap gap-2 pt-1">
                   {(formValues.tags
-                    ? formValues.tags.split(",").map((t) => t.trim()).filter(Boolean)
+                    ? formValues.tags
+                        .split(",")
+                        .map((t) => t.trim())
+                        .filter(Boolean)
                     : []
                   ).map((tag) => (
                     <span
@@ -606,10 +709,18 @@ export function MultiStepCreateTaskModal({
                         type="button"
                         onClick={() => {
                           const currentTagsList = formValues.tags
-                            ? formValues.tags.split(",").map((t) => t.trim()).filter(Boolean)
+                            ? formValues.tags
+                                .split(",")
+                                .map((t) => t.trim())
+                                .filter(Boolean)
                             : [];
-                          const filtered = currentTagsList.filter((t) => t !== tag).join(", ");
-                          setValue("tags", filtered, { shouldValidate: true, shouldDirty: true });
+                          const filtered = currentTagsList
+                            .filter((t) => t !== tag)
+                            .join(", ");
+                          setValue("tags", filtered, {
+                            shouldValidate: true,
+                            shouldDirty: true,
+                          });
                         }}
                         className="text-purple-400 hover:text-purple-700 text-sm font-bold leading-none ml-0.5"
                         aria-label={`Remove tag ${tag}`}
@@ -657,7 +768,9 @@ export function MultiStepCreateTaskModal({
                 <div>
                   <span className="text-gray-500">Assignee:</span>
                   <p className="font-semibold text-gray-900">
-                    {selectedAssignee?.name || formValues.assigneeId || "Unassigned"}
+                    {selectedAssignee?.name ||
+                      formValues.assigneeId ||
+                      "Unassigned"}
                   </p>
                 </div>
                 <div>
@@ -694,7 +807,8 @@ export function MultiStepCreateTaskModal({
               <button
                 type="button"
                 onClick={handleNextStep}
-                className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition"
+                disabled={isTaskCreationBlocked}
+                className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next →
               </button>
@@ -707,8 +821,8 @@ export function MultiStepCreateTaskModal({
                     handleSubmit(onSubmit)();
                   }
                 }}
-                disabled={isLoading}
-                className="rounded-lg bg-green-600 px-6 py-2 text-sm font-semibold text-white hover:bg-green-700 transition disabled:opacity-50"
+                disabled={isLoading || isTaskCreationBlocked}
+                className="rounded-lg bg-green-600 px-6 py-2 text-sm font-semibold text-white hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading
                   ? editingTask

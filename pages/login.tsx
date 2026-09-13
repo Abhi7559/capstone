@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/router";
+import { signOut } from "next-auth/react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useChangePassword, useLogin } from "@/hooks/useLogin";
@@ -9,9 +10,11 @@ import {
   type LoginCredentials,
   loginSchema,
 } from "@/schemas/auth.schema";
+import { useAuthStore } from "@/store/useAuthStore";
 
 export default function LoginPage() {
   const router = useRouter();
+  const logout = useAuthStore((state) => state.logout);
   const { login, isLoading, error } = useLogin();
   const {
     changePassword,
@@ -71,7 +74,8 @@ export default function LoginPage() {
     try {
       await changePassword(data);
       setPendingChangeUserEmail(null);
-      router.push("/dashboard?loggedIn=true");
+      logout();
+      await signOut({ callbackUrl: "/login?passwordChanged=true" });
     } catch {
       // Handled in mutation error
     }
@@ -183,6 +187,21 @@ export default function LoginPage() {
               Please enter your credentials to access your workspace.
             </p>
           </div>
+
+          {router.query.passwordChanged && (
+            <div className="mb-6 rounded-xl bg-emerald-50 p-4 border border-emerald-200 text-emerald-900 flex items-start space-x-3 shadow-xs">
+              <span className="text-lg leading-none">✅</span>
+              <div>
+                <p className="text-xs font-bold text-emerald-900">
+                  Password Changed Successfully
+                </p>
+                <p className="text-xs text-emerald-700 mt-0.5">
+                  Password changed successfully. Please log in with your new
+                  password.
+                </p>
+              </div>
+            </div>
+          )}
 
           {error && (
             <div className="mb-6 rounded-lg bg-red-50 p-4 border border-red-200">

@@ -17,8 +17,8 @@ async function fetchAnalyticsData(
   userRole?: string,
   userId?: string,
 ): Promise<RawAnalyticsData> {
-  const role = userRole || "admin";
-  const id = userId || "550e8400-e29b-41d4-a716-446655440000";
+  const role = userRole || "";
+  const id = userId || "";
 
   const response = await fetch("/api/analytics/data", {
     headers: {
@@ -38,11 +38,16 @@ async function fetchAnalyticsData(
   };
 }
 
-export function useAnalyticsData() {
+export function useAnalyticsData(selectedProjectId?: string) {
   const currentUser = useAuthStore((state) => state.currentUser);
 
   const query = useQuery({
-    queryKey: ["analyticsData", currentUser?.id, currentUser?.role],
+    queryKey: [
+      "analyticsData",
+      currentUser?.id,
+      currentUser?.role,
+      selectedProjectId,
+    ],
     queryFn: () => fetchAnalyticsData(currentUser?.role, currentUser?.id),
     staleTime: 0,
     refetchOnWindowFocus: true,
@@ -50,17 +55,22 @@ export function useAnalyticsData() {
 
   const rawData = query.data;
 
-  const tasksByStatus = rawData ? transformTasksByStatus(rawData.tasks) : [];
+  // Filter tasks by selectedProjectId if specified ("all" or empty means All Projects)
+  const filteredTasks = rawData
+    ? selectedProjectId && selectedProjectId !== "all"
+      ? rawData.tasks.filter((t) => t.projectId === selectedProjectId)
+      : rawData.tasks
+    : [];
+
+  const tasksByStatus = transformTasksByStatus(filteredTasks);
 
   const tasksByAssignee = rawData
-    ? transformTasksByAssignee(rawData.tasks, rawData.members)
+    ? transformTasksByAssignee(filteredTasks, rawData.members)
     : [];
 
-  const completionTrend = rawData
-    ? transformCompletionTrend(rawData.tasks)
-    : [];
+  const completionTrend = transformCompletionTrend(filteredTasks);
 
-  const hasTasks = Boolean(rawData && rawData.tasks.length > 0);
+  const hasTasks = Boolean(filteredTasks.length > 0);
 
   return {
     isLoading: query.isLoading,

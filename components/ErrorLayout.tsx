@@ -1,4 +1,3 @@
-
 interface ErrorLayoutProps {
   code: string;
   title: string;

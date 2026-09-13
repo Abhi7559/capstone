@@ -1,18 +1,13 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { taskServiceServer } from "@/server/services/task.service";
+import { getAuthContext } from "@/server/utils/auth";
 import type { Task, UpdateTaskInput } from "@/types/task";
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Task | { message: string }>,
 ) {
-  const session = await getServerSession(req, res, authOptions);
-  const userId = session?.user?.id || (req.headers["x-user-id"] as string);
-  const userRole =
-    session?.user?.role || (req.headers["x-user-role"] as string);
-
+  const { userRole, userId } = await getAuthContext(req, res);
   const { id } = req.query as { id: string };
 
   if (!id) {

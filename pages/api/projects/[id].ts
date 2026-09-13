@@ -1,19 +1,16 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { projectServiceServer } from "@/server/services/project.service";
+import { getAuthContext } from "@/server/utils/auth";
 import type { Project, UpdateProjectInput } from "@/types/project";
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Project | { message: string }>,
 ) {
-  const session = await getServerSession(req, res, authOptions);
-  const userRole = (session?.user?.role ||
-    req.headers["x-user-role"]) as string;
+  const { userRole, userId } = await getAuthContext(req, res);
   const { id } = req.query as { id: string };
 
-  if (!session && !req.headers["x-user-id"] && !req.headers["x-user-role"]) {
+  if (!userId) {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
@@ -23,11 +20,7 @@ export default async function handler(
 
   if (req.method === "GET") {
     try {
-      const project = projectServiceServer.getProjectById(
-        id,
-        userRole,
-        session?.user?.id || (req.headers["x-user-id"] as string),
-      );
+      const project = projectServiceServer.getProjectById(id, userRole, userId);
       return res.status(200).json(project);
     } catch (error) {
       const message = (error as Error).message;

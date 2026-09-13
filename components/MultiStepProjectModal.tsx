@@ -8,6 +8,7 @@ import {
   multiStepProjectSchema,
 } from "@/schemas/project.schema";
 import type { Project, ProjectStatus } from "@/types/project";
+import { formatProjectStatusLabel } from "@/utils/projectUtils";
 
 interface MultiStepProjectModalProps {
   isOpen: boolean;
@@ -55,11 +56,6 @@ export function MultiStepProjectModal({
     };
   }, [isMemberDropdownOpen]);
 
-  const todayStr = new Date().toISOString().split("T")[0];
-  const defaultEndDateStr = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .split("T")[0];
-
   const {
     register,
     handleSubmit,
@@ -78,12 +74,12 @@ export function MultiStepProjectModal({
       startDate:
         editingProject?.startDate ||
         editingProject?.createdAt?.split("T")[0] ||
-        todayStr,
-      endDate:
-        editingProject?.dueDate || editingProject?.endDate || defaultEndDateStr,
-      priority: "medium",
-      projectState: "active",
-      category: "Engineering",
+        "",
+      endDate: editingProject?.dueDate || editingProject?.endDate || "",
+      priority:
+        (editingProject?.priority as "low" | "medium" | "high") || "medium",
+      projectState: editingProject?.status || "active",
+      category: editingProject?.category || "Engineering",
       budget: "",
     },
   });
@@ -93,11 +89,6 @@ export function MultiStepProjectModal({
   // Reset form state when editing target changes
   useEffect(() => {
     if (isOpen) {
-      const today = new Date().toISOString().split("T")[0];
-      const defaultEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-        .toISOString()
-        .split("T")[0];
-
       if (editingProject) {
         reset({
           name: editingProject.name,
@@ -106,12 +97,12 @@ export function MultiStepProjectModal({
           startDate:
             editingProject.startDate ||
             editingProject.createdAt?.split("T")[0] ||
-            today,
-          endDate:
-            editingProject.dueDate || editingProject.endDate || defaultEnd,
-          priority: "medium",
+            "",
+          endDate: editingProject.dueDate || editingProject.endDate || "",
+          priority:
+            (editingProject.priority as "low" | "medium" | "high") || "medium",
           projectState: editingProject.status || "active",
-          category: "Engineering",
+          category: editingProject.category || "Engineering",
           budget: "",
         });
       } else {
@@ -119,8 +110,8 @@ export function MultiStepProjectModal({
           name: "",
           description: "",
           memberIds: [],
-          startDate: today,
-          endDate: defaultEnd,
+          startDate: "",
+          endDate: "",
           priority: "medium",
           projectState: "active",
           category: "Engineering",
@@ -180,9 +171,9 @@ export function MultiStepProjectModal({
             description: data.description || "",
             status: mappedStatus,
             memberIds: data.memberIds,
-            startDate: data.startDate,
-            dueDate: data.endDate,
-            endDate: data.endDate,
+            startDate: data.startDate || undefined,
+            dueDate: data.endDate || undefined,
+            endDate: data.endDate || undefined,
             category: data.category,
             priority: data.priority,
           },
@@ -194,9 +185,9 @@ export function MultiStepProjectModal({
           description: data.description || "",
           status: mappedStatus,
           memberIds: data.memberIds,
-          startDate: data.startDate,
-          dueDate: data.endDate,
-          endDate: data.endDate,
+          startDate: data.startDate || undefined,
+          dueDate: data.endDate || undefined,
+          endDate: data.endDate || undefined,
           category: data.category,
           priority: data.priority,
         });
@@ -263,7 +254,9 @@ export function MultiStepProjectModal({
           <div className="flex items-center justify-between max-w-2xl mx-auto">
             {/* Step 1 */}
             {(() => {
-              const isNameValid = Boolean(formValues.name && formValues.name.trim().length >= 3);
+              const isNameValid = Boolean(
+                formValues.name && formValues.name.trim().length >= 3,
+              );
               const isStep1Active = currentStep > 1 || isNameValid;
               return (
                 <button
@@ -694,7 +687,10 @@ export function MultiStepProjectModal({
                       htmlFor="startDateIn"
                       className="block text-xs font-semibold text-gray-700 mb-1"
                     >
-                      Start Date <span className="text-red-500">*</span>
+                      Start Date{" "}
+                      <span className="text-gray-400 font-normal">
+                        (Optional)
+                      </span>
                     </label>
                     <input
                       id="startDateIn"
@@ -715,7 +711,9 @@ export function MultiStepProjectModal({
                       className="block text-xs font-semibold text-gray-700 mb-1"
                     >
                       Target Completion Date{" "}
-                      <span className="text-red-500">*</span>
+                      <span className="text-gray-400 font-normal">
+                        (Optional)
+                      </span>
                     </label>
                     <input
                       id="endDateIn"
@@ -783,6 +781,7 @@ export function MultiStepProjectModal({
                       <option value="active"> Active</option>
                       <option value="on_hold"> On Hold</option>
                       <option value="completed"> Completed</option>
+                      <option value="archived"> Archived</option>
                     </select>
                   </div>
                 </div>
@@ -869,7 +868,8 @@ export function MultiStepProjectModal({
                     )}
                   </div>
                   <p className="text-xs font-medium text-gray-700 pt-1">
-                    📅 {formValues.startDate} → {formValues.endDate}
+                    📅 {formValues.startDate || "Not specified"} →{" "}
+                    {formValues.endDate || "Not specified"}
                   </p>
                 </div>
 
@@ -893,8 +893,8 @@ export function MultiStepProjectModal({
                       <span className="text-[10px] text-gray-400 block uppercase">
                         Status
                       </span>
-                      <span className="capitalize font-bold">
-                        {formValues.projectState}
+                      <span className="font-bold">
+                        {formatProjectStatusLabel(formValues.projectState)}
                       </span>
                     </div>
                     <div>

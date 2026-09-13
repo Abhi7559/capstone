@@ -6,7 +6,10 @@ const nextConfig: NextConfig = {
   async rewrites() {
     let backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL?.trim();
     if (!backendUrl) return [];
-    if (!backendUrl.startsWith("http://") && !backendUrl.startsWith("https://")) {
+    if (
+      !backendUrl.startsWith("http://") &&
+      !backendUrl.startsWith("https://")
+    ) {
       backendUrl = `https://${backendUrl}`;
     }
     backendUrl = backendUrl.replace(/\/+$/, "");

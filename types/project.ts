@@ -1,3 +1,5 @@
+import type { TaskStatus } from "./task";
+
 export type ProjectStatus =
   | "planning"
   | "active"
@@ -17,6 +19,7 @@ export interface Project {
   endDate?: string;
   category?: string;
   priority?: string;
+  previousStatus?: ProjectStatus;
 }
 
 export interface CreateProjectInput {
@@ -29,6 +32,7 @@ export interface CreateProjectInput {
   endDate?: string;
   category?: string;
   priority?: string;
+  previousStatus?: ProjectStatus;
 }
 
 export interface UpdateProjectInput {
@@ -41,4 +45,17 @@ export interface UpdateProjectInput {
   endDate?: string;
   category?: string;
   priority?: string;
+  previousStatus?: ProjectStatus;
+}
+
+export interface ProjectActivity {
+  id: string;
+  projectId: string;
+  taskId: string;
+  taskTitle: string;
+  userId: string;
+  userName: string;
+  fromStatus: TaskStatus;
+  toStatus: TaskStatus;
+  createdAt: string;
 }

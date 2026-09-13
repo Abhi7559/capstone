@@ -10,6 +10,10 @@ export const userRepository = {
     return db.findUserByEmail(email);
   },
 
+  findById(id: string): User | undefined {
+    return db.findUserById(id);
+  },
+
   create(user: User): User {
     return db.addUser(user);
   },

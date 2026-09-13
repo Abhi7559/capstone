@@ -6,8 +6,8 @@ import type {
   UpdateProjectInput,
 } from "@/types/project";
 
-const DEFAULT_ROLE = "admin";
-const DEFAULT_USER_ID = "550e8400-e29b-41d4-a716-446655440000";
+const DEFAULT_ROLE = "member";
+const DEFAULT_USER_ID = "";
 
 async function fetchProjects(
   userRole?: string,
@@ -159,6 +159,7 @@ export function useUpdateProject() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       queryClient.invalidateQueries({ queryKey: ["dashboardData"] });
+      queryClient.invalidateQueries({ queryKey: ["projectTasks"] });
     },
   });
 

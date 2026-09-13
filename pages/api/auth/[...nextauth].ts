@@ -53,6 +53,16 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.role = user.role as "admin" | "member";
+        token.name = user.name;
+        token.email = user.email;
+      }
+      if (token.id) {
+        const dbUser = db.findUserById(token.id as string);
+        if (dbUser) {
+          token.role = dbUser.role;
+          token.name = dbUser.name;
+          token.email = dbUser.email;
+        }
       }
       return token;
     },
@@ -60,6 +70,8 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id;
         session.user.role = token.role;
+        session.user.name = token.name;
+        session.user.email = token.email;
       }
       return session;
     },

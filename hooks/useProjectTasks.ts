@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/useAuthStore";
+import type { ProjectActivity } from "@/types/project";
 import type {
   CreateTaskInput,
   Task,
@@ -190,6 +191,7 @@ export function useUpdateTask() {
       queryClient.invalidateQueries({ queryKey: ["task", updatedTask.id] });
       queryClient.invalidateQueries({ queryKey: ["projectTasks"] });
       queryClient.invalidateQueries({ queryKey: ["dashboardData"] });
+      queryClient.invalidateQueries({ queryKey: ["projectActivities"] });
     },
   });
 
@@ -199,6 +201,37 @@ export function useUpdateTask() {
     error: mutation.error ? (mutation.error as Error).message : null,
     reset: mutation.reset,
   };
+}
+
+async function fetchProjectActivities(
+  projectId: string,
+  userRole?: string,
+  userId?: string,
+): Promise<ProjectActivity[]> {
+  const response = await fetch(`/api/projects/${projectId}/activities`, {
+    headers: {
+      "x-user-role": userRole || "admin",
+      "x-user-id": userId || "550e8400-e29b-41d4-a716-446655440000",
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || "Failed to fetch project activities");
+  }
+
+  return response.json();
+}
+
+export function useProjectActivities(projectId: string) {
+  const currentUser = useAuthStore((state) => state.currentUser);
+
+  return useQuery({
+    queryKey: ["projectActivities", projectId],
+    queryFn: () =>
+      fetchProjectActivities(projectId, currentUser?.role, currentUser?.id),
+    enabled: Boolean(projectId),
+  });
 }
 
 export function useDeleteTask() {
@@ -217,6 +250,7 @@ export function useDeleteTask() {
       queryClient.invalidateQueries({ queryKey: ["task"] });
       queryClient.invalidateQueries({ queryKey: ["dashboardData"] });
       queryClient.invalidateQueries({ queryKey: ["analyticsData"] });
+      queryClient.invalidateQueries({ queryKey: ["projectActivities"] });
     },
   });
 

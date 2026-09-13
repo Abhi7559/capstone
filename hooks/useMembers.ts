@@ -1,11 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { useAuthStore } from "@/store/useAuthStore";
 import type { InviteMemberInput, User } from "@/types/auth";
 
-async function fetchMembers(currentUserRole?: string): Promise<User[]> {
+async function fetchMembers(
+  currentUserRole?: string,
+  currentUserId?: string,
+): Promise<User[]> {
   const response = await fetch("/api/members", {
     headers: {
       "x-user-role": currentUserRole || "",
+      "x-user-id": currentUserId || "",
     },
   });
 
@@ -19,12 +24,14 @@ async function fetchMembers(currentUserRole?: string): Promise<User[]> {
 async function inviteMemberRequest(
   input: InviteMemberInput,
   currentUserRole?: string,
+  currentUserId?: string,
 ) {
   const response = await fetch("/api/members/invite", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "x-user-role": currentUserRole || "",
+      "x-user-id": currentUserId || "",
     },
     body: JSON.stringify(input),
   });
@@ -41,12 +48,14 @@ async function updateMemberRequest(
   id: string,
   input: Partial<User>,
   currentUserRole?: string,
+  currentUserId?: string,
 ): Promise<User> {
   const response = await fetch(`/api/members/${id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
       "x-user-role": currentUserRole || "",
+      "x-user-id": currentUserId || "",
     },
     body: JSON.stringify(input),
   });
@@ -62,11 +71,13 @@ async function updateMemberRequest(
 async function deleteMemberRequest(
   id: string,
   currentUserRole?: string,
+  currentUserId?: string,
 ): Promise<{ message: string }> {
   const response = await fetch(`/api/members/${id}`, {
     method: "DELETE",
     headers: {
-      "x-user-role": currentUserRole || "admin",
+      "x-user-role": currentUserRole || "",
+      "x-user-id": currentUserId || "",
     },
   });
 
@@ -81,11 +92,25 @@ async function deleteMemberRequest(
 export function useMembers() {
   const currentUser = useAuthStore((state) => state.currentUser);
 
-  return useQuery({
+  const query = useQuery({
     queryKey: ["members"],
-    queryFn: () => fetchMembers(currentUser?.role || "admin"),
+    queryFn: () => fetchMembers(currentUser?.role, currentUser?.id),
     enabled: true,
   });
+
+  useEffect(() => {
+    if (query.data && currentUser) {
+      const me = query.data.find((m) => m.id === currentUser.id);
+      if (
+        me &&
+        (me.role !== currentUser.role || me.name !== currentUser.name)
+      ) {
+        useAuthStore.getState().login(me);
+      }
+    }
+  }, [query.data, currentUser]);
+
+  return query;
 }
 
 export function useInviteMember() {
@@ -94,7 +119,7 @@ export function useInviteMember() {
 
   const mutation = useMutation({
     mutationFn: (input: InviteMemberInput) =>
-      inviteMemberRequest(input, currentUser?.role || "admin"),
+      inviteMemberRequest(input, currentUser?.role, currentUser?.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["members"] });
     },
@@ -115,9 +140,16 @@ export function useUpdateMember() {
 
   const mutation = useMutation({
     mutationFn: ({ id, input }: { id: string; input: Partial<User> }) =>
-      updateMemberRequest(id, input, currentUser?.role || "admin"),
-    onSuccess: () => {
+      updateMemberRequest(id, input, currentUser?.role, currentUser?.id),
+    onSuccess: (updatedUser) => {
       queryClient.invalidateQueries({ queryKey: ["members"] });
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardData"] });
+      queryClient.invalidateQueries({ queryKey: ["projectTasks"] });
+
+      if (updatedUser && currentUser && updatedUser.id === currentUser.id) {
+        useAuthStore.getState().login(updatedUser);
+      }
     },
   });
 
@@ -134,7 +166,7 @@ export function useDeleteMember() {
 
   const mutation = useMutation({
     mutationFn: (id: string) =>
-      deleteMemberRequest(id, currentUser?.role || "admin"),
+      deleteMemberRequest(id, currentUser?.role, currentUser?.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["members"] });
     },

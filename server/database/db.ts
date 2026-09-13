@@ -2,10 +2,11 @@ import fs from "node:fs";
 import path from "node:path";
 import type { User } from "@/types/auth";
 import type { ActivityItem } from "@/types/dashboard";
-import type { Project } from "@/types/project";
+import type { Project, ProjectActivity } from "@/types/project";
 import type { Task } from "@/types/task";
 import {
   INITIAL_ACTIVITY,
+  INITIAL_PROJECT_ACTIVITIES,
   INITIAL_PROJECTS,
   INITIAL_TASKS,
   INITIAL_USERS,
@@ -20,6 +21,7 @@ interface DbSchema {
   projects: Project[];
   tasks: Task[];
   activity: ActivityItem[];
+  projectActivities?: ProjectActivity[];
 }
 
 // Persistent database writing to data/db.json
@@ -28,6 +30,7 @@ class PersistentDatabase {
   private projects: Project[] = [];
   private tasks: Task[] = [];
   private activity: ActivityItem[] = [];
+  private projectActivities: ProjectActivity[] = [];
 
   constructor() {
     this.loadFromDisk();
@@ -47,6 +50,10 @@ class PersistentDatabase {
         this.projects = parsed.projects || [...INITIAL_PROJECTS];
         this.tasks = parsed.tasks || [...INITIAL_TASKS];
         this.activity = parsed.activity || [...INITIAL_ACTIVITY];
+        this.projectActivities =
+          parsed.projectActivities && parsed.projectActivities.length > 0
+            ? parsed.projectActivities
+            : [...INITIAL_PROJECT_ACTIVITIES];
       } else {
         const seedPath = path.join(process.cwd(), "data", "db.json");
         if (fs.existsSync(seedPath)) {
@@ -56,11 +63,16 @@ class PersistentDatabase {
           this.projects = parsed.projects || [...INITIAL_PROJECTS];
           this.tasks = parsed.tasks || [...INITIAL_TASKS];
           this.activity = parsed.activity || [...INITIAL_ACTIVITY];
+          this.projectActivities =
+            parsed.projectActivities && parsed.projectActivities.length > 0
+              ? parsed.projectActivities
+              : [...INITIAL_PROJECT_ACTIVITIES];
         } else {
           this.users = [...INITIAL_USERS];
           this.projects = [...INITIAL_PROJECTS];
           this.tasks = [...INITIAL_TASKS];
           this.activity = [...INITIAL_ACTIVITY];
+          this.projectActivities = [...INITIAL_PROJECT_ACTIVITIES];
         }
         this.saveToDisk();
       }
@@ -69,6 +81,7 @@ class PersistentDatabase {
       this.projects = [...INITIAL_PROJECTS];
       this.tasks = [...INITIAL_TASKS];
       this.activity = [...INITIAL_ACTIVITY];
+      this.projectActivities = [...INITIAL_PROJECT_ACTIVITIES];
     }
   }
 
@@ -83,6 +96,7 @@ class PersistentDatabase {
         projects: this.projects,
         tasks: this.tasks,
         activity: this.activity,
+        projectActivities: this.projectActivities,
       };
       fs.writeFileSync(
         DB_FILE_PATH,
@@ -240,6 +254,11 @@ class PersistentDatabase {
     return false;
   }
 
+  findUserById(id: string): User | undefined {
+    this.loadFromDisk();
+    return this.users.find((u) => u.id === id);
+  }
+
   // Activity Operations
   getActivity(): ActivityItem[] {
     this.loadFromDisk();
@@ -249,6 +268,25 @@ class PersistentDatabase {
   addActivity(item: ActivityItem): void {
     this.loadFromDisk();
     this.activity.unshift(item);
+    this.saveToDisk();
+  }
+
+  getProjectActivities(projectId: string): ProjectActivity[] {
+    this.loadFromDisk();
+    return (this.projectActivities || [])
+      .filter((a) => a.projectId === projectId)
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
+  }
+
+  addProjectActivity(item: ProjectActivity): void {
+    this.loadFromDisk();
+    if (!this.projectActivities) {
+      this.projectActivities = [];
+    }
+    this.projectActivities.unshift(item);
     this.saveToDisk();
   }
 }

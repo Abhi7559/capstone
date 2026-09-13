@@ -69,6 +69,22 @@ export const memberServiceServer = {
       throw new Error("Forbidden: Admin privileges required to update members");
     }
 
+    const existing = userRepository.findById(id);
+    if (!existing) {
+      throw new Error("Member not found");
+    }
+
+    if (updates.role === "member" && existing.role === "admin") {
+      const adminCount = userRepository
+        .findAll()
+        .filter((u) => u.role === "admin").length;
+      if (adminCount <= 1) {
+        throw new Error(
+          "Cannot demote the only remaining Admin. The workspace must have at least one Admin.",
+        );
+      }
+    }
+
     const updated = userRepository.update(id, updates);
     if (!updated) {
       throw new Error("Member not found");
@@ -81,6 +97,18 @@ export const memberServiceServer = {
       !currentUserRole || currentUserRole.toLowerCase() === "admin";
     if (!isAdmin) {
       throw new Error("Forbidden: Admin privileges required to delete members");
+    }
+
+    const existing = userRepository.findById(id);
+    if (existing?.role === "admin") {
+      const adminCount = userRepository
+        .findAll()
+        .filter((u) => u.role === "admin").length;
+      if (adminCount <= 1) {
+        throw new Error(
+          "Cannot delete the only remaining Admin. The workspace must have at least one Admin.",
+        );
+      }
     }
 
     userRepository.delete(id);

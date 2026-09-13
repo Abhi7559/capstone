@@ -1,7 +1,10 @@
 import { useRouter } from "next/router";
+import { signOut } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
+import { ChangePasswordModal } from "@/components/ChangePasswordModal";
 import { MultiStepCreateTaskModal } from "@/components/MultiStepCreateTaskModal";
 import { MultiStepProjectModal } from "@/components/MultiStepProjectModal";
+import { useProjects } from "@/hooks/useProjects";
 import { useAuthStore } from "@/store/useAuthStore";
 
 interface TopBarProps {
@@ -23,7 +26,15 @@ export function TopBar({
   const { currentUser, logout } = useAuthStore();
   const router = useRouter();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] =
+    useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
+
+  const { data: projects } = useProjects();
+  const activeProjects = (projects || []).filter(
+    (p) => p.status !== "archived",
+  );
+  const hasActiveProjects = activeProjects.length > 0;
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -63,14 +74,22 @@ export function TopBar({
     return name.slice(0, 2).toUpperCase();
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     logout();
+    try {
+      await signOut({ redirect: false });
+    } catch {
+      // Ignored
+    }
     router.push("/login");
   };
 
   const isAdmin = currentUser?.role === "admin";
 
   const handleProceedCreate = () => {
+    if (selectedCreateType === "task" && !hasActiveProjects) {
+      return;
+    }
     setIsCreateSelectorOpen(false);
     if (selectedCreateType === "project") {
       setIsProjectModalOpen(true);
@@ -163,7 +182,10 @@ export function TopBar({
               </div>
 
               <div className="hidden sm:block min-w-0 max-w-[160px]">
-                <p className="text-xs font-bold text-gray-900 leading-tight group-hover:text-blue-600 transition truncate" title={currentUser?.name || "User"}>
+                <p
+                  className="text-xs font-bold text-gray-900 leading-tight group-hover:text-blue-600 transition truncate"
+                  title={currentUser?.name || "User"}
+                >
                   {currentUser?.name || "User"}
                 </p>
                 <span
@@ -182,13 +204,45 @@ export function TopBar({
             {showProfileMenu && (
               <div className="absolute right-0 mt-2 w-64 rounded-xl bg-white p-2.5 shadow-lg border border-gray-100 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
                 <div className="px-3 py-2 border-b border-gray-100 mb-1 overflow-hidden">
-                  <p className="text-xs font-bold text-gray-900 truncate" title={currentUser?.name}>
+                  <p
+                    className="text-xs font-bold text-gray-900 truncate"
+                    title={currentUser?.name}
+                  >
                     {currentUser?.name}
                   </p>
-                  <p className="text-[11px] text-gray-500 truncate mt-0.5" title={currentUser?.email}>
+                  <p
+                    className="text-[11px] text-gray-500 truncate mt-0.5"
+                    title={currentUser?.email}
+                  >
                     {currentUser?.email}
                   </p>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowProfileMenu(false);
+                    setIsChangePasswordModalOpen(true);
+                  }}
+                  className="w-full flex items-center px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition cursor-pointer mb-1"
+                >
+                  <svg
+                    className="w-4 h-4 mr-2 text-gray-500 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                    aria-hidden="true"
+                  >
+                    <title>Key Icon</title>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
+                    />
+                  </svg>
+                  Change Password
+                </button>
                 <button
                   type="button"
                   onClick={() => {
@@ -325,6 +379,16 @@ export function TopBar({
                   </span>
                 </div>
               </button>
+
+              {selectedCreateType === "task" && !hasActiveProjects && (
+                <div className="rounded-xl bg-amber-50 p-3 border border-amber-200 text-xs text-amber-900 font-semibold flex items-center gap-2">
+                  <span>⚠️</span>
+                  <span>
+                    Task creation is restricted because no active projects
+                    exist. Please create an active project first.
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Submit Action Button matching Wireframe */}
@@ -332,7 +396,8 @@ export function TopBar({
               <button
                 type="button"
                 onClick={handleProceedCreate}
-                className="w-full rounded-full bg-gray-200 hover:bg-gray-300 text-gray-900 py-3 text-xs font-bold transition focus:outline-none"
+                disabled={selectedCreateType === "task" && !hasActiveProjects}
+                className="w-full rounded-full bg-gray-200 hover:bg-gray-300 text-gray-900 py-3 text-xs font-bold transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Create
               </button>
@@ -350,6 +415,11 @@ export function TopBar({
       <MultiStepCreateTaskModal
         isOpen={isTaskModalOpen}
         onClose={() => setIsTaskModalOpen(false)}
+      />
+
+      <ChangePasswordModal
+        isOpen={isChangePasswordModalOpen}
+        onClose={() => setIsChangePasswordModalOpen(false)}
       />
     </>
   );

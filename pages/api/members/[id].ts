@@ -1,15 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
 import { memberServiceServer } from "@/server/services/member.service";
-import { authOptions } from "../auth/[...nextauth]";
+import { getAuthContext } from "@/server/utils/auth";
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
 ) {
-  const session = await getServerSession(req, res, authOptions);
-  const headerRole = req.headers["x-user-role"] as string;
-  const currentUserRole = session?.user?.role || headerRole || "member";
+  const { userRole: currentUserRole } = await getAuthContext(req, res);
   const { id } = req.query;
   const memberId = typeof id === "string" ? id : "";
 

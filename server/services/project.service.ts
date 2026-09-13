@@ -68,61 +68,63 @@ export const projectServiceServer = {
   ): Project {
     const existing = projectRepository.findById(id);
     if (!existing) {
-      const createdProject: Project = {
-        id,
-        name: input.name?.trim() || "Untitled Project",
-        description: input.description?.trim() || "",
-        status: input.status || "active",
-        createdAt: new Date().toISOString(),
-        memberIds: input.memberIds || [],
-        startDate: input.startDate,
-        dueDate: input.dueDate || input.endDate,
-        endDate: input.endDate || input.dueDate,
-      };
-      return projectRepository.create(createdProject);
+      throw new Error("Project not found");
+    }
+
+    let previousStatus = input.previousStatus;
+    if (
+      input.status === "archived" &&
+      existing.status !== "archived" &&
+      !previousStatus
+    ) {
+      previousStatus = existing.status;
+    } else if (
+      input.status &&
+      input.status !== "archived" &&
+      existing.status === "archived"
+    ) {
+      previousStatus = undefined;
     }
 
     const updated = projectRepository.update(id, {
       ...(input.name && { name: input.name.trim() }),
-      ...(input.description && { description: input.description.trim() }),
+      ...(input.description !== undefined && {
+        description: input.description.trim(),
+      }),
       ...(input.status && { status: input.status }),
       ...(input.memberIds && { memberIds: input.memberIds }),
       ...(input.startDate && { startDate: input.startDate }),
       ...(input.dueDate && { dueDate: input.dueDate }),
       ...(input.endDate && { endDate: input.endDate }),
+      ...(input.category && { category: input.category }),
+      ...(input.priority && { priority: input.priority }),
+      previousStatus: previousStatus,
     });
 
     if (!updated) {
-      const fallbackProject: Project = {
-        id,
-        name: input.name?.trim() || existing.name,
-        description: input.description?.trim() || existing.description,
-        status: input.status || existing.status,
-        createdAt: existing.createdAt || new Date().toISOString(),
-        memberIds: input.memberIds || existing.memberIds || [],
-        startDate: input.startDate || existing.startDate,
-        dueDate: input.dueDate || input.endDate || existing.dueDate,
-        endDate: input.endDate || input.dueDate || existing.endDate,
-      };
-      return projectRepository.create(fallbackProject);
+      throw new Error("Failed to update project");
     }
 
     return updated;
   },
 
   archiveProject(id: string, _userRole?: string): Project {
-    const updated = projectRepository.update(id, { status: "archived" });
+    const existing = projectRepository.findById(id);
+    if (!existing) {
+      throw new Error("Project not found");
+    }
+
+    const previousStatus =
+      existing.status !== "archived"
+        ? existing.status
+        : existing.previousStatus;
+
+    const updated = projectRepository.update(id, {
+      status: "archived",
+      previousStatus: previousStatus,
+    });
     if (!updated) {
-      const existing = projectRepository.findById(id);
-      const archived: Project = {
-        id,
-        name: existing?.name || "Archived Project",
-        description: existing?.description || "",
-        status: "archived",
-        createdAt: existing?.createdAt || new Date().toISOString(),
-        memberIds: existing?.memberIds || [],
-      };
-      return projectRepository.create(archived);
+      throw new Error("Failed to archive project");
     }
 
     return updated;

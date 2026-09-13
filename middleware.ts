@@ -7,8 +7,10 @@ export async function middleware(req: NextRequest) {
   // If environment variable SERVE_API_ONLY is set to "true" (e.g. on Render), block non-API routes
   if (process.env.SERVE_API_ONLY === "true" && !pathname.startsWith("/api")) {
     return NextResponse.json(
-      { message: "This server is running strictly as an API-only Mock Server." },
-      { status: 404 }
+      {
+        message: "This server is running strictly as an API-only Mock Server.",
+      },
+      { status: 404 },
     );
   }
 

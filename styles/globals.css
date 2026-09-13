@@ -32,3 +32,23 @@ input::-webkit-contacts-auto-fill-button,
 input::-webkit-credentials-auto-fill-button {
   display: none;
 }
+
+/* Remove black focus outline box & active shape stroke from Recharts SVG elements and sector shapes */
+.recharts-wrapper *,
+.recharts-surface *,
+.recharts-sector,
+.recharts-pie-sector,
+.recharts-active-shape,
+.recharts-layer {
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+.recharts-wrapper path:focus,
+.recharts-wrapper path:active,
+.recharts-wrapper svg:focus,
+.recharts-sector:focus,
+.recharts-active-shape path {
+  outline: none !important;
+  stroke: none !important;
+}

@@ -9,8 +9,8 @@ async function fetchDashboardData(
   userRole?: string,
   userId?: string,
 ): Promise<AdminDashboardData | MemberDashboardData> {
-  const role = userRole || "admin";
-  const id = userId || "550e8400-e29b-41d4-a716-446655440000";
+  const role = userRole || "";
+  const id = userId || "";
 
   const response = await fetch("/api/dashboard/stats", {
     headers: {

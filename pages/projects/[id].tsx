@@ -1,7 +1,7 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { MultiStepCreateTaskModal } from "@/components/MultiStepCreateTaskModal";
 import { ErrorLayout } from "@/components/ErrorLayout";
+import { MultiStepCreateTaskModal } from "@/components/MultiStepCreateTaskModal";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Sidebar } from "@/components/Sidebar";
 import { TaskDetailModal } from "@/components/TaskDetailModal";
@@ -10,6 +10,7 @@ import { useMembers } from "@/hooks/useMembers";
 import { useProjects } from "@/hooks/useProjects";
 import {
   useDeleteTask,
+  useProjectActivities,
   useTasks,
   useUpdateTask,
 } from "@/hooks/useProjectTasks";
@@ -60,6 +61,8 @@ export default function ProjectTaskBoardPage() {
 
   const { updateTask } = useUpdateTask();
   const { deleteTask, isLoading: isDeletingTask } = useDeleteTask();
+  const { data: projectActivities, isLoading: isActivitiesLoading } =
+    useProjectActivities(projectId);
 
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -100,9 +103,7 @@ export default function ProjectTaskBoardPage() {
       return;
     }
 
-    const colStatus = trimmedName
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "_");
+    const colStatus = trimmedName.toLowerCase().replace(/[^a-z0-9]+/g, "_");
     const newCol: KanbanColumn = {
       id: `col_${Date.now()}`,
       label: trimmedName.toUpperCase(),
@@ -210,42 +211,118 @@ export default function ProjectTaskBoardPage() {
     e.preventDefault();
   };
 
+  const [pendingBacklogMove, setPendingBacklogMove] = useState<{
+    task: Task;
+    targetStatus: TaskStatus;
+  } | null>(null);
+
+  const requestTaskStatusUpdate = async (
+    task: Task,
+    targetStatus: TaskStatus,
+  ) => {
+    if (currentProject?.status === "archived") {
+      showToast("Cannot move tasks in archived projects.");
+      return;
+    }
+
+    if (task.status === targetStatus) return;
+
+    const currentNorm = (task.status || "").toLowerCase();
+    const targetNorm = (targetStatus || "").toLowerCase();
+
+    if (
+      currentNorm === "todo" &&
+      (targetNorm === "done" || targetNorm === "completed")
+    ) {
+      showToast(
+        "Task must be moved to In Progress before it can be completed.",
+      );
+      return;
+    }
+
+    // Require confirmation when moving from Backlog to any active status
+    if (currentNorm === "backlog" && targetNorm !== "backlog") {
+      setPendingBacklogMove({ task, targetStatus });
+      return;
+    }
+
+    await performTaskStatusUpdate(task, targetStatus);
+  };
+
+  const performTaskStatusUpdate = async (
+    task: Task,
+    targetStatus: TaskStatus,
+  ) => {
+    try {
+      await updateTask({
+        taskId: task.id,
+        input: { status: targetStatus, projectId: task.projectId },
+      });
+      if (viewingTask?.id === task.id) {
+        setViewingTask((prev) =>
+          prev ? { ...prev, status: targetStatus } : null,
+        );
+      }
+      const colLabel =
+        columns.find((c) => c.status === targetStatus)?.label || targetStatus;
+      showToast(`Task moved to ${colLabel}!`);
+    } catch (err: unknown) {
+      const message = (err as Error)?.message || "Failed to move task.";
+      showToast(message);
+    }
+  };
+
+  const handleConfirmBacklogMove = async () => {
+    if (pendingBacklogMove) {
+      const { task, targetStatus } = pendingBacklogMove;
+      setPendingBacklogMove(null);
+      await performTaskStatusUpdate(task, targetStatus);
+    }
+  };
+
   const handleDrop = async (e: React.DragEvent, targetStatus: TaskStatus) => {
     e.preventDefault();
     const taskId = draggedTaskId || e.dataTransfer.getData("text/plain");
+    setDraggedTaskId(null);
+
     if (!taskId) return;
 
     const targetTask = tasks?.find((t) => t.id === taskId);
-    if (targetTask && targetTask.status !== targetStatus) {
-      try {
-        await updateTask({
-          taskId: targetTask.id,
-          input: { status: targetStatus, projectId: targetTask.projectId },
-        });
-        const colLabel =
-          columns.find((c) => c.status === targetStatus)?.label || targetStatus;
-        showToast(`Task moved to ${colLabel}!`);
-      } catch {
-        showToast("Failed to move task.");
-      }
+    if (targetTask) {
+      await requestTaskStatusUpdate(targetTask, targetStatus);
     }
-    setDraggedTaskId(null);
   };
 
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isMobileTabMenuOpen, setIsMobileTabMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<
     "overview" | "kanban" | "members" | "activity"
   >("overview");
 
-  useEffect(() => {
-    if (router.query.tab === "kanban") {
-      setActiveTab("kanban");
-    } else if (router.query.tab === "members") {
-      setActiveTab("members");
-    } else if (router.query.tab === "activity") {
-      setActiveTab("activity");
+  const handleTabChange = (
+    tab: "overview" | "kanban" | "members" | "activity",
+  ) => {
+    setActiveTab(tab);
+    if (router.isReady) {
+      const query = { ...router.query, tab };
+      router.push({ pathname: router.pathname, query }, undefined, {
+        shallow: true,
+      });
     }
-  }, [router.query.tab]);
+  };
+
+  useEffect(() => {
+    if (!router.isReady) return;
+    const tabParam = router.query.tab;
+    if (
+      tabParam === "kanban" ||
+      tabParam === "members" ||
+      tabParam === "activity" ||
+      tabParam === "overview"
+    ) {
+      setActiveTab(tabParam);
+    }
+  }, [router.isReady, router.query.tab]);
 
   const projectTasks = tasks || [];
 
@@ -288,7 +365,7 @@ export default function ProjectTaskBoardPage() {
             onMobileMenuToggle={() => setIsMobileSidebarOpen(true)}
           />
 
-          <main className="flex-1 p-8 overflow-y-auto">
+          <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto">
             {/* Header */}
             <div className="mb-6">
               <button
@@ -298,20 +375,95 @@ export default function ProjectTaskBoardPage() {
               >
                 <span>← Back to Projects</span>
               </button>
-              <div className="flex justify-between items-center">
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="min-w-0 flex-1">
+                  <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
                     {currentProject?.name || "Project Details"}
                   </h1>
                 </div>
 
-                <div className="flex items-center space-x-3">
-                  {/* Tab Switcher per Specification 4.6 */}
-                  <div className="flex items-center rounded-lg border border-gray-200 bg-white p-1 shadow-sm">
+                <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 w-full md:w-auto">
+                  {/* Mobile Collapsible Dropdown Sub-Navigation (< md viewports) */}
+                  <div className="relative md:hidden w-full">
                     <button
                       type="button"
-                      onClick={() => setActiveTab("overview")}
-                      className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+                      onClick={() =>
+                        setIsMobileTabMenuOpen(!isMobileTabMenuOpen)
+                      }
+                      className="w-full flex items-center justify-between rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-xs font-bold text-gray-800 shadow-sm transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <span className="flex items-center space-x-2">
+                        <span className="text-gray-400 font-medium">Tab:</span>
+                        <span className="text-blue-600 font-bold">
+                          {activeTab === "overview" && "Overview"}
+                          {activeTab === "kanban" && "Kanban Board"}
+                          {activeTab === "members" && "Members"}
+                          {activeTab === "activity" && "Activity"}
+                        </span>
+                      </span>
+                      <svg
+                        className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${
+                          isMobileTabMenuOpen ? "rotate-180" : ""
+                        }`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                      >
+                        <title>Toggle navigation menu</title>
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
+                    </button>
+
+                    {isMobileTabMenuOpen && (
+                      <div className="absolute left-0 right-0 mt-1.5 z-30 rounded-xl border border-gray-200 bg-white p-1.5 shadow-lg">
+                        {(
+                          [
+                            { id: "overview", label: "Overview", icon: "📋" },
+                            { id: "kanban", label: "Kanban Board", icon: "📊" },
+                            { id: "members", label: "Members", icon: "👥" },
+                            { id: "activity", label: "Activity", icon: "⚡" },
+                          ] as const
+                        ).map((tab) => (
+                          <button
+                            key={tab.id}
+                            type="button"
+                            onClick={() => {
+                              setActiveTab(tab.id);
+                              setIsMobileTabMenuOpen(false);
+                            }}
+                            className={`w-full flex items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold transition ${
+                              activeTab === tab.id
+                                ? "bg-blue-50 text-blue-700"
+                                : "text-gray-700 hover:bg-gray-50"
+                            }`}
+                          >
+                            <span className="flex items-center space-x-2">
+                              <span>{tab.icon}</span>
+                              <span>{tab.label}</span>
+                            </span>
+                            {activeTab === tab.id && (
+                              <span className="text-blue-600 font-bold text-xs">
+                                ✓
+                              </span>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Desktop / Tablet Tab Switcher (>= md viewports) */}
+                  <div className="hidden md:flex items-center rounded-lg border border-gray-200 bg-white p-1 shadow-sm overflow-x-auto max-w-full shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => handleTabChange("overview")}
+                      className={`rounded-md px-3 py-1.5 text-xs font-semibold transition whitespace-nowrap ${
                         activeTab === "overview"
                           ? "bg-blue-600 text-white shadow-sm"
                           : "text-gray-600 hover:text-gray-900"
@@ -321,8 +473,8 @@ export default function ProjectTaskBoardPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setActiveTab("kanban")}
-                      className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+                      onClick={() => handleTabChange("kanban")}
+                      className={`rounded-md px-3 py-1.5 text-xs font-semibold transition whitespace-nowrap ${
                         activeTab === "kanban"
                           ? "bg-blue-600 text-white shadow-sm"
                           : "text-gray-600 hover:text-gray-900"
@@ -332,8 +484,8 @@ export default function ProjectTaskBoardPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setActiveTab("members")}
-                      className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+                      onClick={() => handleTabChange("members")}
+                      className={`rounded-md px-3 py-1.5 text-xs font-semibold transition whitespace-nowrap ${
                         activeTab === "members"
                           ? "bg-blue-600 text-white shadow-sm"
                           : "text-gray-600 hover:text-gray-900"
@@ -343,8 +495,8 @@ export default function ProjectTaskBoardPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setActiveTab("activity")}
-                      className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+                      onClick={() => handleTabChange("activity")}
+                      className={`rounded-md px-3 py-1.5 text-xs font-semibold transition whitespace-nowrap ${
                         activeTab === "activity"
                           ? "bg-blue-600 text-white shadow-sm"
                           : "text-gray-600 hover:text-gray-900"
@@ -355,7 +507,7 @@ export default function ProjectTaskBoardPage() {
                   </div>
 
                   {activeTab === "kanban" && (
-                    <div className="flex items-center space-x-2">
+                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                       <button
                         type="button"
                         onClick={() => setIsBacklogModalOpen(true)}
@@ -364,7 +516,10 @@ export default function ProjectTaskBoardPage() {
                         <span className="text-sm">📦</span>
                         <span>Backlog</span>
                         <span className="rounded-full bg-amber-100 border border-amber-200 px-2 py-0.5 text-[10px] font-bold text-amber-800">
-                          {(tasks || []).filter((t) => t.status === "backlog").length}
+                          {
+                            (tasks || []).filter((t) => t.status === "backlog")
+                              .length
+                          }
                         </span>
                       </button>
                       {isAdmin && (
@@ -378,8 +533,26 @@ export default function ProjectTaskBoardPage() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => setIsTaskModalOpen(true)}
-                            className="rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none"
+                            disabled={currentProject?.status === "archived"}
+                            onClick={() => {
+                              if (currentProject?.status === "archived") {
+                                showToast(
+                                  "Task creation is disabled for archived projects.",
+                                );
+                                return;
+                              }
+                              setIsTaskModalOpen(true);
+                            }}
+                            className={`rounded-lg px-4 py-2 text-xs font-semibold shadow-sm transition focus:outline-none ${
+                              currentProject?.status === "archived"
+                                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                : "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
+                            }`}
+                            title={
+                              currentProject?.status === "archived"
+                                ? "Task creation is disabled for archived projects"
+                                : "Create new task"
+                            }
                           >
                             + Create Task
                           </button>
@@ -435,7 +608,8 @@ export default function ProjectTaskBoardPage() {
                   </div>
 
                   <p className="text-sm text-gray-600 leading-relaxed pt-1">
-                    {currentProject?.description || "No project description provided."}
+                    {currentProject?.description ||
+                      "No project description provided."}
                   </p>
                 </div>
 
@@ -486,7 +660,9 @@ export default function ProjectTaskBoardPage() {
                                   Start Date:
                                 </span>
                                 <span className="font-semibold text-gray-900">
-                                  {new Date(currentProject.startDate).toLocaleDateString("en-US", {
+                                  {new Date(
+                                    currentProject.startDate,
+                                  ).toLocaleDateString("en-US", {
                                     month: "short",
                                     day: "numeric",
                                     year: "numeric",
@@ -494,13 +670,18 @@ export default function ProjectTaskBoardPage() {
                                 </span>
                               </div>
                             )}
-                            {(currentProject?.dueDate || currentProject?.endDate) && (
+                            {(currentProject?.dueDate ||
+                              currentProject?.endDate) && (
                               <div className="flex justify-between py-2">
                                 <span className="font-medium text-gray-500">
                                   Target Completion:
                                 </span>
                                 <span className="font-semibold text-gray-900">
-                                  {new Date(currentProject.dueDate || currentProject.endDate || "").toLocaleDateString("en-US", {
+                                  {new Date(
+                                    currentProject.dueDate ||
+                                      currentProject.endDate ||
+                                      "",
+                                  ).toLocaleDateString("en-US", {
                                     month: "short",
                                     day: "numeric",
                                     year: "numeric",
@@ -529,7 +710,7 @@ export default function ProjectTaskBoardPage() {
                                 Completed Tasks:
                               </span>
                               <span className="font-semibold text-green-600">
-                                {completed} tasks
+                                {completed} {completed === 1 ? "task" : "tasks"}
                               </span>
                             </div>
                             <div className="flex justify-between py-2">
@@ -537,7 +718,8 @@ export default function ProjectTaskBoardPage() {
                                 In Progress:
                               </span>
                               <span className="font-semibold text-blue-600">
-                                {inProgress} tasks
+                                {inProgress}{" "}
+                                {inProgress === 1 ? "task" : "tasks"}
                               </span>
                             </div>
                           </div>
@@ -649,34 +831,102 @@ export default function ProjectTaskBoardPage() {
               </div>
             ) : activeTab === "activity" ? (
               /* ACTIVITY TAB VIEW */
-              <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-4">
-                <h2 className="text-lg font-bold text-gray-900">
-                  Project Activity Stream
-                </h2>
-                <div className="space-y-3">
-                  <div className="flex items-start space-x-3 text-xs border-b border-gray-100 pb-3">
-                    <span className="text-base">🚀</span>
-                    <div>
-                      <p className="font-bold text-gray-900">
-                        Project initialized
-                      </p>
-                      <p className="text-gray-500">
-                        System Admin created the project workspace.
-                      </p>
-                    </div>
+              <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-xs space-y-6">
+                <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+                  <div>
+                    <h2 className="text-lg font-bold text-gray-900 tracking-tight">
+                      Activities
+                    </h2>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      Audit trail of task transitions within this project
+                      workspace.
+                    </p>
                   </div>
-                  <div className="flex items-start space-x-3 text-xs border-b border-gray-100 pb-3">
-                    <span className="text-base">👤</span>
-                    <div>
-                      <p className="font-bold text-gray-900">
-                        Team members assigned
-                      </p>
-                      <p className="text-gray-500">
-                        Project team members attached to project configuration.
-                      </p>
-                    </div>
-                  </div>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700 border border-blue-100">
+                    ⚡ {projectActivities?.length || 0} Event
+                    {projectActivities?.length === 1 ? "" : "s"}
+                  </span>
                 </div>
+
+                {isActivitiesLoading ? (
+                  <div className="py-12 text-center text-xs font-semibold text-gray-400">
+                    Loading project activities...
+                  </div>
+                ) : !projectActivities || projectActivities.length === 0 ? (
+                  <div className="py-12 text-center text-xs font-medium text-gray-500 space-y-1">
+                    <p className="font-bold text-gray-700">
+                      No activities yet.
+                    </p>
+                    <p className="text-[11px] text-gray-400">
+                      Task status transitions will automatically generate audit
+                      events here.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {projectActivities.map((act) => {
+                      const formatStatus = (st: string) => {
+                        const norm = (st || "").toLowerCase();
+                        if (norm === "todo") return "Todo";
+                        if (norm === "in_progress") return "In Progress";
+                        if (norm === "done" || norm === "completed")
+                          return "Completed";
+                        if (norm === "backlog") return "Backlog";
+                        return st.charAt(0).toUpperCase() + st.slice(1);
+                      };
+
+                      const formatDate = (dateStr: string) => {
+                        try {
+                          const d = new Date(dateStr);
+                          if (Number.isNaN(d.getTime())) return dateStr;
+                          return d.toLocaleString("en-GB", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: true,
+                          });
+                        } catch {
+                          return dateStr;
+                        }
+                      };
+
+                      return (
+                        <div
+                          key={act.id}
+                          className="flex items-start space-x-3 text-xs border-b border-gray-100 pb-3.5 last:border-0 last:pb-0"
+                        >
+                          <span className="text-blue-600 font-bold text-sm leading-none mt-0.5">
+                            ●
+                          </span>
+                          <div className="space-y-0.5">
+                            <p className="text-xs font-medium text-gray-800">
+                              <strong className="text-gray-900 font-bold">
+                                {act.userName}
+                              </strong>{" "}
+                              moved{" "}
+                              <strong className="text-gray-900 font-bold">
+                                "{act.taskTitle}"
+                              </strong>{" "}
+                              from{" "}
+                              <span className="font-semibold text-gray-700">
+                                {formatStatus(act.fromStatus)}
+                              </span>{" "}
+                              to{" "}
+                              <span className="font-semibold text-emerald-700">
+                                {formatStatus(act.toStatus)}
+                              </span>
+                            </p>
+                            <p className="text-[11px] text-gray-400">
+                              {formatDate(act.createdAt)}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             ) : (
               /* KANBAN BOARD VIEW */
@@ -976,7 +1226,34 @@ export default function ProjectTaskBoardPage() {
                                               : task.dueDate
                                             : "No date"}
                                         </span>
-                                        {isAdmin ? (
+                                        {canUserUpdateTaskStatus ? (
+                                          <select
+                                            value={task.status}
+                                            onChange={async (e) => {
+                                              const newStatus = e.target
+                                                .value as TaskStatus;
+                                              await requestTaskStatusUpdate(
+                                                task,
+                                                newStatus,
+                                              );
+                                            }}
+                                            className="rounded-lg border border-gray-300 bg-white px-2 py-1 text-[11px] font-bold text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500 capitalize cursor-pointer hover:border-blue-400 shadow-2xs"
+                                          >
+                                            {columns.map((col) => (
+                                              <option
+                                                key={col.status}
+                                                value={col.status}
+                                              >
+                                                {col.label}
+                                              </option>
+                                            ))}
+                                          </select>
+                                        ) : (
+                                          <span className="rounded-lg bg-gray-100 border border-gray-200 px-2 py-1 text-[11px] font-bold text-gray-600 uppercase tracking-wider">
+                                            {col.label}
+                                          </span>
+                                        )}
+                                        {isAdmin && (
                                           <>
                                             <button
                                               type="button"
@@ -1012,44 +1289,6 @@ export default function ProjectTaskBoardPage() {
                                               </svg>
                                             </button>
                                           </>
-                                        ) : canUserUpdateTaskStatus ? (
-                                          <select
-                                            value={task.status}
-                                            onChange={async (e) => {
-                                              const newStatus = e.target
-                                                .value as TaskStatus;
-                                              try {
-                                                await updateTask({
-                                                  taskId: task.id,
-                                                  input: {
-                                                    status: newStatus,
-                                                    projectId: task.projectId,
-                                                  },
-                                                });
-                                                showToast(
-                                                  "Task status updated!",
-                                                );
-                                              } catch {
-                                                showToast(
-                                                  "Failed to update status.",
-                                                );
-                                              }
-                                            }}
-                                            className="rounded-lg border border-gray-300 bg-white px-2 py-1 text-[11px] font-bold text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500 capitalize cursor-pointer hover:border-blue-400 shadow-2xs"
-                                          >
-                                            {columns.map((col) => (
-                                              <option
-                                                key={col.status}
-                                                value={col.status}
-                                              >
-                                                {col.label}
-                                              </option>
-                                            ))}
-                                          </select>
-                                        ) : (
-                                          <span className="rounded-lg bg-gray-100 border border-gray-200 px-2 py-1 text-[11px] font-bold text-gray-600 uppercase tracking-wider">
-                                            {col.label}
-                                          </span>
                                         )}
                                       </div>
                                     </div>
@@ -1091,6 +1330,13 @@ export default function ProjectTaskBoardPage() {
           onClose={() => setViewingTask(null)}
           onEdit={(taskToEdit) => setEditingTask(taskToEdit)}
           onDelete={(taskToDelete) => setDeletingTask(taskToDelete)}
+          onUpdateStatus={async (taskToUpdate, newStatus) => {
+            await requestTaskStatusUpdate(taskToUpdate, newStatus);
+          }}
+          availableColumns={columns.map((c) => ({
+            status: c.status,
+            label: c.label,
+          }))}
           members={members}
           projectName={currentProject?.name}
           currentUser={currentUser}
@@ -1135,6 +1381,44 @@ export default function ProjectTaskBoardPage() {
                   className="rounded-xl bg-red-600 px-4 py-2 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition"
                 >
                   {isDeletingTask ? "Deleting..." : "Delete Task"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Backlog Move Confirmation Modal */}
+        {Boolean(pendingBacklogMove) && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
+            <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl border border-gray-100 space-y-4">
+              <h3 className="text-lg font-bold text-gray-900">
+                Move Task from Backlog
+              </h3>
+              <p className="text-xs text-gray-600 leading-relaxed">
+                Are you sure you want to move{" "}
+                <strong>"{pendingBacklogMove?.task.title}"</strong> out of the
+                Backlog to{" "}
+                <strong>
+                  {columns.find(
+                    (c) => c.status === pendingBacklogMove?.targetStatus,
+                  )?.label || pendingBacklogMove?.targetStatus}
+                </strong>
+                ?
+              </p>
+              <div className="flex justify-end space-x-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setPendingBacklogMove(null)}
+                  className="rounded-xl border border-gray-300 px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmBacklogMove}
+                  className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition"
+                >
+                  Confirm Move
                 </button>
               </div>
             </div>
@@ -1222,7 +1506,11 @@ export default function ProjectTaskBoardPage() {
                       Project Backlog
                     </h3>
                     <span className="rounded-full bg-amber-100 border border-amber-200 px-2.5 py-0.5 text-xs font-bold text-amber-800">
-                      {(tasks || []).filter((t) => t.status === "backlog").length} tasks
+                      {
+                        (tasks || []).filter((t) => t.status === "backlog")
+                          .length
+                      }{" "}
+                      tasks
                     </span>
                   </div>
                   <p className="text-xs text-gray-500 mt-0.5">
@@ -1248,7 +1536,8 @@ export default function ProjectTaskBoardPage() {
                   if (backlogTasks.length === 0) {
                     return (
                       <div className="p-12 text-center text-xs text-gray-400 rounded-xl border border-dashed border-gray-200">
-                        No tasks in backlog. All tasks are currently assigned to active Kanban columns!
+                        No tasks in backlog. All tasks are currently assigned to
+                        active Kanban columns!
                       </div>
                     );
                   }
@@ -1281,7 +1570,10 @@ export default function ProjectTaskBoardPage() {
                       )}
                       <div className="flex items-center justify-between pt-2 border-t border-amber-100/80 text-xs">
                         <span className="text-[11px] text-gray-500">
-                          Assignee: <strong className="text-gray-800">{getAssigneeName(bTask.assigneeId)}</strong>
+                          Assignee:{" "}
+                          <strong className="text-gray-800">
+                            {getAssigneeName(bTask.assigneeId)}
+                          </strong>
                         </span>
                         <div className="flex items-center space-x-2">
                           <label
@@ -1295,22 +1587,13 @@ export default function ProjectTaskBoardPage() {
                             value={bTask.status}
                             onChange={async (e) => {
                               const newStatus = e.target.value as TaskStatus;
-                              try {
-                                await updateTask({
-                                  taskId: bTask.id,
-                                  input: {
-                                    status: newStatus,
-                                    projectId: bTask.projectId,
-                                  },
-                                });
-                                showToast(`Moved task to ${columns.find((c) => c.status === newStatus)?.label || newStatus}!`);
-                              } catch {
-                                showToast("Failed to reassign backlog task.");
-                              }
+                              await requestTaskStatusUpdate(bTask, newStatus);
                             }}
                             className="rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-100 cursor-pointer"
                           >
-                            <option value="backlog" disabled>Select Column...</option>
+                            <option value="backlog" disabled>
+                              Select Column...
+                            </option>
                             {columns.map((col) => (
                               <option key={col.status} value={col.status}>
                                 {col.label}

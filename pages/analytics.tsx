@@ -18,8 +18,12 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Sidebar } from "@/components/Sidebar";
 import { TopBar } from "@/components/TopBar";
 import { useAnalyticsData } from "@/hooks/useAnalyticsData";
+import { useProjects } from "@/hooks/useProjects";
 
 export default function AnalyticsPage() {
+  const [selectedProjectId, setSelectedProjectId] = useState<string>("all");
+  const { data: projects = [] } = useProjects();
+
   const {
     isLoading,
     isError,
@@ -28,7 +32,7 @@ export default function AnalyticsPage() {
     tasksByStatus,
     tasksByAssignee,
     completionTrend,
-  } = useAnalyticsData();
+  } = useAnalyticsData(selectedProjectId);
 
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
@@ -59,7 +63,40 @@ export default function AnalyticsPage() {
             onMobileMenuToggle={() => setIsMobileSidebarOpen(true)}
           />
 
-          <main className="flex-1 p-8 overflow-y-auto">
+          <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto">
+            {/* Project Filter Section */}
+            <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <div>
+                <h2 className="text-sm font-bold text-gray-900">
+                  Analytics Overview
+                </h2>
+                <p className="text-xs text-gray-500">
+                  Filter task metrics by project or view workspace aggregates.
+                </p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <label
+                  htmlFor="project-filter-select"
+                  className="text-xs font-bold text-gray-700 whitespace-nowrap"
+                >
+                  Project:
+                </label>
+                <select
+                  id="project-filter-select"
+                  value={selectedProjectId}
+                  onChange={(e) => setSelectedProjectId(e.target.value)}
+                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 shadow-xs focus:border-blue-500 focus:outline-hidden cursor-pointer"
+                >
+                  <option value="all">All Projects</option>
+                  {projects.map((project) => (
+                    <option key={project.id} value={project.id}>
+                      {project.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
             {/* UI States: Loading / Error / Empty / Success */}
             {isLoading ? (
               <div className="p-12 text-center text-gray-500 font-medium">
@@ -68,7 +105,9 @@ export default function AnalyticsPage() {
             ) : isError ? (
               <div className="rounded-xl bg-red-50 p-6 text-center border border-red-200 text-red-700 flex flex-col items-center justify-center space-y-3">
                 <p className="text-sm font-semibold">
-                  {error ? error : "Unable to load analytics metrics data at this time. Please try again."}
+                  {error
+                    ? error
+                    : "Unable to load analytics metrics data at this time. Please try again."}
                 </p>
                 <button
                   type="button"
@@ -80,7 +119,9 @@ export default function AnalyticsPage() {
               </div>
             ) : !hasTasks ? (
               <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-12 text-center text-gray-500 font-medium">
-                No task data available to render charts.
+                {selectedProjectId !== "all"
+                  ? "No task data available for this project."
+                  : "No task data available to render charts."}
               </div>
             ) : (
               <div className="space-y-8">
@@ -104,7 +145,8 @@ export default function AnalyticsPage() {
                       if (activeStatusSlices.length === 0) {
                         return (
                           <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50/50 p-8 text-center text-xs text-gray-500">
-                            No tasks created yet in this workspace. Create tasks to view status distribution.
+                            No tasks created yet in this workspace. Create tasks
+                            to view status distribution.
                           </div>
                         );
                       }
@@ -120,6 +162,7 @@ export default function AnalyticsPage() {
                               cy="50%"
                               outerRadius={100}
                               label={renderPieLabel}
+                              activeShape={false}
                             >
                               {activeStatusSlices.map((entry) => (
                                 <Cell key={entry.name} fill={entry.color} />

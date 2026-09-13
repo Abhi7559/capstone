@@ -1,8 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
 import { memberServiceServer } from "@/server/services/member.service";
+import { getAuthContext } from "@/server/utils/auth";
 import type { InviteMemberInput, InviteMemberResponse } from "@/types/auth";
-import { authOptions } from "../auth/[...nextauth]";
 
 export default async function handler(
   req: NextApiRequest,
@@ -12,9 +11,7 @@ export default async function handler(
     return res.status(405).json({ message: "Method not allowed" });
   }
 
-  const session = await getServerSession(req, res, authOptions);
-  const headerRole = req.headers["x-user-role"] as string;
-  const userRole = session?.user?.role || headerRole || "admin";
+  const { userRole } = await getAuthContext(req, res);
 
   try {
     const input = (req.body || {}) as InviteMemberInput;

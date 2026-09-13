@@ -95,7 +95,7 @@ export default function DashboardPage() {
           <TopBar onMobileMenuToggle={() => setIsMobileSidebarOpen(true)} />
 
           {/* Scrollable Page Body */}
-          <main className="flex-1 p-8 overflow-y-auto">
+          <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto">
             {/* Dashboard Welcome Header */}
             <header className="mb-8 pb-4 border-b border-gray-200">
               <div>
@@ -134,39 +134,39 @@ export default function DashboardPage() {
               /* ADMIN DASHBOARD UI */
               <div className="space-y-8">
                 {/* Metric Summary Cards */}
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                  <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                    <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
+                <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
+                  <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
+                    <h3 className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
                       Total Projects
                     </h3>
-                    <p className="text-3xl font-extrabold text-gray-900">
+                    <p className="text-2xl sm:text-3xl font-extrabold text-gray-900">
                       {adminData.totalProjects}
                     </p>
                   </div>
 
-                  <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                    <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
+                  <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
+                    <h3 className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
                       Total Tasks
                     </h3>
-                    <p className="text-3xl font-extrabold text-gray-900">
+                    <p className="text-2xl sm:text-3xl font-extrabold text-gray-900">
                       {adminData.totalTasks}
                     </p>
                   </div>
 
-                  <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                    <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
+                  <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
+                    <h3 className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
                       Completed Tasks
                     </h3>
-                    <p className="text-3xl font-extrabold text-green-600">
+                    <p className="text-2xl sm:text-3xl font-extrabold text-green-600">
                       {adminData.completedTasks}
                     </p>
                   </div>
 
-                  <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                    <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
+                  <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
+                    <h3 className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
                       Overdue Tasks
                     </h3>
-                    <p className="text-3xl font-extrabold text-red-600">
+                    <p className="text-2xl sm:text-3xl font-extrabold text-red-600">
                       {adminData.overdueTasks}
                     </p>
                   </div>
@@ -183,7 +183,7 @@ export default function DashboardPage() {
                       onClick={() => router.push("/projects")}
                       className="text-xs font-semibold text-blue-600 hover:text-blue-800 transition"
                     >
-                      View All Tasks →
+                      View all projects →
                     </button>
                   </div>
 
@@ -358,39 +358,39 @@ export default function DashboardPage() {
               /* MEMBER DASHBOARD UI (Personal Workspace Overview) */
               <div className="space-y-8">
                 {/* Metric Summary Cards */}
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                  <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                    <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
+                <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
+                  <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
+                    <h3 className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
                       My Assigned Tasks
                     </h3>
-                    <p className="text-3xl font-extrabold text-blue-600">
+                    <p className="text-2xl sm:text-3xl font-extrabold text-blue-600">
                       {memberData.myAssignedTasks.length}
                     </p>
                   </div>
 
-                  <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                    <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
+                  <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
+                    <h3 className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
                       Overdue Items
                     </h3>
-                    <p className="text-3xl font-extrabold text-red-600">
+                    <p className="text-2xl sm:text-3xl font-extrabold text-red-600">
                       {memberData.myOverdueTasks.length}
                     </p>
                   </div>
 
-                  <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                    <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
+                  <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
+                    <h3 className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
                       Tasks Due Soon
                     </h3>
-                    <p className="text-3xl font-extrabold text-amber-600">
+                    <p className="text-2xl sm:text-3xl font-extrabold text-amber-600">
                       {memberData.tasksDueSoon.length}
                     </p>
                   </div>
 
-                  <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                    <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
+                  <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
+                    <h3 className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
                       My Projects
                     </h3>
-                    <p className="text-3xl font-extrabold text-purple-600">
+                    <p className="text-2xl sm:text-3xl font-extrabold text-purple-600">
                       {memberData.myProjects.length}
                     </p>
                   </div>

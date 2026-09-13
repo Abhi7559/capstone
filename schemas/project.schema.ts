@@ -19,8 +19,8 @@ export const multiStepProjectSchema = z
 
     // Step 2: Team & Timeline
     memberIds: z.array(z.string()).optional(),
-    startDate: z.string().min(1, "Start date is required"),
-    endDate: z.string().min(1, "End date is required"),
+    startDate: z.string().optional(),
+    endDate: z.string().optional(),
 
     // Step 3: Additional Details
     priority: z.enum(["low", "medium", "high"]),
