@@ -1196,17 +1196,35 @@ export default function ProjectTaskBoardPage() {
                                     {/* Card Footer with Edit Action */}
                                     <div className="border-t border-gray-100 pt-3 mt-1 flex items-center justify-between gap-2 text-xs">
                                       <div className="flex items-center space-x-1.5 min-w-0 text-gray-600">
-                                        <span className="h-5 w-5 rounded-full bg-slate-200 text-slate-700 font-bold text-[10px] flex items-center justify-center shrink-0">
-                                          {getAssigneeName(
-                                            task.assigneeId,
-                                          ).charAt(0)}
-                                        </span>
-                                        <span className="truncate text-[11px] font-semibold text-gray-700">
-                                          {
-                                            getAssigneeName(
+                                        {task.assigneeId ? (
+                                          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-blue-700 text-[10px] font-bold shrink-0 uppercase border border-blue-200">
+                                            {getAssigneeName(
                                               task.assigneeId,
-                                            ).split(" ")[0]
-                                          }
+                                            ).charAt(0)}
+                                          </div>
+                                        ) : (
+                                          <svg
+                                            className="h-4 w-4 text-gray-400 shrink-0"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            aria-hidden="true"
+                                          >
+                                            <path
+                                              strokeLinecap="round"
+                                              strokeLinejoin="round"
+                                              strokeWidth="2"
+                                              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                                            />
+                                          </svg>
+                                        )}
+                                        <span className="truncate text-[11px] font-medium text-gray-600">
+                                          {task.assigneeId
+                                            ? getAssigneeName(
+                                                task.assigneeId,
+                                              ).split(" ")[0]
+                                            : "Unassigned"}
                                         </span>
                                       </div>
 
