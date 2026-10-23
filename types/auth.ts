@@ -31,5 +31,6 @@ export interface InviteMemberInput {
 
 export interface InviteMemberResponse {
   member: User;
-  temporaryPassword: string;
+  temporaryPassword?: string;
+  emailSent?: boolean;
 }

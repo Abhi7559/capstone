@@ -4,6 +4,7 @@ import type {
   User,
 } from "@/types/auth";
 import { userRepository } from "../repositories/user.repository";
+import { emailService } from "./email.service";
 
 function generateTempPassword(): string {
   const chars =
@@ -24,10 +25,10 @@ export const memberServiceServer = {
     return userRepository.findAll();
   },
 
-  inviteMember(
+  async inviteMember(
     input: InviteMemberInput,
     currentUserRole?: string,
-  ): InviteMemberResponse {
+  ): Promise<InviteMemberResponse> {
     if (currentUserRole !== "admin") {
       throw new Error("Forbidden: Admin privileges required to invite members");
     }
@@ -54,9 +55,16 @@ export const memberServiceServer = {
 
     userRepository.create(newMember);
 
+    // Send temporary password via SMTP in real time
+    const emailResult = await emailService.sendTemporaryPassword({
+      toEmail: newMember.email,
+      name: newMember.name,
+      temporaryPassword: tempPassword,
+    });
+
     return {
       member: newMember,
-      temporaryPassword: tempPassword,
+      emailSent: emailResult.success,
     };
   },
 

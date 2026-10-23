@@ -20,7 +20,6 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
 
   const [successResult, setSuccessResult] =
     useState<InviteMemberResponse | null>(null);
-  const [copied, setCopied] = useState(false);
 
   const {
     register,
@@ -34,7 +33,6 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
 
   const handleClose = () => {
     setSuccessResult(null);
-    setCopied(false);
     resetForm();
     resetMutation();
     onClose();
@@ -46,14 +44,6 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
       setSuccessResult(result);
     } catch {
       // Error handled by hook
-    }
-  };
-
-  const handleCopyPassword = () => {
-    if (successResult?.temporaryPassword) {
-      navigator.clipboard.writeText(successResult.temporaryPassword);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
     }
   };
 
@@ -80,16 +70,20 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
 
         {successResult ? (
           <div className="space-y-4">
-            <div className="rounded-xl bg-green-50 p-4 border border-green-200">
-              <p className="text-xs font-bold text-green-900 mb-1">
-                Member Invited Successfully!
-              </p>
-              <p className="text-xs text-green-700 leading-relaxed">
-                Provide these credentials to the member so they can log in.
+            <div className="rounded-xl bg-emerald-50 p-4 border border-emerald-200">
+              <div className="flex items-center space-x-2">
+                <span className="text-emerald-600 text-lg">✉️</span>
+                <p className="text-xs font-bold text-emerald-900">
+                  Invitation & Credentials Sent!
+                </p>
+              </div>
+              <p className="text-xs text-emerald-700 leading-relaxed mt-1">
+                A temporary password has been emailed securely to{" "}
+                <strong>{successResult.member.email}</strong>.
               </p>
             </div>
 
-            <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 space-y-2">
+            <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 space-y-3">
               <div>
                 <span className="text-xs font-medium text-gray-500 uppercase">
                   Name
@@ -116,22 +110,9 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
                   </p>
                 </div>
               )}
-              <div>
-                <span className="text-xs font-medium text-gray-500 uppercase">
-                  Temporary Password
-                </span>
-                <div className="flex items-center justify-between mt-1">
-                  <code className="bg-white px-3 py-1.5 rounded-lg border border-gray-300 font-mono text-sm text-gray-800 font-bold select-all">
-                    {successResult.temporaryPassword}
-                  </code>
-                  <button
-                    type="button"
-                    onClick={handleCopyPassword}
-                    className="ml-2 rounded-lg bg-gray-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-gray-800 transition"
-                  >
-                    {copied ? "Copied! ✓" : "Copy Password"}
-                  </button>
-                </div>
+              <div className="pt-2 border-t border-gray-200 text-xs text-gray-500">
+                🔒 For security, temporary passwords are sent exclusively via
+                email and never displayed to administrators.
               </div>
             </div>
 

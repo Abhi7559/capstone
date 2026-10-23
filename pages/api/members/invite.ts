@@ -19,7 +19,7 @@ export default async function handler(
       return res.status(400).json({ message: "Name and Email are required." });
     }
 
-    const response = memberServiceServer.inviteMember(input, userRole);
+    const response = await memberServiceServer.inviteMember(input, userRole);
     return res.status(201).json(response);
   } catch (error) {
     const message = (error as Error).message;

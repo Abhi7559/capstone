@@ -53,6 +53,50 @@
       "designation": "Software Engineer",
       "joiningDate": "2026-09-10",
       "requiresPasswordChange": false
+    },
+    {
+      "id": "75d303c7-f13b-4e33-9da8-5c5e91444543",
+      "name": "Priya Nair1",
+      "email": "abhishe111k@gmail.com",
+      "role": "member",
+      "status": "active",
+      "password": "As8jGYm4pDO8",
+      "designation": "Devloper",
+      "joiningDate": "2026-10-21",
+      "requiresPasswordChange": true
+    },
+    {
+      "id": "c4b3573f-ce93-48a3-ac83-0f393d6025af",
+      "name": "Adbhishek b",
+      "email": "xlywah2721@betterr.org",
+      "role": "member",
+      "status": "active",
+      "password": "2u1Z&L8maG4c",
+      "designation": "Devloper",
+      "joiningDate": "2026-10-21",
+      "requiresPasswordChange": true
+    },
+    {
+      "id": "5c48afe1-231c-4398-aede-752f2e64f37e",
+      "name": "Abhishek G",
+      "email": "abhishekbganeshwadi@gmail.com",
+      "role": "member",
+      "status": "active",
+      "password": "us4%tMm123@d",
+      "designation": "Soft",
+      "joiningDate": "2026-10-22",
+      "requiresPasswordChange": true
+    },
+    {
+      "id": "ac545a8d-a6ab-4cde-b0b2-3c373a46e8a9",
+      "name": "Priya 11Nair",
+      "email": "wavvyq7926@betterr.org",
+      "role": "member",
+      "status": "active",
+      "password": "N8PeImbFJ*eJ",
+      "designation": "Devloper",
+      "joiningDate": "2026-10-21",
+      "requiresPasswordChange": true
     }
   ],
   "projects": [
@@ -62,10 +106,14 @@
       "description": "r3whjvasrgdb",
       "status": "planning",
       "createdAt": "2026-09-13T06:19:47.614Z",
-      "memberIds": ["2b058b10-c252-45b7-abba-cdcb3fa91937"],
+      "memberIds": [
+        "2b058b10-c252-45b7-abba-cdcb3fa91937"
+      ],
       "startDate": "2026-09-13",
       "dueDate": "2026-09-29",
-      "endDate": "2026-09-29"
+      "endDate": "2026-09-29",
+      "category": "Engineering",
+      "priority": "medium"
     },
     {
       "id": "1fcab206-da21-452e-a99e-32d9881fb2ba",
@@ -73,7 +121,9 @@
       "description": "",
       "status": "active",
       "createdAt": "2026-09-09T12:56:58.371Z",
-      "memberIds": ["b733e169-49d4-4d66-b4ef-2460da7a3a30"],
+      "memberIds": [
+        "b733e169-49d4-4d66-b4ef-2460da7a3a30"
+      ],
       "startDate": "2026-09-09",
       "dueDate": "2026-10-09",
       "endDate": "2026-10-09"
@@ -84,7 +134,9 @@
       "description": "",
       "status": "active",
       "createdAt": "2026-09-09T07:40:11.401Z",
-      "memberIds": ["b733e169-49d4-4d66-b4ef-2460da7a3a30"],
+      "memberIds": [
+        "b733e169-49d4-4d66-b4ef-2460da7a3a30"
+      ],
       "startDate": "2026-09-09",
       "dueDate": "2026-10-09",
       "endDate": "2026-10-09"
@@ -95,7 +147,9 @@
       "description": "",
       "status": "active",
       "createdAt": "2026-09-09T05:47:05.769Z",
-      "memberIds": ["b733e169-49d4-4d66-b4ef-2460da7a3a30"],
+      "memberIds": [
+        "b733e169-49d4-4d66-b4ef-2460da7a3a30"
+      ],
       "startDate": "2026-09-09",
       "dueDate": "2026-10-09",
       "endDate": "2026-10-09"
@@ -166,7 +220,9 @@
       "status": "done",
       "assigneeId": "b733e169-49d4-4d66-b4ef-2460da7a3a30",
       "dueDate": "2026-09-10",
-      "tags": ["backend"],
+      "tags": [
+        "backend"
+      ],
       "createdAt": "2026-09-09T06:01:17.225Z",
       "updatedAt": "2026-09-10T12:25:58.943Z"
     },
@@ -179,7 +235,9 @@
       "status": "done",
       "assigneeId": "b733e169-49d4-4d66-b4ef-2460da7a3a30",
       "dueDate": "2026-09-10",
-      "tags": ["backend"],
+      "tags": [
+        "backend"
+      ],
       "createdAt": "2026-09-09T05:59:45.294Z",
       "updatedAt": "2026-09-09T06:24:49.453Z"
     },
@@ -205,7 +263,9 @@
       "status": "todo",
       "assigneeId": "b733e169-49d4-4d66-b4ef-2460da7a3a30",
       "dueDate": "2026-09-10",
-      "tags": ["backend"],
+      "tags": [
+        "backend"
+      ],
       "createdAt": "2026-09-09T05:52:50.955Z",
       "updatedAt": "2026-09-10T12:11:44.536Z"
     },
@@ -218,9 +278,11 @@
       "status": "in_progress",
       "assigneeId": "2b058b10-c252-45b7-abba-cdcb3fa91937",
       "dueDate": "2026-09-10",
-      "tags": ["backend"],
+      "tags": [
+        "backend"
+      ],
       "createdAt": "2026-09-09T05:51:20.155Z",
-      "updatedAt": "2026-09-09T06:03:58.053Z"
+      "updatedAt": "2026-10-23T04:04:27.301Z"
     },
     {
       "id": "5c6d5576-b4b8-4490-a7d8-b58dd9f8874e",
@@ -244,7 +306,9 @@
       "status": "in_progress",
       "assigneeId": "b733e169-49d4-4d66-b4ef-2460da7a3a30",
       "dueDate": "2026-09-10",
-      "tags": ["backend"],
+      "tags": [
+        "backend"
+      ],
       "createdAt": "2026-09-09T05:48:58.230Z",
       "updatedAt": "2026-09-09T05:54:37.488Z"
     },
@@ -257,7 +321,9 @@
       "status": "in_progress",
       "assigneeId": "2b058b10-c252-45b7-abba-cdcb3fa91937",
       "dueDate": "2026-09-10",
-      "tags": ["backend"],
+      "tags": [
+        "backend"
+      ],
       "createdAt": "2026-09-09T05:48:18.929Z",
       "updatedAt": "2026-09-09T06:25:10.096Z"
     },
@@ -270,13 +336,37 @@
       "status": "todo",
       "assigneeId": "b733e169-49d4-4d66-b4ef-2460da7a3a30",
       "dueDate": "2026-09-10",
-      "tags": ["backend"],
+      "tags": [
+        "backend"
+      ],
       "createdAt": "2026-09-09T05:37:16.770Z",
-      "updatedAt": "2026-09-13T06:20:34.537Z"
+      "updatedAt": "2026-10-23T03:17:41.121Z"
     }
   ],
   "activity": [],
   "projectActivities": [
+    {
+      "id": "b0ace2a3-8772-44bb-a37d-f7597c8c337b",
+      "projectId": "8e50124d-efd2-414e-bbde-777f8d866480",
+      "taskId": "d4a9d1af-47bb-4fb4-b6c1-021b38ce5d70",
+      "taskTitle": "Task 1",
+      "userId": "550e8400-e29b-41d4-a716-446655440000",
+      "userName": "System Admin",
+      "fromStatus": "in_progress",
+      "toStatus": "todo",
+      "createdAt": "2026-10-23T03:17:41.125Z"
+    },
+    {
+      "id": "0573e091-e78f-42f8-89ad-c9e501cb28bd",
+      "projectId": "8e50124d-efd2-414e-bbde-777f8d866480",
+      "taskId": "d4a9d1af-47bb-4fb4-b6c1-021b38ce5d70",
+      "taskTitle": "Task 1",
+      "userId": "550e8400-e29b-41d4-a716-446655440000",
+      "userName": "System Admin",
+      "fromStatus": "todo",
+      "toStatus": "in_progress",
+      "createdAt": "2026-10-23T03:17:38.054Z"
+    },
     {
       "id": "40ce50bb-d7ca-4852-998e-af21c32acb59",
       "projectId": "8e50124d-efd2-414e-bbde-777f8d866480",
