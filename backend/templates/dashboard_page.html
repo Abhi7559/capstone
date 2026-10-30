@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Hub - Live HTMX Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- HTMX 2.0 CDN -->
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <style>
+        .htmx-indicator {
+            display: none;
+        }
+        .htmx-request .htmx-indicator,
+        .htmx-request.htmx-indicator {
+            display: inline-block;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen text-gray-900 font-sans antialiased">
+    <!-- Top Navigation Bar -->
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 rounded-xl bg-indigo-600 text-white font-extrabold flex items-center justify-center text-lg shadow-sm">
+                    ⚡
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-gray-900 leading-tight">Team Hub</h1>
+                    <p class="text-xs text-gray-500">FastAPI + Jinja2 + HTMX Server-Rendered Dashboard</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                    HTMX Mode
+                </span>
+                <a href="/docs" target="_blank" class="text-xs font-medium text-gray-600 hover:text-indigo-600 transition">
+                    Swagger API Docs &rarr;
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="max-w-7xl mx-auto px-6 py-8">
+        <!-- Introduction Header -->
+        <div class="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <h2 class="text-2xl font-black text-gray-900 tracking-tight">Workspace Overview</h2>
+                <p class="text-sm text-gray-600 mt-1">
+                    Live metrics rendered on the server with Jinja2 and updated automatically via HTMX polling.
+                </p>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="text-xs text-gray-500 bg-white border border-gray-200 rounded-lg px-3 py-1.5 shadow-xs">
+                    Redis Cache TTL: <strong>60s</strong>
+                </span>
+            </div>
+        </div>
+
+        <!-- Dynamic Container for HTMX Stats Fragment -->
+        {% include "dashboard_stats_fragment.html" %}
+    </main>
+
+    <footer class="max-w-7xl mx-auto px-6 py-8 mt-12 border-t border-gray-200 text-center text-xs text-gray-400">
+        Team Hub Capstone &bull; High-Performance Server-Rendered UI with FastAPI, Jinja2 & HTMX
+    </footer>
+</body>
+</html>
+
