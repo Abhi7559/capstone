@@ -1,4 +1,5 @@
 import json
+from typing import List, Union
 from pydantic import Field, AliasChoices, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -61,25 +62,27 @@ class Settings(BaseSettings):
     API_V1_PREFIX: str = "/task_management/api/v1"
 
     # CORS
-    BACKEND_CORS_ORIGINS: list[str] = Field(
+    BACKEND_CORS_ORIGINS: Union[str, List[str]] = Field(
         default=["http://localhost:3000", "http://localhost:3001"],
         validation_alias="CORS_ORIGINS",
         description="Allowed CORS origins",
     )
 
-    @field_validator("BACKEND_CORS_ORIGINS", mode="before")
+    @field_validator("BACKEND_CORS_ORIGINS", mode="after")
     @classmethod
-    def assemble_cors_origins(cls, v):
+    def assemble_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
         """Allow comma-separated strings or JSON arrays for CORS origins."""
         if isinstance(v, str):
             v_trimmed = v.strip()
             if v_trimmed.startswith("[") and v_trimmed.endswith("]"):
                 try:
-                    return json.loads(v_trimmed)
+                    parsed = json.loads(v_trimmed)
+                    if isinstance(parsed, list):
+                        return [str(item).strip() for item in parsed if str(item).strip()]
                 except Exception:
                     pass
             return [origin.strip() for origin in v_trimmed.split(",") if origin.strip()]
-        return v
+        return [str(item).strip() for item in v if str(item).strip()]
 
     # SMTP Email Configuration
     SMTP_HOST: str = Field(
