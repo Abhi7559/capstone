@@ -49,19 +49,24 @@ export default function SignupPage() {
 
     try {
       // First try directly calling the FastAPI backend via apiEndpoint
-      let res = await fetch(apiEndpoint("/auth/signup"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: email.trim().toLowerCase(),
-          newPassword,
-          confirmPassword,
-          token: token || null,
-        }),
-      });
+      let res: Response | null = null;
+      try {
+        res = await fetch(apiEndpoint("/auth/signup"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: email.trim().toLowerCase(),
+            newPassword,
+            confirmPassword,
+            token: token || null,
+          }),
+        });
+      } catch {
+        // Direct call failed (network / CORS / bad domain)
+      }
 
       // Fallback to local next route if backend direct call failed
-      if (!res.ok) {
+      if (!res || !res.ok) {
         res = await fetch("/api/auth/signup", {
           method: "POST",
           headers: { "Content-Type": "application/json" },

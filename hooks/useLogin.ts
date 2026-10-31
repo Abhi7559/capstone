@@ -7,26 +7,51 @@ import type { User } from "@/types/auth";
 import { apiEndpoint } from "@/utils/apiConfig";
 
 async function loginRequest(credentials: LoginCredentials): Promise<User> {
-  const response = await fetch(apiEndpoint("/auth/login"), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(credentials),
-  });
+  const directUrl = apiEndpoint("/auth/login");
+  try {
+    const response = await fetch(directUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(credentials),
+    });
 
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    throw new Error(err.message || err.detail || "Invalid email or password");
-  }
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || err.detail || "Invalid email or password");
+    }
 
-  const data = await response.json();
-  const user: User = data.user || data;
-  if (data.accessToken) {
-    user.token = data.accessToken;
+    const data = await response.json();
+    const user: User = data.user || data;
+    if (data.accessToken) {
+      user.token = data.accessToken;
+    }
+    if (data.refreshToken) {
+      user.refreshToken = data.refreshToken;
+    }
+    return user;
+  } catch (err: any) {
+    // If direct fetch fails (network error, CORS block, or invalid URL), fallback to Next.js API route proxy
+    if (
+      directUrl !== "/api/auth/login" &&
+      (err.name === "TypeError" ||
+        err.message?.includes("fetch") ||
+        err.message?.includes("Failed"))
+    ) {
+      const fallbackRes = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(credentials),
+      });
+      if (fallbackRes.ok) {
+        return await fallbackRes.json();
+      }
+      const errData = await fallbackRes.json().catch(() => ({}));
+      throw new Error(
+        errData.message || errData.detail || "Invalid email or password",
+      );
+    }
+    throw err;
   }
-  if (data.refreshToken) {
-    user.refreshToken = data.refreshToken;
-  }
-  return user;
 }
 
 export function useLogin() {
@@ -69,18 +94,40 @@ async function changePasswordRequest(data: {
   newPassword: string;
   confirmPassword: string;
 }): Promise<User> {
-  const response = await fetch(apiEndpoint("/auth/change-password"), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
+  const directUrl = apiEndpoint("/auth/change-password");
+  try {
+    const response = await fetch(directUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
 
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    throw new Error(err.message || "Failed to update password");
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || "Failed to update password");
+    }
+
+    return response.json();
+  } catch (err: any) {
+    if (
+      directUrl !== "/api/auth/change-password" &&
+      (err.name === "TypeError" ||
+        err.message?.includes("fetch") ||
+        err.message?.includes("Failed"))
+    ) {
+      const fallbackRes = await fetch("/api/auth/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (fallbackRes.ok) {
+        return await fallbackRes.json();
+      }
+      const errData = await fallbackRes.json().catch(() => ({}));
+      throw new Error(errData.message || "Failed to update password");
+    }
+    throw err;
   }
-
-  return response.json();
 }
 
 export function useChangePassword() {
