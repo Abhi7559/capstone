@@ -8,10 +8,27 @@
  */
 import { useAppStore } from "@/store";
 
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ||
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ||
-  "/api";
+function resolveApiBaseUrl(): string {
+  const direct =
+    process.env.NEXT_PUBLIC_API_BASE_URL?.trim() ||
+    process.env.NEXT_PUBLIC_API_URL?.trim();
+  if (direct) {
+    return direct.replace(/\/$/, "");
+  }
+
+  const backendHost = process.env.NEXT_PUBLIC_BACKEND_URL?.trim();
+  if (backendHost) {
+    const cleanHost = backendHost.replace(/\/$/, "");
+    if (cleanHost.includes("/task_management/api/v1")) {
+      return cleanHost;
+    }
+    return `${cleanHost}/task_management/api/v1`;
+  }
+
+  return "/api";
+}
+
+export const API_BASE_URL = resolveApiBaseUrl();
 
 /**
  * Helper to build complete API endpoints cleanly.
