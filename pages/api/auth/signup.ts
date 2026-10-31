@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { userRepository } from "@/server/repositories/user.repository";
 import type { User } from "@/types/auth";
+import { getBackendHost } from "@/utils/apiConfig";
 
 export default async function handler(
   req: NextApiRequest,
@@ -27,11 +28,7 @@ export default async function handler(
 
     // 1. Try FastAPI backend if running
     try {
-      const backendUrl =
-        process.env.BACKEND_API_URL ||
-        (process.env.NODE_ENV === "production"
-          ? "http://backend:8000"
-          : "http://localhost:8000");
+      const backendUrl = getBackendHost();
       const backendRes = await fetch(
         `${backendUrl}/task_management/api/v1/auth/signup`,
         {

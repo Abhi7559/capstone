@@ -16,7 +16,9 @@ function resolveApiBaseUrl(): string {
     return direct.replace(/\/$/, "");
   }
 
-  const backendHost = process.env.NEXT_PUBLIC_BACKEND_URL?.trim();
+  const backendHost =
+    process.env.NEXT_PUBLIC_BACKEND_URL?.trim() ||
+    process.env.BACKEND_API_URL?.trim();
   if (backendHost) {
     const cleanHost = backendHost.replace(/\/$/, "");
     if (cleanHost.includes("/task_management/api/v1")) {
@@ -29,6 +31,36 @@ function resolveApiBaseUrl(): string {
 }
 
 export const API_BASE_URL = resolveApiBaseUrl();
+
+/**
+ * Resolves the raw backend host (e.g. "https://teamhub-backend-p5a1.onrender.com")
+ * used by Next.js serverless API routes to reach FastAPI.
+ */
+export function getBackendHost(): string {
+  const direct = process.env.BACKEND_API_URL?.trim();
+  if (direct) return direct.replace(/\/$/, "");
+
+  const nextPublicBackend = process.env.NEXT_PUBLIC_BACKEND_URL?.trim();
+  if (nextPublicBackend) {
+    return nextPublicBackend
+      .replace(/\/$/, "")
+      .replace(/\/task_management\/api\/v1\/?$/, "");
+  }
+
+  const nextPublicApi =
+    process.env.NEXT_PUBLIC_API_URL?.trim() ||
+    process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
+  if (nextPublicApi) {
+    return nextPublicApi
+      .replace(/\/$/, "")
+      .replace(/\/task_management\/api\/v1\/?$/, "");
+  }
+
+  // Inside Docker use internal service hostname; on Vercel or local use localhost
+  return process.env.NODE_ENV === "production" && !process.env.VERCEL
+    ? "http://backend:8000"
+    : "http://localhost:8000";
+}
 
 /**
  * Helper to build complete API endpoints cleanly.

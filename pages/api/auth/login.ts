@@ -3,6 +3,7 @@ import type { LoginCredentials } from "@/schemas/auth.schema";
 import { userRepository } from "@/server/repositories/user.repository";
 import { authServiceServer } from "@/server/services/auth.service";
 import type { User } from "@/types/auth";
+import { getBackendHost } from "@/utils/apiConfig";
 
 export default async function handler(
   req: NextApiRequest,
@@ -18,7 +19,7 @@ export default async function handler(
 
     // 1. Try FastAPI backend if running
     try {
-      const backendUrl = process.env.BACKEND_API_URL || "http://localhost:8000";
+      const backendUrl = getBackendHost();
       const backendRes = await fetch(
         `${backendUrl}/task_management/api/v1/auth/login`,
         {

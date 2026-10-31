@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import NextAuth, { type NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { db } from "@/server/database/db";
+import { getBackendHost } from "@/utils/apiConfig";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -18,11 +19,7 @@ export const authOptions: NextAuthOptions = {
 
         // 1. Try FastAPI backend first
         try {
-          const backendUrl =
-            process.env.BACKEND_API_URL ||
-            (process.env.NODE_ENV === "production"
-              ? "http://backend:8000"
-              : "http://localhost:8000");
+          const backendUrl = getBackendHost();
           const backendRes = await fetch(
             `${backendUrl}/task_management/api/v1/auth/login`,
             {
