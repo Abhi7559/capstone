@@ -3,7 +3,7 @@ FROM python:3.12-slim-bookworm
 WORKDIR /app
 
 # Install uv for fast dependency management
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
+RUN pip install --no-cache-dir uv
 
 # Copy project metadata & lockfile first for layer caching
 COPY pyproject.toml uv.lock ./

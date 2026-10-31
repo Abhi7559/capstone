@@ -32,7 +32,13 @@ export const multiStepProjectSchema = z
       "archived",
     ]),
     budget: z.string().optional(),
-    category: z.string().min(1, "Category selection is required"),
+    category: z.enum([
+      "Engineering",
+      "Product Design",
+      "Marketing & Brand",
+      "Operations",
+      "Security & Compliance",
+    ]),
   })
   .refine(
     (data) => {

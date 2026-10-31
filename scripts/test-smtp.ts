@@ -9,7 +9,10 @@ if (fs.existsSync(envPath)) {
     const trimmed = line.trim();
     if (trimmed && !trimmed.startsWith("#") && trimmed.includes("=")) {
       const [key, ...vals] = trimmed.split("=");
-      const val = vals.join("=").replace(/^["']|["']$/g, "").trim();
+      const val = vals
+        .join("=")
+        .replace(/^["']|["']$/g, "")
+        .trim();
       process.env[key.trim()] = val;
     }
   }
@@ -29,16 +32,20 @@ async function main() {
   if (!process.env.SMTP_USER) {
     console.error("\n❌ Error: SMTP_USER is empty in .env.local!");
     console.error("Please add your Gmail address in .env.local on line 4:");
-    console.error('SMTP_USER=your_email@gmail.com');
+    console.error("SMTP_USER=your_email@gmail.com");
     process.exit(1);
   }
 
   if (!targetEmail) {
-    console.error("\n❌ Error: No target email provided to receive test message.");
+    console.error(
+      "\n❌ Error: No target email provided to receive test message.",
+    );
     process.exit(1);
   }
 
-  console.log(`\n⏳ Sending test temporary password email to: ${targetEmail}...`);
+  console.log(
+    `\n⏳ Sending test temporary password email to: ${targetEmail}...`,
+  );
 
   const result = await emailService.sendTemporaryPassword({
     toEmail: targetEmail,
@@ -49,7 +56,9 @@ async function main() {
   if (result.success) {
     console.log(`\n✅ SUCCESS! Email sent successfully.`);
     console.log(`Message ID: ${result.messageId}`);
-    console.log(`👉 Check inbox of ${targetEmail} (also check Spam/Promotions folder).`);
+    console.log(
+      `👉 Check inbox of ${targetEmail} (also check Spam/Promotions folder).`,
+    );
   } else {
     console.error(`\n❌ FAILED to send email.`);
     console.error(`Error details:`, result.error);

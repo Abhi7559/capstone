@@ -11,6 +11,8 @@ export interface User {
   designation?: string;
   joiningDate?: string;
   requiresPasswordChange?: boolean;
+  token?: string;
+  refreshToken?: string;
 }
 
 export interface AuthState {
@@ -33,4 +35,8 @@ export interface InviteMemberResponse {
   member: User;
   temporaryPassword?: string;
   emailSent?: boolean;
+  invitationToken?: string;
+  signupUrl?: string;
+  signup_url?: string;
+  message?: string;
 }

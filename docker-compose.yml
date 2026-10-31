@@ -1,16 +1,90 @@
-version: '3.8'
-
 services:
-  taskboard-app:
+  # 1. PostgreSQL 16 Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: teamhub_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-postgres_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-postgres_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  # 2. Redis 7 In-Memory Cache
+  redis:
+    image: redis:7-alpine
+    container_name: teamhub_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 3s
+
+  # 3. FastAPI Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: teamhub_backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-postgres_db}
+      - REDIS_URL=redis://redis:6379/0
+      - ENVIRONMENT=development
+      - DEBUG=True
+      - PORT=8000
+      - HOST=0.0.0.0
+      - API_V1_PREFIX=/task_management/api/v1
+      - SECRET_KEY=${SECRET_KEY:-development-secret-key-32-chars-long-teamhub}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=30
+      - REFRESH_TOKEN_EXPIRE_DAYS=7
+      - CORS_ORIGINS=["http://localhost:3000","http://localhost:3001"]
+      - FRONTEND_URL=http://localhost:3000
+      - SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER:-abhishekbganeshwadi@gmail.com}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-csxb ilgm dnqx kgud}
+      - SMTP_FROM_EMAIL=${SMTP_FROM_EMAIL:-abhishekbganeshwadi@gmail.com}
+      - EMAILS_FROM_NAME=Team Hub
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # 4. Next.js Frontend
+  frontend:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: taskboard_app_container
+    container_name: teamhub_frontend
+    restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=production
       - PORT=3000
-    restart: unless-stopped
-    volumes:
-      - ./data:/app/data
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/task_management/api/v1
+      - NEXTAUTH_URL=http://localhost:3000
+      - BACKEND_API_URL=http://backend:8000
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+    driver: local

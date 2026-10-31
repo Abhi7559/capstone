@@ -7,6 +7,7 @@ import type {
   TaskFilters,
   UpdateTaskInput,
 } from "@/types/task";
+import { apiEndpoint, getAuthHeaders } from "@/utils/apiConfig";
 
 async function fetchProjectTasks(
   projectId?: string,
@@ -31,11 +32,11 @@ async function fetchProjectTasks(
     params.append("dueDate", filters.dueDate);
   }
 
-  const response = await fetch(`/api/tasks?${params.toString()}`, {
-    headers: {
+  const response = await fetch(apiEndpoint(`/tasks?${params.toString()}`), {
+    headers: getAuthHeaders({
       "x-user-role": userRole || "",
       "x-user-id": userId || "",
-    },
+    }),
   });
 
   if (!response.ok) {
@@ -50,7 +51,7 @@ async function fetchTaskById(
   userRole?: string,
   userId?: string,
 ): Promise<Task> {
-  const response = await fetch(`/api/tasks/${taskId}`, {
+  const response = await fetch(apiEndpoint(`/tasks/${taskId}`), {
     headers: {
       "x-user-role": userRole || "",
       "x-user-id": userId || "",
@@ -69,7 +70,7 @@ async function createTaskRequest(
   userRole?: string,
   userId?: string,
 ): Promise<Task> {
-  const response = await fetch("/api/tasks", {
+  const response = await fetch(apiEndpoint("/tasks"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -93,7 +94,7 @@ async function updateTaskRequest(
   userRole?: string,
   userId?: string,
 ): Promise<Task> {
-  const response = await fetch(`/api/tasks/${taskId}`, {
+  const response = await fetch(apiEndpoint(`/tasks/${taskId}`), {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -116,7 +117,7 @@ async function deleteTaskRequest(
   userRole?: string,
   userId?: string,
 ): Promise<void> {
-  const response = await fetch(`/api/tasks/${taskId}`, {
+  const response = await fetch(apiEndpoint(`/tasks/${taskId}`), {
     method: "DELETE",
     headers: {
       "x-user-role": userRole || "admin",
@@ -208,12 +209,15 @@ async function fetchProjectActivities(
   userRole?: string,
   userId?: string,
 ): Promise<ProjectActivity[]> {
-  const response = await fetch(`/api/projects/${projectId}/activities`, {
-    headers: {
-      "x-user-role": userRole || "admin",
-      "x-user-id": userId || "550e8400-e29b-41d4-a716-446655440000",
+  const response = await fetch(
+    apiEndpoint(`/projects/${projectId}/activities`),
+    {
+      headers: {
+        "x-user-role": userRole || "admin",
+        "x-user-id": userId || "550e8400-e29b-41d4-a716-446655440000",
+      },
     },
-  });
+  );
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));

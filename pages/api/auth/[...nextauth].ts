@@ -16,6 +16,39 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Missing email or password");
         }
 
+        // 1. Try FastAPI backend first
+        try {
+          const backendUrl =
+            process.env.BACKEND_API_URL ||
+            (process.env.NODE_ENV === "production"
+              ? "http://backend:8000"
+              : "http://localhost:8000");
+          const backendRes = await fetch(
+            `${backendUrl}/task_management/api/v1/auth/login`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                email: credentials.email,
+                password: credentials.password,
+              }),
+            },
+          );
+
+          if (backendRes.ok) {
+            const data = await backendRes.json();
+            const u = data.user || data;
+            return {
+              id: u.id,
+              name: u.name,
+              email: u.email,
+              role: u.role,
+            };
+          }
+        } catch {
+          // Fallback to local db below
+        }
+
         const user = db.findUserByEmail(credentials.email);
         if (!user) {
           throw new Error("Invalid credentials");

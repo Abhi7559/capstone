@@ -724,7 +724,7 @@ export default function ProjectsPage() {
               </div>
             ) : (
               /* TABLE VIEW */
-              <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-x-auto">
+              <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-x-auto min-h-[320px] pb-10">
                 <table className="w-full min-w-[680px] text-left text-sm text-gray-600">
                   <thead className="bg-gray-50/80 text-[11px] uppercase text-gray-400 font-bold border-b border-gray-200">
                     <tr>
@@ -736,41 +736,67 @@ export default function ProjectsPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 overflow-visible">
-                    {filteredProjects.map((project) => (
-                      <tr
-                        key={project.id}
-                        className="hover:bg-gray-50/60 transition"
-                      >
-                        <td className="px-6 py-4 font-bold text-gray-900">
-                          <a
-                            href={`/projects/${project.id}?tab=kanban`}
-                            className="hover:text-blue-600 transition"
-                          >
-                            {project.name}
-                          </a>
-                        </td>
-                        <td className="px-6 py-4 text-xs text-gray-500 max-w-xs truncate">
-                          {project.description}
-                        </td>
-                        <td className="px-6 py-4">
-                          <span
-                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize ${
-                              project.status === "active"
-                                ? "bg-emerald-50 text-emerald-800"
-                                : "bg-purple-50 text-purple-800"
-                            }`}
-                          >
-                            {project.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          {renderAvatarStack(project.memberIds)}
-                        </td>
-                        <td className="px-6 py-4 text-right relative">
-                          {(() => {
-                            const isDropdownOpen =
-                              activeDropdownId === project.id;
-                            return (
+                    {filteredProjects.map((project, index) => {
+                      const isNearBottom =
+                        index >= Math.max(1, filteredProjects.length - 2);
+                      const isDropdownOpen = activeDropdownId === project.id;
+                      return (
+                        <tr
+                          key={project.id}
+                          className="hover:bg-gray-50/60 transition"
+                        >
+                          <td className="px-6 py-4 font-bold text-gray-900">
+                            <a
+                              href={`/projects/${project.id}?tab=kanban`}
+                              className="hover:text-blue-600 transition"
+                            >
+                              {project.name}
+                            </a>
+                          </td>
+                          <td className="px-6 py-4 text-xs text-gray-500 max-w-xs truncate">
+                            {project.description}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span
+                              className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize ${
+                                project.status === "active"
+                                  ? "bg-emerald-50 text-emerald-800"
+                                  : "bg-purple-50 text-purple-800"
+                              }`}
+                            >
+                              {project.status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            {renderAvatarStack(project.memberIds)}
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex items-center justify-end space-x-1">
+                              {isAdmin && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenEditModal(project)}
+                                  className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition focus:outline-none"
+                                  title="Edit Project"
+                                  aria-label="Edit Project"
+                                >
+                                  <svg
+                                    className="w-4 h-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                    aria-hidden="true"
+                                  >
+                                    <title>Edit Project</title>
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth="2"
+                                      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                                    />
+                                  </svg>
+                                </button>
+                              )}
                               <div
                                 className="relative inline-block text-left"
                                 ref={isDropdownOpen ? dropdownRef : null}
@@ -795,9 +821,15 @@ export default function ProjectsPage() {
                                   </svg>
                                 </button>
 
-                                {/* Table Dropdown Menu Matching Image 2 */}
+                                {/* Table Dropdown Menu Positioned Responsively */}
                                 {isDropdownOpen && (
-                                  <div className="absolute right-0 top-full mt-1 w-48 rounded-2xl bg-white p-2.5 shadow-2xl border border-gray-100 z-50 text-xs space-y-1 text-left animate-in fade-in zoom-in-95 duration-100">
+                                  <div
+                                    className={`absolute right-0 ${
+                                      isNearBottom
+                                        ? "bottom-full mb-2 origin-bottom-right"
+                                        : "top-full mt-1 origin-top-right"
+                                    } w-48 rounded-2xl bg-white p-2.5 shadow-2xl border border-gray-100 z-50 text-xs space-y-1 text-left animate-in fade-in zoom-in-95 duration-100`}
+                                  >
                                     <a
                                       href={`/projects/${project.id}?tab=kanban`}
                                       className="flex items-center px-3 py-2 rounded-xl text-gray-700 hover:bg-blue-50 hover:text-blue-600 font-medium transition"
@@ -818,7 +850,7 @@ export default function ProjectsPage() {
                                           onClick={() =>
                                             handleOpenEditModal(project)
                                           }
-                                          className="w-full flex items-center px-3 py-2 rounded-xl text-gray-700 hover:bg-gray-50 font-medium transition text-left"
+                                          className="w-full flex items-center px-3 py-2 rounded-xl text-blue-600 hover:bg-blue-50 font-semibold transition text-left"
                                         >
                                           ✏️ Edit Details
                                         </button>
@@ -850,11 +882,11 @@ export default function ProjectsPage() {
                                   </div>
                                 )}
                               </div>
-                            );
-                          })()}
-                        </td>
-                      </tr>
-                    ))}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

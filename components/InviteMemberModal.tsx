@@ -20,6 +20,7 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
 
   const [successResult, setSuccessResult] =
     useState<InviteMemberResponse | null>(null);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   const {
     register,
@@ -33,6 +34,7 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
 
   const handleClose = () => {
     setSuccessResult(null);
+    setCopiedLink(false);
     resetForm();
     resetMutation();
     onClose();
@@ -110,11 +112,41 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
                   </p>
                 </div>
               )}
-              <div className="pt-2 border-t border-gray-200 text-xs text-gray-500">
-                🔒 For security, temporary passwords are sent exclusively via
-                email and never displayed to administrators.
-              </div>
             </div>
+
+            {/* Direct Activation / Signup Link Box */}
+            {(successResult.signupUrl || successResult.signup_url) && (
+              <div className="rounded-xl bg-indigo-50/70 p-4 border border-indigo-200 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-indigo-950 flex items-center gap-1.5">
+                    🔗 Direct Activation Link
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const link =
+                        successResult.signupUrl ||
+                        successResult.signup_url ||
+                        "";
+                      navigator.clipboard.writeText(link);
+                      setCopiedLink(true);
+                      setTimeout(() => setCopiedLink(false), 2000);
+                    }}
+                    className="text-xs font-bold text-indigo-700 hover:text-indigo-900 bg-white px-2.5 py-1 rounded-md border border-indigo-200 shadow-sm transition active:scale-95"
+                  >
+                    {copiedLink ? "✓ Copied!" : "📋 Copy Link"}
+                  </button>
+                </div>
+                <div className="text-xs text-indigo-900 font-mono bg-white p-2.5 rounded-lg border border-indigo-200 break-all select-all shadow-inner">
+                  {successResult.signupUrl || successResult.signup_url}
+                </div>
+                <p className="text-[11px] text-gray-600 leading-snug">
+                  If SMTP email delivery is simulated or pending, copy this link
+                  directly and share it with the member to let them set their
+                  password.
+                </p>
+              </div>
+            )}
 
             <button
               type="button"

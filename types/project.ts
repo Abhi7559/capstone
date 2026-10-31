@@ -7,6 +7,15 @@ export type ProjectStatus =
   | "completed"
   | "archived";
 
+// Matches the backend KanbanColumnSchema (camelCase from FastAPI)
+export interface KanbanColumnDef {
+  id: string;
+  label: string;
+  status: string;
+  color: string;
+  isCustom: boolean;
+}
+
 export interface Project {
   id: string; // UUID string
   name: string;
@@ -20,6 +29,8 @@ export interface Project {
   category?: string;
   priority?: string;
   previousStatus?: ProjectStatus;
+  /** Persisted Kanban column config. Empty array = use frontend defaults. */
+  kanbanColumns?: KanbanColumnDef[];
 }
 
 export interface CreateProjectInput {
@@ -46,6 +57,8 @@ export interface UpdateProjectInput {
   category?: string;
   priority?: string;
   previousStatus?: ProjectStatus;
+  /** Send this to persist column order/config to the database. */
+  kanbanColumns?: KanbanColumnDef[];
 }
 
 export interface ProjectActivity {

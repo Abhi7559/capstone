@@ -2,16 +2,17 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useAuthStore } from "@/store/useAuthStore";
 import type { InviteMemberInput, User } from "@/types/auth";
+import { apiEndpoint, getAuthHeaders } from "@/utils/apiConfig";
 
 async function fetchMembers(
   currentUserRole?: string,
   currentUserId?: string,
 ): Promise<User[]> {
-  const response = await fetch("/api/members", {
-    headers: {
+  const response = await fetch(apiEndpoint("/members"), {
+    headers: getAuthHeaders({
       "x-user-role": currentUserRole || "",
       "x-user-id": currentUserId || "",
-    },
+    }),
   });
 
   if (!response.ok) {
@@ -26,13 +27,13 @@ async function inviteMemberRequest(
   currentUserRole?: string,
   currentUserId?: string,
 ) {
-  const response = await fetch("/api/members/invite", {
+  const response = await fetch(apiEndpoint("/members/invite"), {
     method: "POST",
-    headers: {
+    headers: getAuthHeaders({
       "Content-Type": "application/json",
       "x-user-role": currentUserRole || "",
       "x-user-id": currentUserId || "",
-    },
+    }),
     body: JSON.stringify(input),
   });
 
@@ -50,13 +51,13 @@ async function updateMemberRequest(
   currentUserRole?: string,
   currentUserId?: string,
 ): Promise<User> {
-  const response = await fetch(`/api/members/${id}`, {
-    method: "PUT",
-    headers: {
+  const response = await fetch(apiEndpoint(`/members/${id}`), {
+    method: "PATCH",
+    headers: getAuthHeaders({
       "Content-Type": "application/json",
       "x-user-role": currentUserRole || "",
       "x-user-id": currentUserId || "",
-    },
+    }),
     body: JSON.stringify(input),
   });
 
@@ -73,20 +74,32 @@ async function deleteMemberRequest(
   currentUserRole?: string,
   currentUserId?: string,
 ): Promise<{ message: string }> {
-  const response = await fetch(`/api/members/${id}`, {
+  const response = await fetch(apiEndpoint(`/members/${id}`), {
     method: "DELETE",
-    headers: {
+    headers: getAuthHeaders({
       "x-user-role": currentUserRole || "",
       "x-user-id": currentUserId || "",
-    },
+    }),
   });
+
+  // 204 No Content has no JSON body - treat as immediate success
+  if (response.status === 204) {
+    return { message: "Member deleted successfully" };
+  }
+
+  // 404 means the member was already deleted / not found
+  if (response.status === 404) {
+    return { message: "Member already removed" };
+  }
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
     throw new Error(err.message || "Failed to delete member on server");
   }
 
-  return response.json();
+  return response
+    .json()
+    .catch(() => ({ message: "Member deleted successfully" }));
 }
 
 export function useMembers() {

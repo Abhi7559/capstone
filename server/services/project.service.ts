@@ -56,6 +56,8 @@ export const projectServiceServer = {
       startDate: input.startDate,
       dueDate: input.dueDate || input.endDate,
       endDate: input.endDate || input.dueDate,
+      category: input.category || "Engineering",
+      priority: input.priority || "medium",
     };
 
     return projectRepository.create(newProject);

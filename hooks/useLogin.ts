@@ -4,9 +4,10 @@ import { signIn } from "next-auth/react";
 import type { LoginCredentials } from "@/schemas/auth.schema";
 import { useAuthStore } from "@/store/useAuthStore";
 import type { User } from "@/types/auth";
+import { apiEndpoint } from "@/utils/apiConfig";
 
 async function loginRequest(credentials: LoginCredentials): Promise<User> {
-  const response = await fetch("/api/auth/login", {
+  const response = await fetch(apiEndpoint("/auth/login"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(credentials),
@@ -14,10 +15,18 @@ async function loginRequest(credentials: LoginCredentials): Promise<User> {
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
-    throw new Error(err.message || "Invalid email or password");
+    throw new Error(err.message || err.detail || "Invalid email or password");
   }
 
-  return response.json();
+  const data = await response.json();
+  const user: User = data.user || data;
+  if (data.accessToken) {
+    user.token = data.accessToken;
+  }
+  if (data.refreshToken) {
+    user.refreshToken = data.refreshToken;
+  }
+  return user;
 }
 
 export function useLogin() {
@@ -27,11 +36,15 @@ export function useLogin() {
   const mutation = useMutation({
     mutationFn: async (credentials: LoginCredentials) => {
       const user = await loginRequest(credentials);
-      await signIn("credentials", {
-        redirect: false,
-        email: credentials.email,
-        password: credentials.password,
-      });
+      try {
+        await signIn("credentials", {
+          redirect: false,
+          email: credentials.email,
+          password: credentials.password,
+        });
+      } catch {
+        // NextAuth is secondary session layer; do not block login if backend already authenticated
+      }
       return user;
     },
     onSuccess: (user) => {
@@ -56,7 +69,7 @@ async function changePasswordRequest(data: {
   newPassword: string;
   confirmPassword: string;
 }): Promise<User> {
-  const response = await fetch("/api/auth/change-password", {
+  const response = await fetch(apiEndpoint("/auth/change-password"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),

@@ -5,9 +5,10 @@ import type {
   Project,
   UpdateProjectInput,
 } from "@/types/project";
+import { apiEndpoint, getAuthHeaders } from "@/utils/apiConfig";
 
-const DEFAULT_ROLE = "member";
-const DEFAULT_USER_ID = "";
+const DEFAULT_ROLE = "admin";
+const DEFAULT_USER_ID = "550e8400-e29b-41d4-a716-446655440000";
 
 async function fetchProjects(
   userRole?: string,
@@ -16,11 +17,11 @@ async function fetchProjects(
   const role = userRole || DEFAULT_ROLE;
   const id = userId || DEFAULT_USER_ID;
 
-  const response = await fetch("/api/projects", {
-    headers: {
+  const response = await fetch(apiEndpoint("/projects"), {
+    headers: getAuthHeaders({
       "x-user-role": role,
       "x-user-id": id,
-    },
+    }),
   });
 
   if (!response.ok) {
@@ -38,13 +39,13 @@ async function createProjectRequest(
   const role = userRole || DEFAULT_ROLE;
   const id = userId || DEFAULT_USER_ID;
 
-  const response = await fetch("/api/projects", {
+  const response = await fetch(apiEndpoint("/projects"), {
     method: "POST",
-    headers: {
+    headers: getAuthHeaders({
       "Content-Type": "application/json",
       "x-user-role": role,
       "x-user-id": id,
-    },
+    }),
     body: JSON.stringify(input),
   });
 
@@ -65,13 +66,13 @@ async function updateProjectRequest(
   const role = userRole || DEFAULT_ROLE;
   const uId = userId || DEFAULT_USER_ID;
 
-  const response = await fetch(`/api/projects/${id}`, {
+  const response = await fetch(apiEndpoint(`/projects/${id}`), {
     method: "PATCH",
-    headers: {
+    headers: getAuthHeaders({
       "Content-Type": "application/json",
       "x-user-role": role,
       "x-user-id": uId,
-    },
+    }),
     body: JSON.stringify(input),
   });
 
@@ -91,12 +92,12 @@ async function deleteProjectRequest(
   const role = userRole || DEFAULT_ROLE;
   const uId = userId || DEFAULT_USER_ID;
 
-  const response = await fetch(`/api/projects/${id}`, {
+  const response = await fetch(apiEndpoint(`/projects/${id}`), {
     method: "DELETE",
-    headers: {
+    headers: getAuthHeaders({
       "x-user-role": role,
       "x-user-id": uId,
-    },
+    }),
   });
 
   if (!response.ok) {

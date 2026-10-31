@@ -1,5 +1,5 @@
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ErrorLayout } from "@/components/ErrorLayout";
 import { MultiStepCreateTaskModal } from "@/components/MultiStepCreateTaskModal";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -7,7 +7,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { TaskDetailModal } from "@/components/TaskDetailModal";
 import { TopBar } from "@/components/TopBar";
 import { useMembers } from "@/hooks/useMembers";
-import { useProjects } from "@/hooks/useProjects";
+import { useProjects, useUpdateProject } from "@/hooks/useProjects";
 import {
   useDeleteTask,
   useProjectActivities,
@@ -15,8 +15,10 @@ import {
   useUpdateTask,
 } from "@/hooks/useProjectTasks";
 import { useAuthStore } from "@/store/useAuthStore";
+import type { KanbanColumnDef } from "@/types/project";
 import type { Task, TaskFilters, TaskPriority, TaskStatus } from "@/types/task";
 
+// ─── Local alias so the rest of the file stays unchanged ─────────────────────
 interface KanbanColumn {
   id: string;
   label: string;
@@ -46,6 +48,28 @@ const DEFAULT_COLUMNS: KanbanColumn[] = [
   },
 ];
 
+/** Convert frontend KanbanColumn → backend KanbanColumnDef shape */
+function toColumnDef(col: KanbanColumn): KanbanColumnDef {
+  return {
+    id: col.id,
+    label: col.label,
+    status: col.status,
+    color: col.color,
+    isCustom: col.isCustom ?? false,
+  };
+}
+
+/** Convert backend KanbanColumnDef → local KanbanColumn shape */
+function fromColumnDef(def: KanbanColumnDef): KanbanColumn {
+  return {
+    id: def.id,
+    label: def.label,
+    status: def.status,
+    color: def.color,
+    isCustom: def.isCustom,
+  };
+}
+
 export default function ProjectTaskBoardPage() {
   const router = useRouter();
   const { id } = router.query;
@@ -56,6 +80,8 @@ export default function ProjectTaskBoardPage() {
 
   const { data: projects } = useProjects();
   const currentProject = projects?.find((p) => p.id === projectId);
+
+  const { updateProject } = useUpdateProject();
 
   const { data: members } = useMembers();
 
@@ -69,8 +95,88 @@ export default function ProjectTaskBoardPage() {
   const [viewingTask, setViewingTask] = useState<Task | null>(null);
   const [deletingTask, setDeletingTask] = useState<Task | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  // Dynamic Custom Columns State
+
+  // ─── Kanban Columns — loaded from project.kanbanColumns, fall back to defaults
   const [columns, setColumns] = useState<KanbanColumn[]>(DEFAULT_COLUMNS);
+  const columnsInitialized = useRef(false);
+
+  useEffect(() => {
+    // Only initialise once from server data to avoid overwriting drag state
+    if (!columnsInitialized.current && currentProject) {
+      columnsInitialized.current = true;
+      const saved = currentProject.kanbanColumns;
+      if (saved && saved.length > 0) {
+        setColumns(saved.map(fromColumnDef));
+      } else {
+        setColumns(DEFAULT_COLUMNS);
+      }
+    }
+  }, [currentProject]);
+
+  // ─── Persist columns to backend via existing PATCH /projects/:id ────────────
+  const persistColumns = async (updated: KanbanColumn[]) => {
+    if (!projectId || !isAdmin) return;
+    try {
+      await updateProject({
+        id: projectId,
+        input: { kanbanColumns: updated.map(toColumnDef) },
+      });
+    } catch {
+      showToast("Column order saved locally but failed to sync to server.");
+    }
+  };
+
+  // ─── Column drag-and-drop state ──────────────────────────────────────────────
+  const [draggedColIdx, setDraggedColIdx] = useState<number | null>(null);
+  const [dragOverColIdx, setDragOverColIdx] = useState<number | null>(null);
+
+  const handleColumnDragStart = (e: React.DragEvent, index: number) => {
+    if (!isAdmin) return;
+    setDraggedColIdx(index);
+    e.dataTransfer.setData("application/x-column-index", String(index));
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleColumnDragOver = (e: React.DragEvent, targetIndex: number) => {
+    if (draggedColIdx !== null) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      if (dragOverColIdx !== targetIndex) {
+        setDragOverColIdx(targetIndex);
+      }
+    } else {
+      handleDragOver(e);
+    }
+  };
+
+  const handleSectionDrop = async (
+    e: React.DragEvent,
+    targetIndex: number,
+    targetStatus: TaskStatus,
+  ) => {
+    e.preventDefault();
+    const colIndexStr = e.dataTransfer.getData("application/x-column-index");
+
+    if (colIndexStr !== "" && draggedColIdx !== null) {
+      const fromIdx = parseInt(colIndexStr, 10);
+      setDraggedColIdx(null);
+      setDragOverColIdx(null);
+
+      if (fromIdx === targetIndex || Number.isNaN(fromIdx)) return;
+
+      const updated = [...columns];
+      const [movedCol] = updated.splice(fromIdx, 1);
+      updated.splice(targetIndex, 0, movedCol);
+      setColumns(updated);
+      showToast("Column reordered!");
+      await persistColumns(updated);
+    } else {
+      setDraggedColIdx(null);
+      setDragOverColIdx(null);
+      handleDrop(e, targetStatus);
+    }
+  };
+
   const [isAddColumnModalOpen, setIsAddColumnModalOpen] = useState(false);
   const [isBacklogModalOpen, setIsBacklogModalOpen] = useState(false);
   const [newColumnName, setNewColumnName] = useState("");
@@ -82,10 +188,15 @@ export default function ProjectTaskBoardPage() {
     setIsAddColumnModalOpen(true);
   };
 
-  const handleAddColumn = () => {
+  const handleAddColumn = async () => {
     const trimmedName = newColumnName.trim();
     if (!trimmedName) {
       setColumnError("Please enter a column name.");
+      return;
+    }
+
+    if (columns.length >= 8) {
+      setColumnError("A project can have at most 8 Kanban columns.");
       return;
     }
 
@@ -111,11 +222,16 @@ export default function ProjectTaskBoardPage() {
       color: "bg-purple-50 border-purple-200 text-purple-800",
       isCustom: true,
     };
-    setColumns((prev) => [...prev, newCol]);
+
+    const updated = [...columns, newCol];
+    setColumns(updated);
     setNewColumnName("");
     setColumnError(null);
     setIsAddColumnModalOpen(false);
     showToast("Column added successfully!");
+
+    // Persist to backend via PATCH /projects/:id
+    await persistColumns(updated);
   };
 
   const showToast = (msg: string) => {
@@ -137,7 +253,7 @@ export default function ProjectTaskBoardPage() {
   };
 
   const handleDeleteColumn = async (colToDelete: KanbanColumn) => {
-    // Reassign all tasks in deleted column back to 'backlog'
+    // Move all tasks in the deleted column to backlog first
     const tasksInColumn = (tasks || []).filter(
       (t) => t.status === colToDelete.status,
     );
@@ -148,15 +264,21 @@ export default function ProjectTaskBoardPage() {
           input: { status: "backlog", projectId: t.projectId },
         });
       } catch {
-        // Ignored
+        // Ignore individual task move failures silently
       }
     }
-    setColumns((prev) => prev.filter((c) => c.id !== colToDelete.id));
+
+    const updated = columns.filter((c) => c.id !== colToDelete.id);
+    setColumns(updated);
+
     const toastMsg =
       tasksInColumn.length > 0
         ? `Column ${colToDelete.label} deleted! ${tasksInColumn.length} task${tasksInColumn.length === 1 ? "" : "s"} moved to Backlog.`
         : `Column ${colToDelete.label} deleted!`;
     showToast(toastMsg);
+
+    // Persist updated column list to backend
+    await persistColumns(updated);
   };
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -1071,7 +1193,7 @@ export default function ProjectTaskBoardPage() {
                   </div>
                 ) : (
                   <div className="flex flex-wrap lg:flex-nowrap gap-6 overflow-x-auto pb-4">
-                    {columns.map((col) => {
+                    {columns.map((col, index) => {
                       const columnTasks = (tasks || []).filter(
                         (t) => t.status === col.status,
                       );
@@ -1080,13 +1202,55 @@ export default function ProjectTaskBoardPage() {
                         <section
                           key={col.status}
                           aria-label={`${col.label} column`}
-                          onDragOver={handleDragOver}
-                          onDrop={(e) => handleDrop(e, col.status)}
-                          className="flex flex-col rounded-2xl border border-gray-200 bg-gray-50/70 p-4 min-h-[520px] w-full min-w-[280px] lg:w-1/3 flex-1 transition-colors hover:border-gray-300"
+                          onDragOver={(e) => handleColumnDragOver(e, index)}
+                          onDrop={(e) =>
+                            handleSectionDrop(e, index, col.status)
+                          }
+                          onDragLeave={() => {
+                            if (dragOverColIdx === index)
+                              setDragOverColIdx(null);
+                          }}
+                          className={`flex flex-col rounded-2xl border bg-gray-50/70 p-4 min-h-[520px] w-full min-w-[280px] lg:w-1/3 flex-1 transition-all ${
+                            dragOverColIdx === index
+                              ? "border-blue-500 ring-2 ring-blue-300 bg-blue-50/40 shadow-lg scale-[1.01]"
+                              : draggedColIdx === index
+                                ? "opacity-50 border-dashed border-gray-400"
+                                : "border-gray-200 hover:border-gray-300"
+                          }`}
                         >
                           {/* Column Header */}
                           <div className="flex justify-between items-center mb-4 px-1 pb-2 border-b border-gray-200/80">
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center space-x-1.5">
+                              {isAdmin && (
+                                <button
+                                  type="button"
+                                  draggable
+                                  onDragStart={(e) =>
+                                    handleColumnDragStart(e, index)
+                                  }
+                                  onDragEnd={() => {
+                                    setDraggedColIdx(null);
+                                    setDragOverColIdx(null);
+                                  }}
+                                  className="cursor-grab active:cursor-grabbing p-1 -ml-1 text-gray-400 hover:text-gray-700 hover:bg-gray-200/60 rounded transition flex items-center bg-transparent border-none"
+                                  title="Drag to reorder column (Admin only)"
+                                  aria-label="Drag to reorder column"
+                                >
+                                  <svg
+                                    className="w-3.5 h-3.5"
+                                    viewBox="0 0 24 24"
+                                    fill="currentColor"
+                                    aria-hidden="true"
+                                  >
+                                    <circle cx="8" cy="6" r="1.5" />
+                                    <circle cx="16" cy="6" r="1.5" />
+                                    <circle cx="8" cy="12" r="1.5" />
+                                    <circle cx="16" cy="12" r="1.5" />
+                                    <circle cx="8" cy="18" r="1.5" />
+                                    <circle cx="16" cy="18" r="1.5" />
+                                  </svg>
+                                </button>
+                              )}
                               <span
                                 className={`px-2.5 py-1 rounded-md text-xs font-extrabold uppercase tracking-wider ${col.color}`}
                               >
@@ -1193,45 +1357,47 @@ export default function ProjectTaskBoardPage() {
                                       </div>
                                     )}
 
-                                    {/* Card Footer with Edit Action */}
-                                    <div className="border-t border-gray-100 pt-3 mt-1 flex items-center justify-between gap-2 text-xs">
-                                      <div className="flex items-center gap-2 min-w-0 text-gray-600">
-                                        {task.assigneeId ? (
-                                          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-blue-700 text-[10px] font-bold shrink-0 uppercase border border-blue-200">
-                                            {getAssigneeName(
-                                              task.assigneeId,
-                                            ).charAt(0)}
-                                          </div>
-                                        ) : (
-                                          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-gray-100 text-gray-400 text-[10px] shrink-0 border border-gray-200">
-                                            <svg
-                                              className="h-3 w-3 text-gray-400"
-                                              fill="none"
-                                              stroke="currentColor"
-                                              viewBox="0 0 24 24"
-                                              xmlns="http://www.w3.org/2000/svg"
-                                              aria-hidden="true"
-                                            >
-                                              <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth="2"
-                                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                                              />
-                                            </svg>
-                                          </div>
-                                        )}
-                                        <span className="truncate text-[11px] font-medium text-gray-700 shrink min-w-0">
-                                          {task.assigneeId
-                                            ? getAssigneeName(
+                                    {/* Card Footer: Row 1 (Assignee & Date) + Row 2 (Status Dropdown, Edit, Delete) */}
+                                    <div className="border-t border-gray-100 pt-2.5 mt-2 space-y-2 text-xs">
+                                      {/* Line 1: Assignee with Avatar and Due Date */}
+                                      <div className="flex items-center justify-between gap-2">
+                                        <div className="flex items-center space-x-1.5 min-w-0 flex-1">
+                                          {task.assigneeId ? (
+                                            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-blue-700 text-[10px] font-bold shrink-0 uppercase border border-blue-200">
+                                              {getAssigneeName(
                                                 task.assigneeId,
-                                              ).split(" ")[0]
-                                            : "Unassigned"}
-                                        </span>
-                                      </div>
+                                              ).charAt(0)}
+                                            </div>
+                                          ) : (
+                                            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-gray-100 text-gray-400 text-[10px] shrink-0 border border-gray-200">
+                                              <svg
+                                                className="h-3 w-3 text-gray-400"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                                aria-hidden="true"
+                                              >
+                                                <path
+                                                  strokeLinecap="round"
+                                                  strokeLinejoin="round"
+                                                  strokeWidth="2"
+                                                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                                                />
+                                              </svg>
+                                            </div>
+                                          )}
+                                          <span
+                                            className="truncate text-xs font-semibold text-gray-700"
+                                            title={getAssigneeName(
+                                              task.assigneeId,
+                                            )}
+                                          >
+                                            {getAssigneeName(task.assigneeId)}
+                                          </span>
+                                        </div>
 
-                                      <div className="flex items-center space-x-2 shrink-0">
-                                        <span className="inline-flex items-center text-[11px] font-medium text-gray-500 whitespace-nowrap bg-gray-50 px-2 py-0.5 rounded border border-gray-200">
+                                        {/* Due Date */}
+                                        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-gray-500 whitespace-nowrap bg-gray-50 px-2 py-0.5 rounded-md border border-gray-200 shrink-0">
                                           📅{" "}
                                           {task.dueDate
                                             ? new Date(
@@ -1246,41 +1412,49 @@ export default function ProjectTaskBoardPage() {
                                               : task.dueDate
                                             : "No date"}
                                         </span>
-                                        {canUserUpdateTaskStatus ? (
-                                          <select
-                                            value={task.status}
-                                            onChange={async (e) => {
-                                              const newStatus = e.target
-                                                .value as TaskStatus;
-                                              await requestTaskStatusUpdate(
-                                                task,
-                                                newStatus,
-                                              );
-                                            }}
-                                            className="rounded-lg border border-gray-300 bg-white px-2 py-1 text-[11px] font-bold text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500 capitalize cursor-pointer hover:border-blue-400 shadow-2xs"
-                                          >
-                                            {columns.map((col) => (
-                                              <option
-                                                key={col.status}
-                                                value={col.status}
-                                              >
-                                                {col.label}
-                                              </option>
-                                            ))}
-                                          </select>
-                                        ) : (
-                                          <span className="rounded-lg bg-gray-100 border border-gray-200 px-2 py-1 text-[11px] font-bold text-gray-600 uppercase tracking-wider">
-                                            {col.label}
-                                          </span>
-                                        )}
+                                      </div>
+
+                                      {/* Line 2: Status Dropdown, Edit, Delete (All strictly inside the box) */}
+                                      <div className="flex items-center justify-between gap-1.5 pt-1.5 border-t border-gray-100/70">
+                                        <div className="flex-1 min-w-0">
+                                          {canUserUpdateTaskStatus ? (
+                                            <select
+                                              value={task.status}
+                                              onChange={async (e) => {
+                                                const newStatus = e.target
+                                                  .value as TaskStatus;
+                                                await requestTaskStatusUpdate(
+                                                  task,
+                                                  newStatus,
+                                                );
+                                              }}
+                                              className="w-full rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs font-bold text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500 capitalize cursor-pointer hover:border-blue-400 shadow-2xs truncate"
+                                            >
+                                              {columns.map((c) => (
+                                                <option
+                                                  key={c.status}
+                                                  value={c.status}
+                                                >
+                                                  {c.label}
+                                                </option>
+                                              ))}
+                                            </select>
+                                          ) : (
+                                            <span className="inline-block w-full text-center rounded-lg bg-gray-100 border border-gray-200 px-2 py-1 text-xs font-bold text-gray-600 uppercase tracking-wider truncate">
+                                              {col.label}
+                                            </span>
+                                          )}
+                                        </div>
+
+                                        {/* Actions: Edit and Delete buttons */}
                                         {isAdmin && (
-                                          <>
+                                          <div className="flex items-center space-x-1 shrink-0">
                                             <button
                                               type="button"
                                               onClick={() =>
                                                 setEditingTask(task)
                                               }
-                                              className="rounded-lg bg-gray-100 px-2.5 py-1 text-[11px] font-bold text-gray-700 hover:bg-blue-600 hover:text-white transition shadow-2xs"
+                                              className="rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs font-semibold text-gray-700 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition shadow-2xs"
                                             >
                                               Edit
                                             </button>
@@ -1290,7 +1464,7 @@ export default function ProjectTaskBoardPage() {
                                                 setDeletingTask(task)
                                               }
                                               title="Delete Task"
-                                              className="rounded-lg bg-red-50 p-1.5 text-red-600 hover:bg-red-600 hover:text-white transition"
+                                              className="rounded-lg border border-red-100 bg-red-50 p-1.5 text-red-600 hover:bg-red-600 hover:text-white hover:border-red-600 transition shadow-2xs flex items-center justify-center"
                                             >
                                               <svg
                                                 className="w-3.5 h-3.5"
@@ -1308,7 +1482,7 @@ export default function ProjectTaskBoardPage() {
                                                 />
                                               </svg>
                                             </button>
-                                          </>
+                                          </div>
                                         )}
                                       </div>
                                     </div>

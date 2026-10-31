@@ -50,9 +50,10 @@ export function ChangePasswordModal({
   const onSubmit = async (data: ChangePasswordValues) => {
     try {
       await changePassword(data);
-      onClose();
       logout();
-      await signOut({ callbackUrl: "/login?passwordChanged=true" });
+      onClose();
+      await signOut({ redirect: false });
+      window.location.href = "/login?passwordChanged=true";
     } catch {
       // Error handled via mutation state 'error'
     }

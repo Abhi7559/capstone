@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/router";
 import { signOut } from "next-auth/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useChangePassword, useLogin } from "@/hooks/useLogin";
 import {
@@ -35,6 +35,7 @@ export default function LoginPage() {
   const {
     register,
     handleSubmit,
+    setValue: setLoginValue,
     formState: { errors },
   } = useForm<LoginCredentials>({
     resolver: zodResolver(loginSchema),
@@ -50,11 +51,19 @@ export default function LoginPage() {
     register: registerChange,
     handleSubmit: handleSubmitChange,
     setValue: setChangeValue,
+    reset: resetChangeForm,
     formState: { errors: changeErrors },
   } = useForm<ChangePasswordValues>({
     resolver: zodResolver(changePasswordSchema),
     mode: "onTouched",
   });
+
+  // Pre-fill email from query parameters (e.g. after signup redirect)
+  useEffect(() => {
+    if (router.isReady && typeof router.query.email === "string") {
+      setLoginValue("email", router.query.email, { shouldValidate: true });
+    }
+  }, [router.isReady, router.query.email, setLoginValue]);
 
   const onSubmit = async (data: LoginCredentials) => {
     try {
@@ -73,9 +82,29 @@ export default function LoginPage() {
   const onChangePasswordSubmit = async (data: ChangePasswordValues) => {
     try {
       await changePassword(data);
+      const userEmail = data.email || pendingChangeUserEmail || "";
+      const updatedPassword = data.newPassword;
+
+      // Reset change password modal
       setPendingChangeUserEmail(null);
+      resetChangeForm();
       logout();
-      await signOut({ callbackUrl: "/login?passwordChanged=true" });
+
+      // Sign out any temporary session
+      await signOut({ redirect: false });
+
+      // Pre-fill login form with the updated credentials for seamless 1-click login
+      if (userEmail) {
+        setLoginValue("email", userEmail, { shouldValidate: true });
+      }
+      if (updatedPassword) {
+        setLoginValue("password", updatedPassword, { shouldValidate: true });
+      }
+
+      // Update URL query to show success banner on login page
+      await router.replace("/login?passwordChanged=true", undefined, {
+        shallow: true,
+      });
     } catch {
       // Handled in mutation error
     }

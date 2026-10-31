@@ -79,7 +79,9 @@ export function MultiStepProjectModal({
       priority:
         (editingProject?.priority as "low" | "medium" | "high") || "medium",
       projectState: editingProject?.status || "active",
-      category: editingProject?.category || "Engineering",
+      category:
+        (editingProject?.category as MultiStepProjectInput["category"]) ||
+        "Engineering",
       budget: "",
     },
   });
@@ -102,7 +104,9 @@ export function MultiStepProjectModal({
           priority:
             (editingProject.priority as "low" | "medium" | "high") || "medium",
           projectState: editingProject.status || "active",
-          category: editingProject.category || "Engineering",
+          category:
+            (editingProject.category as MultiStepProjectInput["category"]) ||
+            "Engineering",
           budget: "",
         });
       } else {

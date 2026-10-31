@@ -116,9 +116,9 @@ Create `database/seed.py` to insert default System Administrator:
 - Role: `admin`
 
 ### ✅ Day 1 Validation Deliverables:
-- [ ] PostgreSQL tables created via Alembic.
-- [ ] Default Admin seeded and confirmed via `psql`.
-- [ ] Database connection verified via a simple script.
+- [x] PostgreSQL tables created via Alembic.
+- [x] Default Admin seeded and confirmed via `psql` / seed script.
+- [x] Database connection verified via a simple script.
 
 ---
 

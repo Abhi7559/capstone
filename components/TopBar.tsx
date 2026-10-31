@@ -6,6 +6,7 @@ import { MultiStepCreateTaskModal } from "@/components/MultiStepCreateTaskModal"
 import { MultiStepProjectModal } from "@/components/MultiStepProjectModal";
 import { useProjects } from "@/hooks/useProjects";
 import { useAuthStore } from "@/store/useAuthStore";
+import { apiEndpoint, getAuthHeaders } from "@/utils/apiConfig";
 
 interface TopBarProps {
   title?: string;
@@ -75,6 +76,14 @@ export function TopBar({
   };
 
   const handleLogout = async () => {
+    try {
+      await fetch(apiEndpoint("/auth/logout"), {
+        method: "POST",
+        headers: getAuthHeaders({ "Content-Type": "application/json" }),
+      });
+    } catch (err) {
+      console.warn("Backend logout notification failed:", err);
+    }
     logout();
     try {
       await signOut({ redirect: false });
