@@ -150,6 +150,13 @@ async def request_id_logging_middleware(request: Request, call_next) -> Response
     return response
 
 
+@app.get("/", include_in_schema=False)
+async def root():
+    """Redirect root to interactive Swagger UI API documentation."""
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/docs")
+
+
 # ============================================================================
 # Single Health Check Endpoint (API 23: Service Health)
 # ============================================================================

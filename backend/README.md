@@ -46,10 +46,10 @@ uv run uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ---
 
 ## 🐳 Running with Docker
-The container entrypoint script (`entrypoint.sh`) **automatically executes both database migrations and initial admin user seeding**:
+From the project root directory, the container entrypoint script (`entrypoint.sh`) **automatically executes both database migrations and initial admin user seeding**:
 
 ```bash
-docker compose up --build
+docker compose up
 ```
 
 ---
