@@ -46,20 +46,30 @@ async function fetchProjectTasks(
   return response.json();
 }
 
+function extractErrorMessage(errData: any, defaultMsg: string): string {
+  if (errData?.message) return errData.message;
+  if (typeof errData?.detail === "string") return errData.detail;
+  if (Array.isArray(errData?.detail)) {
+    return errData.detail.map((d: any) => d.msg || JSON.stringify(d)).join(", ");
+  }
+  return defaultMsg;
+}
+
 async function fetchTaskById(
   taskId: string,
   userRole?: string,
   userId?: string,
 ): Promise<Task> {
   const response = await fetch(apiEndpoint(`/tasks/${taskId}`), {
-    headers: {
+    headers: getAuthHeaders({
       "x-user-role": userRole || "",
       "x-user-id": userId || "",
-    },
+    }),
   });
 
   if (!response.ok) {
-    throw new Error("Task not found");
+    const err = await response.json().catch(() => ({}));
+    throw new Error(extractErrorMessage(err, "Task not found"));
   }
 
   return response.json();
@@ -72,17 +82,17 @@ async function createTaskRequest(
 ): Promise<Task> {
   const response = await fetch(apiEndpoint("/tasks"), {
     method: "POST",
-    headers: {
+    headers: getAuthHeaders({
       "Content-Type": "application/json",
       "x-user-role": userRole || "",
       "x-user-id": userId || "",
-    },
+    }),
     body: JSON.stringify(input),
   });
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
-    throw new Error(err.message || "Failed to create task on server");
+    throw new Error(extractErrorMessage(err, "Failed to create task on server"));
   }
 
   return response.json();
@@ -96,17 +106,17 @@ async function updateTaskRequest(
 ): Promise<Task> {
   const response = await fetch(apiEndpoint(`/tasks/${taskId}`), {
     method: "PATCH",
-    headers: {
+    headers: getAuthHeaders({
       "Content-Type": "application/json",
       "x-user-role": userRole || "admin",
       "x-user-id": userId || "550e8400-e29b-41d4-a716-446655440000",
-    },
+    }),
     body: JSON.stringify(input),
   });
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
-    throw new Error(err.message || "Failed to update task on server");
+    throw new Error(extractErrorMessage(err, "Failed to update task on server"));
   }
 
   return response.json();
@@ -119,15 +129,15 @@ async function deleteTaskRequest(
 ): Promise<void> {
   const response = await fetch(apiEndpoint(`/tasks/${taskId}`), {
     method: "DELETE",
-    headers: {
+    headers: getAuthHeaders({
       "x-user-role": userRole || "admin",
       "x-user-id": userId || "550e8400-e29b-41d4-a716-446655440000",
-    },
+    }),
   });
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
-    throw new Error(err.message || "Failed to delete task on server");
+    throw new Error(extractErrorMessage(err, "Failed to delete task on server"));
   }
 }
 

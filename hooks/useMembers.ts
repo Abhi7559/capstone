@@ -4,6 +4,15 @@ import { useAuthStore } from "@/store/useAuthStore";
 import type { InviteMemberInput, User } from "@/types/auth";
 import { apiEndpoint, getAuthHeaders } from "@/utils/apiConfig";
 
+function extractErrorMessage(errData: any, defaultMsg: string): string {
+  if (errData?.message) return errData.message;
+  if (typeof errData?.detail === "string") return errData.detail;
+  if (Array.isArray(errData?.detail)) {
+    return errData.detail.map((d: any) => d.msg || JSON.stringify(d)).join(", ");
+  }
+  return defaultMsg;
+}
+
 async function fetchMembers(
   currentUserRole?: string,
   currentUserId?: string,
@@ -16,7 +25,8 @@ async function fetchMembers(
   });
 
   if (!response.ok) {
-    throw new Error("Failed to fetch members from server");
+    const err = await response.json().catch(() => ({}));
+    throw new Error(extractErrorMessage(err, "Failed to fetch members from server"));
   }
 
   return response.json();
@@ -39,7 +49,7 @@ async function inviteMemberRequest(
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
-    throw new Error(err.message || "Failed to invite member");
+    throw new Error(extractErrorMessage(err, "Failed to invite member"));
   }
 
   return response.json();
@@ -63,7 +73,7 @@ async function updateMemberRequest(
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
-    throw new Error(err.message || "Failed to update member");
+    throw new Error(extractErrorMessage(err, "Failed to update member"));
   }
 
   return response.json();
@@ -94,7 +104,7 @@ async function deleteMemberRequest(
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
-    throw new Error(err.message || "Failed to delete member on server");
+    throw new Error(extractErrorMessage(err, "Failed to delete member on server"));
   }
 
   return response

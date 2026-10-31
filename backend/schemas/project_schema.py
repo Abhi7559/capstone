@@ -104,7 +104,7 @@ class ProjectCreate(ProjectBase):
     """Payload submitted when creating a new project (Admin only)."""
 
     name: str = Field(min_length=3, max_length=50)
-    description: str = Field(min_length=1)
+    description: str = Field(default="No description provided.", min_length=1)
     status: ProjectStatus = Field(default=ProjectStatus.PLANNING)
     category: Optional[ProjectCategory] = Field(default=ProjectCategory.ENGINEERING)
     priority: Optional[ProjectPriority] = Field(default=ProjectPriority.MEDIUM)
@@ -112,6 +112,13 @@ class ProjectCreate(ProjectBase):
     due_date: Optional[date] = Field(default=None)
     end_date: Optional[date] = Field(default=None)
     member_ids: Optional[List[uuid.UUID]] = Field(default=None)
+
+    @field_validator("description", mode="before")
+    @classmethod
+    def normalize_description(cls, v):
+        if not v or not str(v).strip():
+            return "No description provided."
+        return str(v).strip()
 
     @field_validator("category", mode="before")
     @classmethod

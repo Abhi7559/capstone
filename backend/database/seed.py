@@ -39,5 +39,40 @@ async def seed_admin_user() -> None:
         logger.info("Admin user seeded successfully with ID: %s", ADMIN_ID)
 
 
+async def seed_initial_data() -> None:
+    """Seed initial administrator and default workspace projects if empty."""
+    await seed_admin_user()
+    try:
+        from models.project import Project
+        async with async_session_factory() as session:
+            proj_result = await session.execute(select(Project).where(Project.is_deleted == False))
+            existing_projects = proj_result.scalars().all()
+            if not existing_projects:
+                logger.info("Seeding default workspace projects...")
+                p1 = Project(
+                    id=uuid.UUID("8e50124d-efd2-414e-bbde-777f8d866480"),
+                    name="Internal Team Task Board",
+                    description="Centralized Kanban workflow tracking and team task governance.",
+                    status="active",
+                    category="Engineering",
+                    priority="high",
+                    created_by=ADMIN_ID,
+                )
+                p2 = Project(
+                    id=uuid.UUID("a0569f6c-5510-45f2-ae81-1c3cfa02fc36"),
+                    name="Capstone Governance Platform",
+                    description="Enterprise project lifecycle management and RBAC security platform.",
+                    status="active",
+                    category="Engineering",
+                    priority="high",
+                    created_by=ADMIN_ID,
+                )
+                session.add_all([p1, p2])
+                await session.commit()
+                logger.info("Default projects seeded successfully.")
+    except Exception as exc:
+        logger.warning("Could not seed default projects: %s", exc)
+
+
 if __name__ == "__main__":
-    asyncio.run(seed_admin_user())
+    asyncio.run(seed_initial_data())

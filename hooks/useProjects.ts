@@ -10,6 +10,15 @@ import { apiEndpoint, getAuthHeaders } from "@/utils/apiConfig";
 const DEFAULT_ROLE = "admin";
 const DEFAULT_USER_ID = "550e8400-e29b-41d4-a716-446655440000";
 
+function extractErrorMessage(errData: any, defaultMsg: string): string {
+  if (errData?.message) return errData.message;
+  if (typeof errData?.detail === "string") return errData.detail;
+  if (Array.isArray(errData?.detail)) {
+    return errData.detail.map((d: any) => d.msg || JSON.stringify(d)).join(", ");
+  }
+  return defaultMsg;
+}
+
 async function fetchProjects(
   userRole?: string,
   userId?: string,
@@ -25,7 +34,8 @@ async function fetchProjects(
   });
 
   if (!response.ok) {
-    throw new Error("Failed to fetch projects from server");
+    const errData = await response.json().catch(() => ({}));
+    throw new Error(extractErrorMessage(errData, "Failed to fetch projects from server"));
   }
 
   return response.json();
@@ -51,7 +61,7 @@ async function createProjectRequest(
 
   if (!response.ok) {
     const errData = await response.json().catch(() => ({}));
-    throw new Error(errData.message || "Failed to create project on server.");
+    throw new Error(extractErrorMessage(errData, "Failed to create project on server."));
   }
 
   return response.json();
@@ -78,7 +88,7 @@ async function updateProjectRequest(
 
   if (!response.ok) {
     const errData = await response.json().catch(() => ({}));
-    throw new Error(errData.message || "Failed to update project on server.");
+    throw new Error(extractErrorMessage(errData, "Failed to update project on server."));
   }
 
   return response.json();
@@ -102,7 +112,7 @@ async function deleteProjectRequest(
 
   if (!response.ok) {
     const errData = await response.json().catch(() => ({}));
-    throw new Error(errData.message || "Failed to delete project on server.");
+    throw new Error(extractErrorMessage(errData, "Failed to delete project on server."));
   }
 
   return response.json();

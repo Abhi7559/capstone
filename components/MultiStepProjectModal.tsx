@@ -172,7 +172,7 @@ export function MultiStepProjectModal({
           id: editingProject.id,
           input: {
             name: data.name,
-            description: data.description || "",
+            description: data.description?.trim() || `${data.name} project description`,
             status: mappedStatus,
             memberIds: data.memberIds,
             startDate: data.startDate || undefined,
@@ -186,7 +186,7 @@ export function MultiStepProjectModal({
       } else {
         await createProject({
           name: data.name,
-          description: data.description || "",
+          description: data.description?.trim() || `${data.name} project description`,
           status: mappedStatus,
           memberIds: data.memberIds,
           startDate: data.startDate || undefined,
