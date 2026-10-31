@@ -52,8 +52,22 @@ class TaskCreate(TaskBase):
     priority: TaskPriority = Field(default=TaskPriority.MEDIUM)
     status: str = Field(default="todo")
     assignee_id: Optional[uuid.UUID] = Field(default=None)
-    due_date: date
+    due_date: Optional[date] = Field(default=None)
     tags: List[str] = Field(default_factory=list)
+
+    @field_validator("assignee_id", mode="before")
+    @classmethod
+    def normalize_assignee_id(cls, v):
+        if not v or str(v).strip() in ("", "null", "undefined", "none", "None"):
+            return None
+        return v
+
+    @field_validator("due_date", mode="before")
+    @classmethod
+    def normalize_due_date(cls, v):
+        if not v or str(v).strip() in ("", "null", "undefined", "none", "None"):
+            return None
+        return v
 
     @field_validator("title", mode="before")
     @classmethod
@@ -116,6 +130,20 @@ class TaskUpdate(TaskBase):
     assignee_id: Optional[uuid.UUID] = Field(default=None)
     due_date: Optional[date] = Field(default=None)
     tags: Optional[List[str]] = Field(default=None)
+
+    @field_validator("assignee_id", mode="before")
+    @classmethod
+    def normalize_assignee_id(cls, v):
+        if not v or str(v).strip() in ("", "null", "undefined", "none", "None"):
+            return None
+        return v
+
+    @field_validator("due_date", mode="before")
+    @classmethod
+    def normalize_due_date(cls, v):
+        if not v or str(v).strip() in ("", "null", "undefined", "none", "None"):
+            return None
+        return v
 
     @field_validator("title", mode="before")
     @classmethod

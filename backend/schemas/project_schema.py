@@ -165,6 +165,26 @@ class ProjectCreate(ProjectBase):
             f"Invalid status '{v}'. Allowed statuses: {[s.value for s in ProjectStatus]}"
         )
 
+    @field_validator("start_date", "due_date", "end_date", mode="before")
+    @classmethod
+    def normalize_dates(cls, v):
+        if not v or str(v).strip() in ("", "null", "undefined", "none", "None"):
+            return None
+        return v
+
+    @field_validator("member_ids", mode="before")
+    @classmethod
+    def normalize_member_ids(cls, v):
+        if not v:
+            return None
+        if isinstance(v, list):
+            cleaned = []
+            for item in v:
+                if item and str(item).strip() not in ("", "null", "undefined", "none"):
+                    cleaned.append(item)
+            return cleaned
+        return v
+
     @model_validator(mode="after")
     def validate_dates(self) -> "ProjectCreate":
         """Validate that due_date is greater than or equal to start_date when both are present."""
@@ -250,6 +270,26 @@ class ProjectUpdate(ProjectBase):
         raise ValueError(
             f"Invalid status '{v}'. Allowed statuses: {[s.value for s in ProjectStatus]}"
         )
+
+    @field_validator("start_date", "due_date", "end_date", mode="before")
+    @classmethod
+    def normalize_dates(cls, v):
+        if not v or str(v).strip() in ("", "null", "undefined", "none", "None"):
+            return None
+        return v
+
+    @field_validator("member_ids", mode="before")
+    @classmethod
+    def normalize_member_ids(cls, v):
+        if not v:
+            return None
+        if isinstance(v, list):
+            cleaned = []
+            for item in v:
+                if item and str(item).strip() not in ("", "null", "undefined", "none"):
+                    cleaned.append(item)
+            return cleaned
+        return v
 
     @model_validator(mode="after")
     def validate_dates(self) -> "ProjectUpdate":

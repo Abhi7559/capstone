@@ -178,11 +178,11 @@ export function MultiStepCreateTaskModal({
         await updateTask({
           taskId: editingTask.id,
           input: {
-            title: data.title,
-            description: data.description,
+            title: data.title.trim(),
+            description: data.description?.trim() || `${data.title} description`,
             priority: data.priority as TaskPriority,
-            assigneeId: data.assigneeId || undefined,
-            dueDate: data.dueDate || undefined,
+            assigneeId: data.assigneeId && data.assigneeId.trim() !== "" ? data.assigneeId.trim() : undefined,
+            dueDate: data.dueDate && data.dueDate.trim() !== "" ? data.dueDate.trim() : undefined,
             tags: parsedTags,
             status: data.status,
           },
@@ -191,12 +191,12 @@ export function MultiStepCreateTaskModal({
       } else {
         await createTask({
           projectId: data.projectId,
-          title: data.title,
-          description: data.description,
+          title: data.title.trim(),
+          description: data.description?.trim() || `${data.title} description`,
           priority: data.priority as TaskPriority,
           status: data.status || "todo",
-          assigneeId: data.assigneeId,
-          dueDate: data.dueDate,
+          assigneeId: data.assigneeId && data.assigneeId.trim() !== "" ? data.assigneeId.trim() : undefined,
+          dueDate: data.dueDate && data.dueDate.trim() !== "" ? data.dueDate.trim() : undefined,
           tags: parsedTags,
         });
         onSuccess?.("Task created successfully!");
