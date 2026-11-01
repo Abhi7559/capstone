@@ -1,5 +1,5 @@
 import uuid
-from typing import Optional
+from typing import Any, Optional
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
 
@@ -195,3 +195,13 @@ class SignupRequest(BaseModel):
     email: EmailStr
     new_password: str = Field(min_length=8, alias="newPassword")
     token: Optional[str] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def extract_password_fields(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            if not data.get("new_password") and not data.get("newPassword"):
+                fallback = data.get("password") or data.get("newPassword")
+                if fallback:
+                    data["new_password"] = fallback
+        return data

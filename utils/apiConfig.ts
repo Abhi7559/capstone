@@ -34,7 +34,7 @@ function resolveApiBaseUrl(): string {
   const direct = cleanBackendUrl(
     process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL,
   );
-  if (direct) {
+  if (direct && !direct.includes("localhost:8000")) {
     if (direct.includes("/task_management/api/v1")) {
       return direct;
     }
@@ -44,23 +44,14 @@ function resolveApiBaseUrl(): string {
   const backendHost = cleanBackendUrl(
     process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_API_URL,
   );
-  if (backendHost) {
+  if (backendHost && !backendHost.includes("localhost:8000")) {
     if (backendHost.includes("/task_management/api/v1")) {
       return backendHost;
     }
     return `${backendHost}/task_management/api/v1`;
   }
 
-  // If in browser or production environment without explicit configuration, default to live backend
-  if (
-    typeof window !== "undefined" ||
-    process.env.VERCEL ||
-    process.env.NODE_ENV === "production"
-  ) {
-    return `${DEFAULT_PRODUCTION_BACKEND}/task_management/api/v1`;
-  }
-
-  return "/api";
+  return `${DEFAULT_PRODUCTION_BACKEND}/task_management/api/v1`;
 }
 
 export const API_BASE_URL = resolveApiBaseUrl();
@@ -71,25 +62,21 @@ export const API_BASE_URL = resolveApiBaseUrl();
  */
 export function getBackendHost(): string {
   const direct = cleanBackendUrl(process.env.BACKEND_API_URL);
-  if (direct) return direct;
+  if (direct && !direct.includes("localhost:8000")) return direct;
 
   const nextPublicBackend = cleanBackendUrl(process.env.NEXT_PUBLIC_BACKEND_URL);
-  if (nextPublicBackend) {
+  if (nextPublicBackend && !nextPublicBackend.includes("localhost:8000")) {
     return nextPublicBackend.replace(/\/task_management\/api\/v1\/?$/, "");
   }
 
   const nextPublicApi = cleanBackendUrl(
     process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL,
   );
-  if (nextPublicApi) {
+  if (nextPublicApi && !nextPublicApi.includes("localhost:8000")) {
     return nextPublicApi.replace(/\/task_management\/api\/v1\/?$/, "");
   }
 
-  if (process.env.VERCEL || process.env.NODE_ENV === "production") {
-    return DEFAULT_PRODUCTION_BACKEND;
-  }
-
-  return "http://localhost:8000";
+  return DEFAULT_PRODUCTION_BACKEND;
 }
 
 /**

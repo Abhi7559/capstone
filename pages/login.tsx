@@ -85,7 +85,13 @@ export default function LoginPage() {
   // Pre-fill email from query parameters (e.g. after signup redirect)
   useEffect(() => {
     if (router.isReady && typeof router.query.email === "string") {
-      setLoginValue("email", router.query.email, { shouldValidate: true });
+      let rawEmail = router.query.email;
+      try {
+        rawEmail = decodeURIComponent(rawEmail);
+      } catch {
+        // ignore
+      }
+      setLoginValue("email", rawEmail.trim().toLowerCase(), { shouldValidate: true });
     }
   }, [router.isReady, router.query.email, setLoginValue]);
 
