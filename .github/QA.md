@@ -160,8 +160,8 @@ Stores task status changes and audit events within individual projects.
 
 ### Live Environment & Connection Parameters
 
-- **Base URL:** `https://workstream-backend-1rr8.onrender.com/task_management/api/v1`
-- **Alternative Mirror:** `https://teamhub-backend-p5a1.onrender.com/task_management/api/v1`
+- **Base URL (Verified Active):** `https://teamhub-backend-p5a1.onrender.com/task_management/api/v1`
+- **Alternative Mirror:** `https://workstream-backend-1rr8.onrender.com/task_management/api/v1`
 - **Default Admin Credentials:**
   - Email: `admin@teamboard.com` (or `admin@teamhub.com`)
   - Password: `Admin@123`
@@ -1005,7 +1005,7 @@ Stores task status changes and audit events within individual projects.
 
 #### 1. `GET /task_management/api/v1/tasks`
 
-- **Purpose:** Retrieves tasks matching filter criteria. Operates in dual response modes: returns standard paginated envelopes when pagination parameters are provided, or flat lists for Kanban boards and list views. Supports filtering by project, workflow status, priority, assignee, and due date.
+- **Purpose:** Retrieves tasks matching filter criteria. Operates in dual response modes: returns standard paginated envelopes when pagination parameters are provided, or flat lists for Kanban boards and list views. Supports filtering by project, workflow status, priority, assignee, due date, and categorization tags.
 - **Scoping & RBAC:**
     - **When accessed by Admin:** Can query and view tasks across all projects and members.
     - **When accessed by Member:** Automatically scoped to tasks belonging to projects where the member is an assigned contributor.
