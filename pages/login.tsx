@@ -11,7 +11,7 @@ import {
   loginSchema,
 } from "@/schemas/auth.schema";
 import { useAuthStore } from "@/store/useAuthStore";
-import { apiEndpoint } from "@/utils/apiConfig";
+import { apiEndpoint, getBackendHost } from "@/utils/apiConfig";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -38,6 +38,8 @@ export default function LoginPage() {
   // Pre-warm the backend immediately while the user views/fills the login form
   useEffect(() => {
     try {
+      const host = getBackendHost();
+      fetch(`${host}/health`, { method: "GET" }).catch(() => {});
       fetch(apiEndpoint("/health"), { method: "GET" }).catch(() => {});
     } catch {
       // silent background warmer

@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { AppProps } from "next/app";
 import { SessionProvider } from "next-auth/react";
 import { useState, useEffect } from "react";
-import { apiEndpoint } from "@/utils/apiConfig";
+import { apiEndpoint, getBackendHost } from "@/utils/apiConfig";
 
 export default function App({
   Component,
@@ -25,6 +25,8 @@ export default function App({
   // Background non-blocking ping to wake up the cloud backend (mitigates free-tier cold starts)
   useEffect(() => {
     try {
+      const host = getBackendHost();
+      fetch(`${host}/health`, { method: "GET" }).catch(() => {});
       fetch(apiEndpoint("/health"), { method: "GET" }).catch(() => {});
     } catch {
       // Non-blocking ping
