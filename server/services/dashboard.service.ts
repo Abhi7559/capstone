@@ -25,7 +25,7 @@ export const dashboardServiceServer = {
       const totalTasks = tasks.length;
       const completedTasks = tasks.filter((t) => t.status === "done").length;
       const overdueTasks = tasks.filter(
-        (t) => t.status !== "done" && t.dueDate < todayStr,
+        (t) => t.status !== "done" && t.dueDate && t.dueDate < todayStr,
       ).length;
 
       const recentlyCreatedTasks = [...tasks]
@@ -48,10 +48,10 @@ export const dashboardServiceServer = {
     // Member dashboard metrics
     const myAssignedTasks = tasks.filter((t) => t.assigneeId === userId);
     const myOverdueTasks = myAssignedTasks.filter(
-      (t) => t.status !== "done" && t.dueDate < todayStr,
+      (t) => t.status !== "done" && t.dueDate && t.dueDate < todayStr,
     );
     const tasksDueSoon = myAssignedTasks.filter(
-      (t) => t.status !== "done" && t.dueDate >= todayStr,
+      (t) => t.status !== "done" && t.dueDate && t.dueDate >= todayStr,
     );
     const myProjects = projects.filter((p) => p.memberIds.includes(userId));
 

@@ -196,7 +196,7 @@ export function MultiStepCreateTaskModal({
           priority: data.priority as TaskPriority,
           status: data.status || "todo",
           assigneeId: data.assigneeId && data.assigneeId.trim() !== "" ? data.assigneeId.trim() : undefined,
-          dueDate: data.dueDate && data.dueDate.trim() !== "" ? data.dueDate.trim() : undefined,
+          dueDate: data.dueDate?.trim() || new Date().toISOString().split("T")[0],
           tags: parsedTags,
         });
         onSuccess?.("Task created successfully!");
