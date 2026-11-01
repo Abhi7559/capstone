@@ -14,7 +14,7 @@ from schemas.project_schema import (
     PaginatedProjectsResponse,
 )
 from schemas.task_schema import ProjectActivityOut
-from schemas.column_schema import ColumnCreate, ColumnOut, ColumnReorder
+from schemas.column_schema import ColumnCreate, ColumnDeleteResponse, ColumnOut, ColumnReorder
 from services.project_service import project_service
 from services.task_service import task_service
 from services.column_service import column_service
@@ -271,7 +271,8 @@ async def reorder_columns(
 
 @router.delete(
     "/{id}/columns/{column_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
+    response_model=ColumnDeleteResponse,
+    status_code=status.HTTP_200_OK,
     summary="Delete Project Column",
     description="Delete a column and reassign all tasks in it to 'backlog'.",
 )
@@ -280,10 +281,13 @@ async def delete_column(
     column_id: str,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-):
+) -> ColumnDeleteResponse:
     await column_service.delete_column(
         db=db, project_id=id, column_id=column_id, current_user=current_user
     )
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
+    return ColumnDeleteResponse(
+        success=True,
+        message="Column deleted successfully.",
+    )
 
 

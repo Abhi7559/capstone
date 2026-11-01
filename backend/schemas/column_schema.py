@@ -20,3 +20,9 @@ class ColumnOut(CamelCaseModel):
     slug: str
     order: int
     color: str
+
+
+class ColumnDeleteResponse(CamelCaseModel):
+    """Response returned upon successful column deletion."""
+    success: bool = True
+    message: str = "Column deleted successfully."

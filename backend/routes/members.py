@@ -13,6 +13,7 @@ from dependencies.db import get_db
 from exceptions.domain import DuplicateEntityException, EntityNotFoundException
 from models.user import User
 from schemas.user_schema import (
+    MemberDeleteResponse,
     MemberInviteRequest,
     MemberInviteResponse,
     MemberUpdateRequest,
@@ -188,7 +189,8 @@ async def update_member(
 # ============================================================================
 @router.delete(
     "/{id}",
-    status_code=status.HTTP_204_NO_CONTENT,
+    response_model=MemberDeleteResponse,
+    status_code=status.HTTP_200_OK,
     summary="Delete Member",
     description="Deletes a member. Restricted to Admin users. Protects the last remaining admin.",
 )
@@ -196,8 +198,11 @@ async def delete_member(
     id: uuid.UUID,
     current_admin: User = Depends(require_role("admin")),
     db: AsyncSession = Depends(get_db),
-) -> Response:
+) -> MemberDeleteResponse:
     """Delete a workspace member and cascade removals."""
     await member_service.delete_member(db=db, member_id=id, current_user=current_admin)
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
+    return MemberDeleteResponse(
+        success=True,
+        message="Member deleted successfully.",
+    )
 

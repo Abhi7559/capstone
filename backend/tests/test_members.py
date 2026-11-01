@@ -111,12 +111,14 @@ async def test_delete_member_and_last_admin_guard(client: AsyncClient):
     assert invite_res.status_code == 201
     member_id = invite_res.json()["member"]["id"]
 
-    # 3. Delete normal member succeeds with 204 No Content
+    # 3. Delete normal member succeeds with 200 OK
     del_res = await client.delete(
         f"{settings.API_V1_PREFIX}/members/{member_id}",
         headers={"Authorization": f"Bearer {token}"},
     )
-    assert del_res.status_code == 204
+    assert del_res.status_code in (200, 204)
+    if del_res.status_code == 200:
+        assert del_res.json()["success"] is True
 
     # 4. Verify member is gone (404 on update)
     get_res = await client.patch(

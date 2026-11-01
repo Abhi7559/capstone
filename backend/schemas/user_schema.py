@@ -52,3 +52,10 @@ class MemberInviteResponse(CamelCaseModel):
     signup_url: str
 
 
+class MemberDeleteResponse(CamelCaseModel):
+    """Response returned upon successful member deletion."""
+    success: bool = True
+    message: str = "Member deleted successfully."
+
+
+

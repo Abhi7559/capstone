@@ -960,7 +960,14 @@ Stores task status changes and audit events within individual projects.
 - **Query Parameters:** None
 - **Request Body:** None
 - **Positive Response Scenario A (Column Deleted & Tasks Migrated):**
-    - HTTP 204 No Content — Empty response body.
+    - HTTP 200 OK:
+    
+    ```json
+    {
+      "success": true,
+      "message": "Column deleted successfully."
+    }
+    ```
 - **Negative Scenarios:**
     - **HTTP 400 Bad Request** | **Exception:** `ValidationException`
         ```json
@@ -1476,7 +1483,14 @@ Stores task status changes and audit events within individual projects.
 - **Query Parameters:** None
 - **Request Body:** None
 - **Positive Response Scenario A (Member Safely Deleted):**
-    - HTTP 204 No Content — Empty response body.
+    - HTTP 200 OK:
+    
+    ```json
+    {
+      "success": true,
+      "message": "Member deleted successfully."
+    }
+    ```
 - **Negative Scenarios:**
     - **HTTP 400 Bad Request** | **Exception:** `ValidationException`
         ```json
@@ -2064,6 +2078,12 @@ class MemberInviteResponse(CamelCaseModel):
     message: str
     member: UserRead
 
+class MemberDeleteResponse(CamelCaseModel):
+    """Returned by: DELETE /task_management/api/v1/members/{id}"""
+    success: bool = True
+    message: str = "Member deleted successfully."
+
+
 
 # --- Project Responses ---
 class KanbanColumnSchema(CamelCaseModel):
@@ -2133,6 +2153,12 @@ class ColumnOut(CamelCaseModel):
     slug: str
     order: int
     color: str
+
+class ColumnDeleteResponse(CamelCaseModel):
+    """Returned by: DELETE /task_management/api/v1/projects/{id}/columns/{column_id}"""
+    success: bool = True
+    message: str = "Column deleted successfully."
+
 
 
 # --- Task Responses ---
