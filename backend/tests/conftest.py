@@ -18,6 +18,7 @@ from main import app
 from models.user import User
 
 import os
+from unittest.mock import AsyncMock
 
 # SQLite Test Engine for complete isolation from real PostgreSQL/Redis
 TEST_DB_FILE = "./test_mock.db"
@@ -110,12 +111,15 @@ class MockRedis:
 
     def __init__(self):
         self.store = {}
+        self.ttls = {}
 
     async def get(self, key: str):
         return self.store.get(key)
 
     async def set(self, key: str, value: str, ex: int | None = None):
         self.store[key] = value
+        if ex is not None:
+            self.ttls[key] = ex
         return True
 
     async def exists(self, key: str) -> int:
@@ -124,8 +128,13 @@ class MockRedis:
     async def delete(self, key: str):
         if key in self.store:
             del self.store[key]
+            self.ttls.pop(key, None)
             return 1
         return 0
+
+    async def keys(self, pattern: str = "*"):
+        import fnmatch
+        return [k for k in self.store.keys() if fnmatch.fnmatch(k, pattern)]
 
     async def ping(self):
         return True
@@ -134,9 +143,13 @@ class MockRedis:
         pass
 
 
-@pytest.fixture
-def mock_redis(monkeypatch):
+@pytest.fixture(autouse=True)
+def mock_redis(request, monkeypatch):
     """Fixture that intercepts Redis client calls and redirects to MockRedis."""
+    if "test_redis" in str(request.node.fspath):
+        yield None
+        return
+
     fake_redis = MockRedis()
     import database.redis
     monkeypatch.setattr(database.redis, "get_redis_client", lambda: fake_redis)

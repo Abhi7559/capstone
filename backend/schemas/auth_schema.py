@@ -49,7 +49,7 @@ class LoginRequest(BaseModel):
     """Credentials payload for login."""
 
     model_config = ConfigDict(
-        extra="ignore",
+        extra="forbid",
         strict=False,
     )
 
@@ -119,12 +119,27 @@ class TokenResponse(BaseModel):
 
     model_config = ConfigDict(
         populate_by_name=True,
-        extra="forbid",
-        strict=True,
+        extra="ignore",
+        strict=False,
     )
 
     access_token: str = Field(alias="accessToken")
+    refresh_token: Optional[str] = Field(default=None, alias="refreshToken")
     token_type: str = Field(default="Bearer", alias="tokenType")
+    access_token_expires_in: int = Field(default=900, alias="accessTokenExpiresIn")
+    refresh_token_expires_in: int = Field(default=604800, alias="refreshTokenExpiresIn")
+
+
+class LogoutRequest(BaseModel):
+    """Optional payload for logout specifying which refresh token to invalidate."""
+
+    model_config = ConfigDict(
+        populate_by_name=True,
+        extra="ignore",
+        strict=False,
+    )
+
+    refresh_token: Optional[str] = Field(default=None, alias="refreshToken")
 
 
 class MessageResponse(BaseModel):

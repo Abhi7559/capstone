@@ -217,13 +217,24 @@ async def test_auth_service_change_password():
 
 @pytest.mark.asyncio(loop_scope="session")
 async def test_auth_service_refresh_token():
-    """Refresh token issues a fresh access token for an active user."""
+    """Refresh token issues a fresh access token for an active user after whitelist validation."""
+    from database.redis import store_refresh_token
+    from core.security import decode_token
+
     async with get_test_session() as session:
         admin = await user_dao.get_by_email(session, "admin@teamboard.com")
         assert admin is not None
 
         refresh_jwt = create_refresh_token(data={"sub": str(admin.id)})
+        payload = decode_token(refresh_jwt)
+        await store_refresh_token(
+            user_id=str(admin.id),
+            jti=payload["jti"],
+            expires_in_seconds=604800,
+        )
+
         token_res = await auth_service.refresh_access_token(session, refresh_jwt)
 
         assert "access_token" in token_res
         assert token_res["token_type"] == "Bearer"
+        assert "refresh_token" in token_res

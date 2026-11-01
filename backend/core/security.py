@@ -40,13 +40,19 @@ def create_access_token(data: dict[str, Any] | str, expires_delta: timedelta | N
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
 
 
-def create_refresh_token(data: dict[str, Any] | str, expires_delta: timedelta | None = None) -> str:
-    """Create longer-lived JWT refresh token with user claims."""
+def create_refresh_token(
+    data: dict[str, Any] | str,
+    expires_delta: timedelta | None = None,
+    jti: str | None = None,
+) -> str:
+    """Create longer-lived JWT refresh token with user claims and a unique jti."""
+    import uuid
     to_encode = data.copy() if isinstance(data, dict) else {"sub": str(data)}
     expire = datetime.now(timezone.utc) + (
         expires_delta or timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     )
-    to_encode.update({"exp": expire, "type": "refresh"})
+    token_jti = jti or to_encode.get("jti") or str(uuid.uuid4())
+    to_encode.update({"exp": expire, "type": "refresh", "jti": token_jti})
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
 
 

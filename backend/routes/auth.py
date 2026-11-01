@@ -13,6 +13,7 @@ from schemas.auth_schema import (
     ChangePasswordResponse,
     LoginRequest,
     LoginResponse,
+    LogoutRequest,
     MessageResponse,
     RefreshTokenRequest,
     SignupRequest,
@@ -105,19 +106,22 @@ async def signup(
     response_model=TokenResponse,
     status_code=status.HTTP_200_OK,
     summary="Refresh Access Token",
-    description="Exchange a valid refresh token for a newly signed access token.",
+    description="Exchange a valid refresh token for a newly signed access token and rotated refresh token.",
 )
 async def refresh_token(
     data: RefreshTokenRequest,
     db: AsyncSession = Depends(get_db),
 ) -> TokenResponse:
-    """Exchange refresh token for a new access token."""
+    """Exchange refresh token for a new access token and rotated refresh token."""
     result = await auth_service.refresh_access_token(
         db=db, refresh_token_str=data.refresh_token
     )
     return TokenResponse(
         access_token=result["access_token"],
+        refresh_token=result.get("refresh_token"),
         token_type=result.get("token_type", "Bearer"),
+        access_token_expires_in=result.get("access_token_expires_in", 900),
+        refresh_token_expires_in=result.get("refresh_token_expires_in", 604800),
     )
 
 
@@ -129,15 +133,30 @@ async def refresh_token(
     response_model=MessageResponse,
     status_code=status.HTTP_200_OK,
     summary="Logout User",
-    description="Invalidate current access token by blacklisting it in Redis until expiration.",
+    description="Invalidate current access token by blacklisting it in Redis, and revoke active refresh token.",
 )
 async def logout(
+    logout_data: LogoutRequest | None = None,
     current_user: User = Depends(get_current_user_allow_pending),
     auth_creds: HTTPAuthorizationCredentials | None = Depends(security_bearer),
 ) -> MessageResponse:
     """
-    Blacklist the bearer token in Redis for its remaining lifetime.
+    Blacklist the bearer token in Redis and invalidate the specific refresh token session.
     """
+    from database.redis import blacklist_token, revoke_refresh_token
+
+    # 1. Invalidate specific refresh token if provided
+    if logout_data and logout_data.refresh_token:
+        try:
+            payload = decode_token(logout_data.refresh_token)
+            user_id = payload.get("sub")
+            jti = payload.get("jti")
+            if user_id and jti:
+                await revoke_refresh_token(user_id=str(user_id), jti=str(jti))
+        except Exception:
+            pass
+
+    # 2. Blacklist access token for its remaining lifetime
     if auth_creds and auth_creds.credentials:
         token = auth_creds.credentials.strip()
         try:

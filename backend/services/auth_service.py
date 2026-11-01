@@ -1,5 +1,5 @@
 import uuid
-from typing import Optional
+from typing import Optional, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from dao.user_dao import user_dao
@@ -43,13 +43,22 @@ class AuthService:
         if user.status != "active":
             raise UnauthorizedException(detail="Account is inactive or pending activation.")
 
-        # Generate signed access and refresh tokens
+        # Generate signed access and refresh tokens with unique jti
         user_id_str = str(user.id)
+        token_jti = str(uuid.uuid4())
         access_token = create_access_token(data={"sub": user_id_str})
-        refresh_token = create_refresh_token(data={"sub": user_id_str})
+        refresh_token = create_refresh_token(data={"sub": user_id_str}, jti=token_jti)
 
         access_token_expires_in = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
         refresh_token_expires_in = settings.REFRESH_TOKEN_EXPIRE_DAYS * 86400
+
+        # Store refresh token in Redis whitelist: refresh_token:<user_id>:<jti> -> "active"
+        from database.redis import store_refresh_token
+        await store_refresh_token(
+            user_id=user_id_str,
+            jti=token_jti,
+            expires_in_seconds=refresh_token_expires_in,
+        )
 
         return LoginResponse(
             access_token=access_token,
@@ -69,7 +78,7 @@ class AuthService:
     ) -> UserSummary:
         """
         Verify current password, hash new password, update database,
-        and clear the forced password-change flag.
+        clear the forced password-change flag, and revoke all existing sessions in Redis.
         """
         if not verify_password(current_password, user.hashed_password):
             raise UnauthorizedException(detail="Current password is incorrect.")
@@ -78,6 +87,11 @@ class AuthService:
         updated_user = await user_dao.update_password(
             db=db, user=user, new_hashed_password=new_hashed
         )
+
+        # Invalidate all active refresh tokens for this user on password rotation
+        from database.redis import revoke_all_user_refresh_tokens
+        await revoke_all_user_refresh_tokens(str(user.id))
+
         return UserSummary.model_validate(updated_user)
 
     async def setup_password_via_invitation(
@@ -107,13 +121,18 @@ class AuthService:
         updated_user = await user_dao.update_password(
             db=db, user=user, new_hashed_password=new_hashed
         )
+
+        from database.redis import revoke_all_user_refresh_tokens
+        await revoke_all_user_refresh_tokens(str(user.id))
+
         return UserSummary.model_validate(updated_user)
 
     async def refresh_access_token(
         self, db: AsyncSession, refresh_token_str: str
-    ) -> dict[str, str]:
+    ) -> dict[str, Any]:
         """
-        Validate refresh token and issue a fresh access token.
+        Validate refresh token against JWT claims and Redis whitelist,
+        then rotate refresh token and issue a fresh access token.
         """
         try:
             payload = decode_token(refresh_token_str)
@@ -124,8 +143,17 @@ class AuthService:
             raise UnauthorizedException(detail="Token is not a refresh token.")
 
         user_id_str = payload.get("sub")
+        jti = payload.get("jti")
         if not user_id_str:
             raise UnauthorizedException(detail="Token payload missing user identifier.")
+        if not jti:
+            raise UnauthorizedException(detail="Refresh token missing unique identifier (jti).")
+
+        # Verify Redis whitelist record: refresh_token:<user_id>:<jti> == "active"
+        from database.redis import is_refresh_token_active, store_refresh_token, revoke_refresh_token
+        is_active = await is_refresh_token_active(user_id=str(user_id_str), jti=str(jti))
+        if not is_active:
+            raise UnauthorizedException(detail="Refresh token is invalid, expired, or revoked.")
 
         try:
             user_uuid = uuid.UUID(str(user_id_str))
@@ -139,10 +167,30 @@ class AuthService:
         if user.status != "active":
             raise UnauthorizedException(detail="Account is inactive or pending activation.")
 
+        # Invalidate old refresh token (prevents reuse / replay attacks)
+        await revoke_refresh_token(user_id=str(user_id_str), jti=str(jti))
+
+        # Rotate: generate brand new access and refresh tokens with new jti
+        new_jti = str(uuid.uuid4())
         new_access_token = create_access_token(data={"sub": str(user.id)})
+        new_refresh_token = create_refresh_token(data={"sub": str(user.id)}, jti=new_jti)
+
+        access_token_expires_in = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+        refresh_token_expires_in = settings.REFRESH_TOKEN_EXPIRE_DAYS * 86400
+
+        # Store rotated refresh token in Redis
+        await store_refresh_token(
+            user_id=str(user.id),
+            jti=new_jti,
+            expires_in_seconds=refresh_token_expires_in,
+        )
+
         return {
             "access_token": new_access_token,
+            "refresh_token": new_refresh_token,
             "token_type": "Bearer",
+            "access_token_expires_in": access_token_expires_in,
+            "refresh_token_expires_in": refresh_token_expires_in,
         }
 
 
