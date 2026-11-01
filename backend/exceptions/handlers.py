@@ -13,10 +13,7 @@ def register_exception_handlers(app: FastAPI) -> None:
         return JSONResponse(
             status_code=exc.status_code,
             content={
-                "status_code": exc.status_code,
-                "msg": exc.msg,
                 "detail": detail_msg,
-                "details": exc.details,
             },
             headers=exc.headers,
         )
@@ -34,28 +31,16 @@ def register_exception_handlers(app: FastAPI) -> None:
         return JSONResponse(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             content={
-                "status_code": status.HTTP_422_UNPROCESSABLE_ENTITY,
-                "msg": "Unprocessable Entity",
                 "detail": clean_errors,
-                "details": clean_errors,
             },
         )
 
     @app.exception_handler(HTTPException)
     async def http_exception_handler(request: Request, exc: HTTPException):
-        import http
-        try:
-            msg = http.HTTPStatus(exc.status_code).phrase
-        except ValueError:
-            msg = "Error"
-
         return JSONResponse(
             status_code=exc.status_code,
             content={
-                "status_code": exc.status_code,
-                "msg": msg,
                 "detail": exc.detail,
-                "details": exc.detail,
             },
             headers=exc.headers,
         )
@@ -72,10 +57,7 @@ def register_exception_handlers(app: FastAPI) -> None:
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={
-                "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR,
-                "msg": "Internal Server Error",
                 "detail": "An unexpected server error occurred. Please try again later.",
-                "details": "An unexpected server error occurred. Please try again later.",
             },
         )
 

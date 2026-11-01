@@ -88,10 +88,8 @@ async def test_forbidden_error_returns_403(error_app):
         response = await ac.get("/trigger-forbidden")
         assert response.status_code == 403
         data = response.json()
-        assert data["status_code"] == 403
-        assert data["msg"] == "Forbidden"
+        assert "detail" in data
         assert "You lack permission" in data["detail"]
-        assert "You lack permission" in data["details"]
 
 
 @pytest.mark.asyncio
@@ -101,8 +99,7 @@ async def test_entity_not_found_returns_404(error_app):
         response = await ac.get("/trigger-not-found")
         assert response.status_code == 404
         data = response.json()
-        assert data["status_code"] == 404
-        assert data["msg"] == "Not Found"
+        assert "detail" in data
         assert "Task with identifier '12345' not found" in data["detail"]
 
 
@@ -113,8 +110,7 @@ async def test_conflict_error_returns_409(error_app):
         response = await ac.get("/trigger-conflict")
         assert response.status_code == 409
         data = response.json()
-        assert data["status_code"] == 409
-        assert data["msg"] == "Conflict"
+        assert "detail" in data
         assert "already exists" in data["detail"]
 
 
@@ -126,8 +122,7 @@ async def test_invalid_credentials_returns_401(error_app):
         assert response.status_code == 401
         assert response.headers.get("WWW-Authenticate") == "Bearer"
         data = response.json()
-        assert data["status_code"] == 401
-        assert data["msg"] == "Unauthorized"
+        assert "detail" in data
         assert "Invalid email or password" in data["detail"]
 
 
@@ -138,8 +133,7 @@ async def test_validation_rule_error_returns_400(error_app):
         response = await ac.get("/trigger-validation-rule")
         assert response.status_code == 400
         data = response.json()
-        assert data["status_code"] == 400
-        assert data["msg"] == "Bad Request"
+        assert "detail" in data
         assert "Due date cannot be before start date" in data["detail"]
 
 
@@ -150,7 +144,6 @@ async def test_standard_http_exception_handled(error_app):
         response = await ac.get("/trigger-http-exception")
         assert response.status_code == 418
         data = response.json()
-        assert data["status_code"] == 418
         assert data["detail"] == "I'm a teapot"
 
 
@@ -162,8 +155,7 @@ async def test_request_validation_error_422(error_app):
         response = await ac.post("/trigger-request-validation", json={"name": "x", "count": "not-int"})
         assert response.status_code == 422
         data = response.json()
-        assert data["status_code"] == 422
-        assert data["msg"] == "Unprocessable Entity"
+        assert "detail" in data
         assert isinstance(data["detail"], list)
 
 
@@ -177,8 +169,7 @@ async def test_unexpected_exception_returns_safe_500(error_app):
         response = await ac.get("/trigger-unhandled")
         assert response.status_code == 500
         data = response.json()
-        assert data["status_code"] == 500
-        assert data["msg"] == "Internal Server Error"
+        assert "detail" in data
         # Must NOT leak secret database pointer
         assert "db://user:pass" not in response.text
         assert "An unexpected server error occurred" in data["detail"]

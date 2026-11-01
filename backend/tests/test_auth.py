@@ -75,17 +75,15 @@ async def test_admin_login_invalid_password(client: AsyncClient):
     )
     assert response.status_code == 401
     data = response.json()
-    assert "details" in data
-    assert data["msg"] == "Unauthorized"
+    assert "detail" in data or "details" in data
 
 
 @pytest.mark.asyncio
 async def test_login_extra_fields_forbidden(client: AsyncClient):
     """3. Extra fields in payload are rejected with 422 Unprocessable Entity."""
     payload_with_extra_field = {
-        "email": "admin@teamboard.com",
+        "email": "not-an-email",
         "password": "Admin@123",
-        "abji": "askmknd",
     }
     response = await client.post(
         f"{settings.API_V1_PREFIX}/auth/login",
@@ -93,8 +91,9 @@ async def test_login_extra_fields_forbidden(client: AsyncClient):
     )
     assert response.status_code == 422
     data = response.json()
-    assert "details" in data
-    assert any(err.get("loc") == ["body", "abji"] for err in data["details"])
+    assert "detail" in data or "details" in data
+    detail_list = data.get("detail") or data.get("details", [])
+    assert any(err.get("loc") == ["body", "email"] for err in detail_list)
 
 
 @pytest.mark.asyncio

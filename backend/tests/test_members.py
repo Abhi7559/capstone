@@ -95,7 +95,8 @@ async def test_delete_member_and_last_admin_guard(client: AsyncClient):
         headers={"Authorization": f"Bearer {token}"},
     )
     assert del_admin_res.status_code == 400
-    assert "last remaining Administrator" in del_admin_res.json()["details"]
+    del_admin_err = del_admin_res.json().get("detail") or del_admin_res.json().get("details", "")
+    assert "last remaining Administrator" in del_admin_err
 
     # 2. Invite a normal member
     invite_res = await client.post(

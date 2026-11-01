@@ -217,7 +217,7 @@ async def test_create_project_unknown_member_rejected(client: AsyncClient, setup
     response = await client.post("/task_management/api/v1/projects", json=payload, headers=headers)
     assert response.status_code == 400
     res_json = response.json()
-    assert "does not exist in workspace" in str(res_json.get("details", ""))
+    assert "does not exist in workspace" in str(res_json.get("detail", res_json.get("details", "")))
 
 
 # ============================================================================

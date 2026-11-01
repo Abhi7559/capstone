@@ -119,7 +119,8 @@ async def test_refresh_token_rejected_as_access_token():
             headers=auth_header(refresh_token),
         )
         assert response.status_code == 401
-        assert "not an access token" in response.json()["details"]
+        err_msg = response.json().get("detail") or response.json().get("details", "")
+        assert "not an access token" in err_msg
 
 
 @pytest.mark.asyncio(loop_scope="session")
@@ -151,7 +152,8 @@ async def test_unknown_user_id_rejected():
             headers=auth_header(token),
         )
         assert response.status_code == 401
-        assert response.json()["details"] == "User does not exist."
+        err_msg = response.json().get("detail") or response.json().get("details", "")
+        assert err_msg == "User does not exist."
 
 
 @pytest.mark.asyncio(loop_scope="session")
@@ -182,7 +184,8 @@ async def test_password_change_flow_isolation():
         # 10. Ordinary protected route must be BLOCKED with 403
         blocked_res = await client.get("/test-auth-deps/protected", headers=auth_header(token))
         assert blocked_res.status_code == 403
-        assert "Password change required" in blocked_res.json()["details"]
+        blocked_err = blocked_res.json().get("detail") or blocked_res.json().get("details", "")
+        assert "Password change required" in blocked_err
 
         # 11. Password-change route must be ALLOWED with 200
         allowed_res = await client.get("/test-auth-deps/change-password-flow", headers=auth_header(token))
@@ -233,7 +236,8 @@ async def test_require_role_admin_and_member_enforcement():
             # 13. Member is rejected from admin-only dependency with 403
             res_member_blocked = await client.get("/test-auth-deps/admin-only", headers=auth_header(member_token))
             assert res_member_blocked.status_code == 403
-            assert "does not have permission" in res_member_blocked.json()["details"]
+            member_blocked_err = res_member_blocked.json().get("detail") or res_member_blocked.json().get("details", "")
+            assert "does not have permission" in member_blocked_err
 
             # 14. Member can access member-or-admin route
             res_member_allowed = await client.get("/test-auth-deps/member-or-admin", headers=auth_header(member_token))
