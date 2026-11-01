@@ -6,7 +6,7 @@ import type { Task } from "@/types/task";
 export const SEED_ADMIN: User = {
   id: "550e8400-e29b-41d4-a716-446655440000",
   name: "System Admin",
-  email: "admin@teamboard.com",
+  email: "admin@teamhub.com",
   password: "Admin@123",
   role: "admin",
   status: "active",
@@ -14,7 +14,18 @@ export const SEED_ADMIN: User = {
   joiningDate: "2026-09-01",
 };
 
-export const INITIAL_USERS: User[] = [SEED_ADMIN];
+export const SEED_MEMBER: User = {
+  id: "660e8400-e29b-41d4-a716-446655440001",
+  name: "Alex Member",
+  email: "member@teamhub.com",
+  password: "Member@123",
+  role: "member",
+  status: "active",
+  designation: "Software Engineer",
+  joiningDate: "2026-09-01",
+};
+
+export const INITIAL_USERS: User[] = [SEED_ADMIN, SEED_MEMBER];
 
 export const INITIAL_PROJECTS: Project[] = [];
 

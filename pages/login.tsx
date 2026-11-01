@@ -15,7 +15,7 @@ import { apiEndpoint } from "@/utils/apiConfig";
 
 export default function LoginPage() {
   const router = useRouter();
-  const logout = useAuthStore((state) => state.logout);
+  const { isAuthenticated, currentUser, logout } = useAuthStore();
   const { login, isLoading, error } = useLogin();
   const {
     changePassword,
@@ -267,6 +267,89 @@ export default function LoginPage() {
               <p className="text-sm font-medium text-red-800">{error}</p>
             </div>
           )}
+
+          {/* Active Session Notification if already authenticated */}
+          {isAuthenticated && currentUser && (
+            <div className="mb-5 rounded-2xl bg-blue-50/80 border border-blue-200/90 p-4 shadow-xs">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-8 w-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs uppercase shadow-xs">
+                    {currentUser.name ? currentUser.name.charAt(0) : "U"}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-bold text-gray-900">
+                        {currentUser.name}
+                      </span>
+                      <span className="rounded-full bg-blue-200/80 px-2 py-0.2 text-[10px] font-bold text-blue-900 uppercase">
+                        {currentUser.role}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-gray-500 truncate max-w-[200px]">
+                      {currentUser.email}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => router.push("/dashboard")}
+                  className="flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 text-white py-2 text-xs font-bold transition shadow-xs text-center cursor-pointer"
+                >
+                  Continue to Workspace →
+                </button>
+                <button
+                  type="button"
+                  onClick={() => logout()}
+                  className="rounded-xl border border-gray-300 hover:bg-gray-100 bg-white text-gray-700 px-3 py-2 text-xs font-semibold transition cursor-pointer"
+                >
+                  Log out
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Quick Demo Credentials Switcher */}
+          <div className="rounded-2xl bg-slate-50 border border-slate-200/80 p-3.5 space-y-2.5 shadow-2xs">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
+                1-Click Demo Login
+              </span>
+              <span className="text-[10px] text-slate-400 font-medium">Click to pre-fill</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2.5">
+              <button
+                type="button"
+                onClick={() => {
+                  setLoginValue("email", "admin@teamhub.com", { shouldValidate: true });
+                  setLoginValue("password", "Admin@123", { shouldValidate: true });
+                }}
+                className="rounded-xl bg-white border border-slate-200/80 hover:border-blue-500 hover:bg-blue-50/50 p-2.5 text-left transition cursor-pointer group shadow-2xs"
+              >
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs">🛡️</span>
+                  <span className="text-xs font-bold text-slate-800 group-hover:text-blue-700">Admin</span>
+                </div>
+                <span className="text-[10px] text-slate-500 block truncate mt-0.5">admin@teamhub.com</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setLoginValue("email", "member@teamhub.com", { shouldValidate: true });
+                  setLoginValue("password", "Member@123", { shouldValidate: true });
+                }}
+                className="rounded-xl bg-white border border-slate-200/80 hover:border-emerald-500 hover:bg-emerald-50/50 p-2.5 text-left transition cursor-pointer group shadow-2xs"
+              >
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs">👤</span>
+                  <span className="text-xs font-bold text-slate-800 group-hover:text-emerald-700">Member</span>
+                </div>
+                <span className="text-[10px] text-slate-500 block truncate mt-0.5">member@teamhub.com</span>
+              </button>
+            </div>
+          </div>
 
           <form
             onSubmit={handleSubmit(onSubmit)}

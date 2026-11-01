@@ -11,6 +11,37 @@ ADMIN_ID = uuid.UUID("550e8400-e29b-41d4-a716-446655440000")
 ADMIN_EMAIL = "admin@teamboard.com"
 ADMIN_PASSWORD = "Admin@123"
 
+MEMBER_ID = uuid.UUID("660e8400-e29b-41d4-a716-446655440001")
+MEMBER_EMAIL = "member@teamhub.com"
+MEMBER_PASSWORD = "Member@123"
+
+
+async def seed_member_user() -> None:
+    """Seed the default Member into PostgreSQL so both Admin and Member logins work out-of-the-box."""
+    async with async_session_factory() as session:
+        result = await session.execute(
+            select(User).where(User.email.in_([MEMBER_EMAIL, "member@teamboard.com"]))
+        )
+        existing_member = result.scalar_one_or_none()
+        if existing_member:
+            return
+
+        logger.info("Seeding default Member user: %s", MEMBER_EMAIL)
+        member = User(
+            id=MEMBER_ID,
+            name="Alex Member",
+            email=MEMBER_EMAIL,
+            hashed_password=get_password_hash(MEMBER_PASSWORD),
+            role="member",
+            status="active",
+            designation="Software Engineer",
+            joining_date=date(2026, 9, 1),
+            requires_password_change=False,
+        )
+        session.add(member)
+        await session.commit()
+        logger.info("Member user seeded successfully with ID: %s", MEMBER_ID)
+
 
 async def seed_admin_user() -> None:
     """Seed the single initial Administrator into PostgreSQL and ensure no duplicate admins exist."""
@@ -53,6 +84,7 @@ async def seed_admin_user() -> None:
 async def seed_initial_data() -> None:
     """Seed initial administrator and default workspace projects if empty."""
     await seed_admin_user()
+    await seed_member_user()
     try:
         from models.project import Project
         async with async_session_factory() as session:

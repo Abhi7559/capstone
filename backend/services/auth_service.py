@@ -36,6 +36,49 @@ class AuthService:
             user = await user_dao.get_by_email(db, "admin@teamboard.com")
         elif not user and email == "admin@teamboard.com":
             user = await user_dao.get_by_email(db, "admin@teamhub.com")
+        elif not user and email == "member@teamhub.com":
+            user = await user_dao.get_by_email(db, "member@teamboard.com")
+        elif not user and email == "member@teamboard.com":
+            user = await user_dao.get_by_email(db, "member@teamhub.com")
+
+        # Auto-provision standard demo accounts if not yet in database
+        if not user and email in ("admin@teamhub.com", "admin@teamboard.com") and login_data.password == "Admin@123":
+            from models.user import User as UserModel
+            from datetime import date
+            admin_user = UserModel(
+                id=uuid.UUID("550e8400-e29b-41d4-a716-446655440000"),
+                name="System Admin",
+                email=email,
+                hashed_password=get_password_hash("Admin@123"),
+                role="admin",
+                status="active",
+                designation="System Administrator",
+                joining_date=date(2026, 9, 1),
+                requires_password_change=False,
+            )
+            db.add(admin_user)
+            await db.commit()
+            await db.refresh(admin_user)
+            user = admin_user
+
+        if not user and email in ("member@teamhub.com", "member@teamboard.com") and login_data.password == "Member@123":
+            from models.user import User as UserModel
+            from datetime import date
+            member_user = UserModel(
+                id=uuid.UUID("660e8400-e29b-41d4-a716-446655440001"),
+                name="Alex Member",
+                email=email,
+                hashed_password=get_password_hash("Member@123"),
+                role="member",
+                status="active",
+                designation="Software Engineer",
+                joining_date=date(2026, 9, 1),
+                requires_password_change=False,
+            )
+            db.add(member_user)
+            await db.commit()
+            await db.refresh(member_user)
+            user = member_user
 
         if not user or not verify_password(login_data.password, user.hashed_password):
             raise UnauthorizedException(detail="Invalid email or password.")

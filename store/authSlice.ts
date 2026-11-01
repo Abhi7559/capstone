@@ -19,8 +19,8 @@ const DEFAULT_ADMIN: User = {
 };
 
 export const createAuthSlice: StateCreator<AuthSlice> = (set) => ({
-  currentUser: DEFAULT_ADMIN,
-  isAuthenticated: true,
+  currentUser: null,
+  isAuthenticated: false,
   isHydrated: false,
   login: (user: User) => {
     const { password: _, ...safeUser } = user;
