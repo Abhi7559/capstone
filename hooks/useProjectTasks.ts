@@ -175,6 +175,7 @@ export function useCreateTask() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projectTasks"] });
       queryClient.invalidateQueries({ queryKey: ["dashboardData"] });
+      queryClient.invalidateQueries({ queryKey: ["analyticsData"] });
     },
   });
 
@@ -202,6 +203,7 @@ export function useUpdateTask() {
       queryClient.invalidateQueries({ queryKey: ["task", updatedTask.id] });
       queryClient.invalidateQueries({ queryKey: ["projectTasks"] });
       queryClient.invalidateQueries({ queryKey: ["dashboardData"] });
+      queryClient.invalidateQueries({ queryKey: ["analyticsData"] });
       queryClient.invalidateQueries({ queryKey: ["projectActivities"] });
     },
   });

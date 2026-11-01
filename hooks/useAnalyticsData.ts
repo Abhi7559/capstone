@@ -117,8 +117,8 @@ export function useAnalyticsData(selectedProjectId?: string) {
     ],
     queryFn: () =>
       fetchAnalyticsData(currentUser?.role, currentUser?.id, selectedProjectId),
-    staleTime: 0,
-    refetchOnWindowFocus: true,
+    staleTime: 1000 * 60,
+    refetchOnWindowFocus: false,
   });
 
   const rawData = query.data;
