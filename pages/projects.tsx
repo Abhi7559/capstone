@@ -383,7 +383,7 @@ export default function ProjectsPage() {
                 <button
                   type="button"
                   onClick={() => setStatusFilter("all")}
-                  className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
+                  className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold whitespace-nowrap transition ${
                     statusFilter === "all"
                       ? "bg-gray-900 text-white shadow-sm"
                       : "bg-gray-100 text-gray-600 hover:bg-gray-200"
@@ -404,7 +404,7 @@ export default function ProjectsPage() {
                 <button
                   type="button"
                   onClick={() => setStatusFilter("active")}
-                  className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
+                  className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold whitespace-nowrap transition ${
                     statusFilter === "active"
                       ? "bg-emerald-600 text-white shadow-sm"
                       : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
@@ -425,7 +425,7 @@ export default function ProjectsPage() {
                 <button
                   type="button"
                   onClick={() => setStatusFilter("completed")}
-                  className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
+                  className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold whitespace-nowrap transition ${
                     statusFilter === "completed"
                       ? "bg-purple-600 text-white shadow-sm"
                       : "bg-purple-50 text-purple-700 hover:bg-purple-100"
@@ -446,18 +446,18 @@ export default function ProjectsPage() {
                 <button
                   type="button"
                   onClick={() => setStatusFilter("archived")}
-                  className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
+                  className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold whitespace-nowrap transition ${
                     statusFilter === "archived"
                       ? "bg-amber-600 text-white shadow-sm"
-                      : "bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200"
+                      : "bg-amber-50 text-amber-700 hover:bg-amber-100"
                   }`}
                 >
-                  📁 Archive / Trash
+                  Archived
                   <span
                     className={`rounded-full px-1.5 py-0.5 text-[10px] ${
                       statusFilter === "archived"
                         ? "bg-amber-700 text-amber-100"
-                        : "bg-amber-200/70 text-amber-900"
+                        : "bg-amber-200/60 text-amber-800"
                     }`}
                   >
                     {archivedCount}
@@ -534,21 +534,6 @@ export default function ProjectsPage() {
                 </div>
               </div>
             </div>
-
-            {/* Archive State Banner */}
-            {statusFilter === "archived" && (
-              <div className="mb-6 rounded-2xl bg-amber-500/10 border border-amber-500/30 p-4 flex items-start gap-3.5 shadow-xs">
-                <span className="text-2xl leading-none">📁</span>
-                <div>
-                  <h4 className="text-xs font-bold text-amber-950 uppercase tracking-wider">
-                    Archived Workspaces
-                  </h4>
-                  <p className="text-xs text-amber-800/90 mt-0.5 leading-relaxed">
-                    These projects have been soft-deleted and hidden from active boards. Their tasks, member assignments, and history are completely preserved. Click <strong>Restore</strong> to reactivate any project.
-                  </p>
-                </div>
-              </div>
-            )}
 
             {/* Projects View */}
             {isLoading ? (
