@@ -113,8 +113,9 @@ class Settings(BaseSettings):
         description="Sender display name",
     )
     FRONTEND_URL: str = Field(
-        default="http://localhost:3000",
-        description="Frontend base URL for login links",
+        default="https://capstone-git-main-abhishek-ganeshwadis-projects.vercel.app",
+        validation_alias=AliasChoices("FRONTEND_URL", "NEXT_PUBLIC_APP_URL"),
+        description="Frontend base URL for invitation and activation links",
     )
 
     # Compatibility aliases
