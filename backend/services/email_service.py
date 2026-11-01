@@ -14,6 +14,8 @@ def render_invitation_html(
 ) -> str:
     """Generate a clean, responsive HTML email template for new user invitations."""
     action_url = signup_url or login_url or f"{settings.FRONTEND_URL.rstrip('/')}/signup"
+    if "localhost" in action_url:
+        action_url = action_url.replace("http://localhost:3000", "https://capstone-git-main-abhishek-ganeshwadis-projects.vercel.app")
     
     password_box = ""
     if temp_password:
@@ -77,6 +79,8 @@ def create_invitation_message(
 ) -> EmailMessage:
     """Build the multipart EmailMessage with subject, recipient, sender, and HTML template."""
     action_url = signup_url or f"{settings.FRONTEND_URL.rstrip('/')}/signup"
+    if "localhost" in action_url:
+        action_url = action_url.replace("http://localhost:3000", "https://capstone-git-main-abhishek-ganeshwadis-projects.vercel.app")
 
     message = EmailMessage()
     message["Subject"] = "Welcome to Team Hub — Activate Your Account"

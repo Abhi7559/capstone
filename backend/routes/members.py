@@ -1,7 +1,8 @@
 import secrets
 import uuid
 from typing import List
-from fastapi import APIRouter, BackgroundTasks, Depends, Response, status
+from urllib.parse import urlparse
+from fastapi import APIRouter, BackgroundTasks, Depends, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.config import settings
@@ -21,6 +22,19 @@ from services.email_service import send_invitation_email
 from services.member_service import member_service
 
 router = APIRouter()
+
+
+def get_frontend_base_url(request: Request) -> str:
+    """Determine the live frontend base URL, guaranteeing production Vercel domain over localhost."""
+    origin = request.headers.get("origin") or request.headers.get("referer")
+    if origin and "vercel.app" in origin:
+        parsed = urlparse(origin)
+        return f"{parsed.scheme}://{parsed.netloc}"
+
+    base = settings.FRONTEND_URL or "https://capstone-git-main-abhishek-ganeshwadis-projects.vercel.app"
+    if "localhost" in base:
+        base = "https://capstone-git-main-abhishek-ganeshwadis-projects.vercel.app"
+    return base.rstrip("/")
 
 
 # ============================================================================
@@ -54,6 +68,7 @@ async def list_members(
 async def invite_member(
     invite_data: MemberInviteRequest,
     background_tasks: BackgroundTasks,
+    request: Request,
     current_admin: User = Depends(require_role("admin")),
     db: AsyncSession = Depends(get_db),
 ) -> MemberInviteResponse:
@@ -80,7 +95,8 @@ async def invite_member(
 
     # Create signed invitation token for the new user (valid 3 days)
     invitation_token = create_invitation_token({"sub": str(new_user.id), "email": new_user.email})
-    signup_url = f"{settings.FRONTEND_URL.rstrip('/')}/signup?email={new_user.email}&token={invitation_token}"
+    frontend_base = get_frontend_base_url(request)
+    signup_url = f"{frontend_base}/signup?email={new_user.email}&token={invitation_token}"
 
     # Dispatch email asynchronously in background with signup link
     background_tasks.add_task(
@@ -111,6 +127,7 @@ async def invite_member(
 async def resend_invite(
     id: uuid.UUID,
     background_tasks: BackgroundTasks,
+    request: Request,
     current_admin: User = Depends(require_role("admin")),
     db: AsyncSession = Depends(get_db),
 ) -> MemberInviteResponse:
@@ -120,7 +137,8 @@ async def resend_invite(
         raise EntityNotFoundException(entity_name="Member", identifier=id)
 
     invitation_token = create_invitation_token({"sub": str(target_user.id), "email": target_user.email})
-    signup_url = f"{settings.FRONTEND_URL.rstrip('/')}/signup?email={target_user.email}&token={invitation_token}"
+    frontend_base = get_frontend_base_url(request)
+    signup_url = f"{frontend_base}/signup?email={target_user.email}&token={invitation_token}"
 
     background_tasks.add_task(
         send_invitation_email,
