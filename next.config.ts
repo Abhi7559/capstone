@@ -19,10 +19,13 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   output: process.env.VERCEL ? undefined : "standalone",
   async rewrites() {
-    let backendUrl =
-      cleanBackendUrl(
-        process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_API_URL,
-      ) || DEFAULT_PRODUCTION_BACKEND;
+    let raw = cleanBackendUrl(
+      process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_API_URL,
+    );
+    if (raw.includes("localhost:8000")) {
+      raw = "";
+    }
+    let backendUrl = raw || DEFAULT_PRODUCTION_BACKEND;
 
     if (
       !backendUrl.startsWith("http://") &&
