@@ -15,13 +15,20 @@ import { apiEndpoint } from "@/utils/apiConfig";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { isAuthenticated, currentUser, logout } = useAuthStore();
+  const { isAuthenticated, currentUser, isHydrated, logout } = useAuthStore();
   const { login, isLoading, error } = useLogin();
   const {
     changePassword,
     isLoading: isChangingPassword,
     error: changePasswordError,
   } = useChangePassword();
+
+  // If already authenticated, redirect directly to dashboard
+  useEffect(() => {
+    if (isHydrated && isAuthenticated && currentUser) {
+      router.replace("/dashboard");
+    }
+  }, [isHydrated, isAuthenticated, currentUser, router]);
 
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -265,48 +272,6 @@ export default function LoginPage() {
           {error && (
             <div className="mb-6 rounded-lg bg-red-50 p-4 border border-red-200">
               <p className="text-sm font-medium text-red-800">{error}</p>
-            </div>
-          )}
-
-          {/* Active Session Notification if already authenticated */}
-          {isAuthenticated && currentUser && (
-            <div className="mb-5 rounded-2xl bg-blue-50/80 border border-blue-200/90 p-4 shadow-xs">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="h-8 w-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs uppercase shadow-xs">
-                    {currentUser.name ? currentUser.name.charAt(0) : "U"}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-bold text-gray-900">
-                        {currentUser.name}
-                      </span>
-                      <span className="rounded-full bg-blue-200/80 px-2 py-0.2 text-[10px] font-bold text-blue-900 uppercase">
-                        {currentUser.role}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-gray-500 truncate max-w-[200px]">
-                      {currentUser.email}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => router.push("/dashboard")}
-                  className="flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 text-white py-2 text-xs font-bold transition shadow-xs text-center cursor-pointer"
-                >
-                  Continue to Workspace →
-                </button>
-                <button
-                  type="button"
-                  onClick={() => logout()}
-                  className="rounded-xl border border-gray-300 hover:bg-gray-100 bg-white text-gray-700 px-3 py-2 text-xs font-semibold transition cursor-pointer"
-                >
-                  Log out
-                </button>
-              </div>
             </div>
           )}
 
