@@ -127,14 +127,15 @@ export default function ProjectsPage() {
   // Local state for Search, Filter, Sort, and View mode
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<
-    "all" | "active" | "archived"
+    "all" | "active" | "completed" | "archived"
   >("all");
   const [sortBy, setSortBy] = useState<"newest" | "name" | "status">("newest");
   const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
 
   // Metrics calculations
   const allProjectsList = projects || [];
-  const totalCount = allProjectsList.length;
+  const nonArchivedList = allProjectsList.filter((p) => p.status !== "archived");
+  const totalCount = nonArchivedList.length;
   const activeCount = allProjectsList.filter(
     (p) => p.status === "active",
   ).length;
@@ -147,7 +148,7 @@ export default function ProjectsPage() {
   const avgProgress =
     totalCount > 0
       ? Math.round(
-          allProjectsList.reduce(
+          nonArchivedList.reduce(
             (acc, p) => acc + calculateProjectProgress(p.id),
             0,
           ) / totalCount,
@@ -161,7 +162,9 @@ export default function ProjectsPage() {
         project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         project.description.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesStatus =
-        statusFilter === "all" ? true : project.status === statusFilter;
+        statusFilter === "all"
+          ? project.status !== "archived"
+          : project.status === statusFilter;
       return matchesSearch && matchesStatus;
     })
     .sort((a, b) => {
@@ -421,19 +424,40 @@ export default function ProjectsPage() {
 
                 <button
                   type="button"
-                  onClick={() => setStatusFilter("archived")}
+                  onClick={() => setStatusFilter("completed")}
                   className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
-                    statusFilter === "archived"
+                    statusFilter === "completed"
                       ? "bg-purple-600 text-white shadow-sm"
                       : "bg-purple-50 text-purple-700 hover:bg-purple-100"
                   }`}
                 >
-                  Archived
+                  Completed
+                  <span
+                    className={`rounded-full px-1.5 py-0.5 text-[10px] ${
+                      statusFilter === "completed"
+                        ? "bg-purple-700 text-purple-100"
+                        : "bg-purple-200/60 text-purple-800"
+                    }`}
+                  >
+                    {completedCount}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter("archived")}
+                  className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
+                    statusFilter === "archived"
+                      ? "bg-amber-600 text-white shadow-sm"
+                      : "bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200"
+                  }`}
+                >
+                  📁 Archive / Trash
                   <span
                     className={`rounded-full px-1.5 py-0.5 text-[10px] ${
                       statusFilter === "archived"
-                        ? "bg-purple-700 text-purple-100"
-                        : "bg-purple-200/60 text-purple-800"
+                        ? "bg-amber-700 text-amber-100"
+                        : "bg-amber-200/70 text-amber-900"
                     }`}
                   >
                     {archivedCount}
@@ -510,6 +534,21 @@ export default function ProjectsPage() {
                 </div>
               </div>
             </div>
+
+            {/* Archive State Banner */}
+            {statusFilter === "archived" && (
+              <div className="mb-6 rounded-2xl bg-amber-500/10 border border-amber-500/30 p-4 flex items-start gap-3.5 shadow-xs">
+                <span className="text-2xl leading-none">📁</span>
+                <div>
+                  <h4 className="text-xs font-bold text-amber-950 uppercase tracking-wider">
+                    Archived Workspaces
+                  </h4>
+                  <p className="text-xs text-amber-800/90 mt-0.5 leading-relaxed">
+                    These projects have been soft-deleted and hidden from active boards. Their tasks, member assignments, and history are completely preserved. Click <strong>Restore</strong> to reactivate any project.
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Projects View */}
             {isLoading ? (
@@ -710,12 +749,30 @@ export default function ProjectsPage() {
                         </div>
 
                         <div className="flex items-center space-x-2">
-                          <a
-                            href={`/projects/${project.id}`}
-                            className="flex-1 text-center rounded-xl bg-blue-50 border border-blue-200/80 py-2 text-xs font-bold text-blue-600 hover:bg-blue-600 hover:text-white transition shadow-2xs"
-                          >
-                            View Details →
-                          </a>
+                          {project.status === "archived" ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => handleArchiveToggle(project)}
+                                className="flex-1 text-center rounded-xl bg-amber-600 hover:bg-amber-700 text-white py-2 text-xs font-bold transition shadow-2xs inline-flex items-center justify-center gap-1.5 cursor-pointer"
+                              >
+                                <span>🔄</span> Restore Project
+                              </button>
+                              <a
+                                href={`/projects/${project.id}`}
+                                className="rounded-xl border border-gray-200 px-3 py-2 text-xs font-bold text-gray-600 hover:bg-gray-50 transition"
+                              >
+                                View
+                              </a>
+                            </>
+                          ) : (
+                            <a
+                              href={`/projects/${project.id}`}
+                              className="flex-1 text-center rounded-xl bg-blue-50 border border-blue-200/80 py-2 text-xs font-bold text-blue-600 hover:bg-blue-600 hover:text-white transition shadow-2xs"
+                            >
+                              View Details →
+                            </a>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -761,10 +818,12 @@ export default function ProjectsPage() {
                               className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize ${
                                 project.status === "active"
                                   ? "bg-emerald-50 text-emerald-800"
-                                  : "bg-purple-50 text-purple-800"
+                                  : project.status === "archived"
+                                    ? "bg-amber-50 text-amber-800 border border-amber-200"
+                                    : "bg-purple-50 text-purple-800"
                               }`}
                             >
-                              {project.status}
+                              {project.status.replace("_", " ")}
                             </span>
                           </td>
                           <td className="px-6 py-4">
@@ -772,6 +831,16 @@ export default function ProjectsPage() {
                           </td>
                           <td className="px-6 py-4 text-right">
                             <div className="flex items-center justify-end space-x-1">
+                              {project.status === "archived" && isAdmin && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleArchiveToggle(project)}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-amber-800 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition mr-1 cursor-pointer"
+                                  title="Restore Project"
+                                >
+                                  <span>🔄</span> Restore
+                                </button>
+                              )}
                               {isAdmin && (
                                 <button
                                   type="button"

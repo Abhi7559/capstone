@@ -31,6 +31,12 @@ async function fetchProjectTasks(
   if (filters?.dueDate) {
     params.append("dueDate", filters.dueDate);
   }
+  if (filters?.includeDeleted) {
+    params.append("includeDeleted", "true");
+  }
+  if (filters?.deletedOnly) {
+    params.append("deletedOnly", "true");
+  }
 
   const response = await fetch(apiEndpoint(`/tasks?${params.toString()}`), {
     headers: getAuthHeaders({
@@ -272,6 +278,83 @@ export function useDeleteTask() {
 
   return {
     deleteTask: mutation.mutateAsync,
+    isLoading: mutation.isPending,
+    error: mutation.error ? (mutation.error as Error).message : null,
+  };
+}
+
+export function useRestoreTask() {
+  const queryClient = useQueryClient();
+  const currentUser = useAuthStore((state) => state.currentUser);
+
+  const mutation = useMutation({
+    mutationFn: async (taskId: string) => {
+      const response = await fetch(apiEndpoint(`/tasks/${taskId}/restore`), {
+        method: "POST",
+        headers: getAuthHeaders({
+          "Content-Type": "application/json",
+          "x-user-role": currentUser?.role || "",
+          "x-user-id": currentUser?.id || "",
+        }),
+      });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(extractErrorMessage(err, "Failed to restore task"));
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projectTasks"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["task"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardData"] });
+      queryClient.invalidateQueries({ queryKey: ["analyticsData"] });
+      queryClient.invalidateQueries({ queryKey: ["projectActivities"] });
+    },
+  });
+
+  return {
+    restoreTask: mutation.mutateAsync,
+    isLoading: mutation.isPending,
+    error: mutation.error ? (mutation.error as Error).message : null,
+  };
+}
+
+export function usePermanentDeleteTask() {
+  const queryClient = useQueryClient();
+  const currentUser = useAuthStore((state) => state.currentUser);
+
+  const mutation = useMutation({
+    mutationFn: async (taskId: string) => {
+      const response = await fetch(
+        apiEndpoint(`/tasks/${taskId}?permanent=true`),
+        {
+          method: "DELETE",
+          headers: getAuthHeaders({
+            "x-user-role": currentUser?.role || "",
+            "x-user-id": currentUser?.id || "",
+          }),
+        },
+      );
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(
+          extractErrorMessage(err, "Failed to permanently delete task"),
+        );
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projectTasks"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardData"] });
+      queryClient.invalidateQueries({ queryKey: ["analyticsData"] });
+      queryClient.invalidateQueries({ queryKey: ["projectActivities"] });
+    },
+  });
+
+  return {
+    permanentDeleteTask: mutation.mutateAsync,
     isLoading: mutation.isPending,
     error: mutation.error ? (mutation.error as Error).message : null,
   };

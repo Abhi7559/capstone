@@ -11,6 +11,7 @@ export interface Task {
   assigneeId?: string; // UUID string of assigned User (optional)
   dueDate?: string; // YYYY-MM-DD format
   tags: string[];
+  isDeleted?: boolean;
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
 }
@@ -20,6 +21,8 @@ export interface TaskFilters {
   priority?: TaskPriority | "all";
   assigneeId?: string | "all";
   dueDate?: string; // YYYY-MM-DD format for date filtering
+  includeDeleted?: boolean;
+  deletedOnly?: boolean;
 }
 
 export interface CreateTaskInput {

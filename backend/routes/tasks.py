@@ -31,6 +31,8 @@ async def list_tasks(
     priority: Optional[str] = Query(None, description="Filter by priority"),
     assignee_id: Optional[UUID] = Query(None, alias="assigneeId", description="Filter by assignee UUID"),
     due_date: Optional[date] = Query(None, alias="dueDate", description="Filter by due date (YYYY-MM-DD)"),
+    include_deleted: bool = Query(False, alias="includeDeleted", description="Include soft-deleted tasks"),
+    deleted_only: bool = Query(False, alias="deletedOnly", description="Return only soft-deleted tasks"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> Union[PaginatedTasksResponse, List[TaskOut]]:
@@ -63,6 +65,8 @@ async def list_tasks(
         priority=priority,
         assignee_id=assignee_id,
         due_date=due_date,
+        include_deleted=include_deleted,
+        deleted_only=deleted_only,
     )
 
 
@@ -153,7 +157,7 @@ async def update_task(
 
 
 # ============================================================================
-# API 16: Delete Task 
+# API 16: Delete Task (Soft-delete or Permanent)
 # ============================================================================
 @router.delete(
     "/{id}",
@@ -164,16 +168,27 @@ async def update_task(
 )
 async def delete_task(
     id: UUID,
+    permanent: bool = Query(False, description="Permanently delete from database"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> TaskDeleteResponse:
     """
-    Deletes a task.
+    Deletes a task:
+    - Standard delete performs soft-delete (is_deleted = True).
+    - If permanent=True, removes the record permanently.
     - Only workspace Admins are permitted to delete tasks (403 Forbidden for members).
-    - Returns 404 Not Found if task does not exist.
-    - Invalidates affected project dashboard cache.
-    - Returns 200 OK with confirmation message.
     """
+    if permanent:
+        await task_service.hard_delete_task(
+            db=db,
+            task_id=id,
+            current_user=current_user,
+        )
+        return TaskDeleteResponse(
+            success=True,
+            message="Task permanently deleted successfully.",
+        )
+
     await task_service.delete_task(
         db=db,
         task_id=id,
@@ -182,4 +197,31 @@ async def delete_task(
     return TaskDeleteResponse(
         success=True,
         message="Task deleted successfully.",
+    )
+
+
+# ============================================================================
+# API 17: Restore Soft-Deleted Task
+# ============================================================================
+@router.post(
+    "/{id}/restore",
+    response_model=TaskOut,
+    status_code=status.HTTP_200_OK,
+    summary="Restore Task",
+    description="Restores a soft-deleted task back to its active column on the Kanban board.",
+)
+async def restore_task(
+    id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> TaskOut:
+    """
+    Restores a soft-deleted task:
+    - Sets is_deleted = False.
+    - Returns the restored task and refreshes cache.
+    """
+    return await task_service.restore_task(
+        db=db,
+        task_id=id,
+        current_user=current_user,
     )

@@ -29,6 +29,7 @@ class TaskDAO(BaseDAO[Task]):
         skip: Optional[int] = None,
         limit: Optional[int] = None,
         include_deleted: bool = False,
+        deleted_only: bool = False,
     ) -> List[Task]:
         """
         Retrieve tasks with dynamic filters and eager loading.
@@ -37,7 +38,9 @@ class TaskDAO(BaseDAO[Task]):
         """
         query = select(Task).options(selectinload(Task.assignee))
 
-        if not include_deleted:
+        if deleted_only:
+            query = query.where(Task.is_deleted == True)
+        elif not include_deleted:
             query = query.where(Task.is_deleted == False)
 
         if project_id is not None:
@@ -356,6 +359,32 @@ class TaskDAO(BaseDAO[Task]):
 
         task.is_deleted = True
         db.add(task)
+        await db.commit()
+        return True
+
+    async def restore(self, db: AsyncSession, task_id: UUID) -> Optional[Task]:
+        """
+        Restore a soft-deleted task by setting is_deleted = False.
+        """
+        task = await self.get_by_id(db, task_id, include_deleted=True)
+        if not task:
+            return None
+
+        task.is_deleted = False
+        db.add(task)
+        await db.commit()
+        await db.refresh(task)
+        return task
+
+    async def hard_delete(self, db: AsyncSession, task_id: UUID) -> bool:
+        """
+        Permanently remove a task from the database.
+        """
+        task = await self.get_by_id(db, task_id, include_deleted=True)
+        if not task:
+            return False
+
+        await db.delete(task)
         await db.commit()
         return True
 

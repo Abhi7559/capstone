@@ -46,6 +46,8 @@ class TaskService:
         due_date: Optional[date] = None,
         skip: Optional[int] = None,
         limit: Optional[int] = None,
+        include_deleted: bool = False,
+        deleted_only: bool = False,
     ) -> List[TaskOut]:
         """
         Retrieve filtered tasks accessible to the current user.
@@ -71,6 +73,8 @@ class TaskService:
             due_date=due_date,
             skip=skip,
             limit=limit,
+            include_deleted=include_deleted,
+            deleted_only=deleted_only,
         )
 
         # For members querying without a specific project_id, filter out tasks from unassigned projects
@@ -322,6 +326,58 @@ class TaskService:
         if deleted:
             await invalidate_dashboard_cache(project_id)
 
+        return deleted
+
+    async def restore_task(
+        self,
+        db: AsyncSession,
+        task_id: UUID,
+        current_user: User,
+    ) -> TaskOut:
+        """
+        Restore a soft-deleted task:
+        Enforces project access and invalidates dashboard cache.
+        """
+        task = await task_dao.get_by_id(db, task_id, include_deleted=True)
+        if not task:
+            raise EntityNotFoundException(entity_name="Task", identifier=task_id)
+
+        role = (current_user.role or "").lower()
+        if role != "admin":
+            project = await project_dao.get_by_id(db, task.project_id)
+            if project:
+                member_ids = {m.id for m in project.members}
+                if current_user.id not in member_ids:
+                    raise ForbiddenException(detail="You do not have access to this project's tasks.")
+
+        restored_task = await task_dao.restore(db, task_id)
+        if not restored_task:
+            raise EntityNotFoundException(entity_name="Task", identifier=task_id)
+
+        await invalidate_dashboard_cache(str(restored_task.project_id))
+        return self._to_task_out(restored_task)
+
+    async def hard_delete_task(
+        self,
+        db: AsyncSession,
+        task_id: UUID,
+        current_user: User,
+    ) -> bool:
+        """
+        Permanently delete a task from the database (Admin only).
+        """
+        role = (current_user.role or "").lower()
+        if role != "admin":
+            raise ForbiddenException(detail="Forbidden: Only Admins can permanently delete tasks.")
+
+        task = await task_dao.get_by_id(db, task_id, include_deleted=True)
+        if not task:
+            raise EntityNotFoundException(entity_name="Task", identifier=task_id)
+
+        project_id = str(task.project_id)
+        deleted = await task_dao.hard_delete(db, task_id)
+        if deleted:
+            await invalidate_dashboard_cache(project_id)
         return deleted
 
     async def get_project_activities(

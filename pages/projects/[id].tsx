@@ -10,7 +10,9 @@ import { useMembers } from "@/hooks/useMembers";
 import { useProjects, useUpdateProject } from "@/hooks/useProjects";
 import {
   useDeleteTask,
+  usePermanentDeleteTask,
   useProjectActivities,
+  useRestoreTask,
   useTasks,
   useUpdateTask,
 } from "@/hooks/useProjectTasks";
@@ -87,6 +89,9 @@ export default function ProjectTaskBoardPage() {
 
   const { updateTask } = useUpdateTask();
   const { deleteTask, isLoading: isDeletingTask } = useDeleteTask();
+  const { restoreTask, isLoading: isRestoringTask } = useRestoreTask();
+  const { permanentDeleteTask, isLoading: isPermanentDeletingTask } =
+    usePermanentDeleteTask();
   const { data: projectActivities, isLoading: isActivitiesLoading } =
     useProjectActivities(projectId);
 
@@ -94,6 +99,9 @@ export default function ProjectTaskBoardPage() {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [viewingTask, setViewingTask] = useState<Task | null>(null);
   const [deletingTask, setDeletingTask] = useState<Task | null>(null);
+  const [isArchivedTasksModalOpen, setIsArchivedTasksModalOpen] =
+    useState(false);
+  const [archivedSearchQuery, setArchivedSearchQuery] = useState("");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // ─── Kanban Columns — loaded from project.kanbanColumns, fall back to defaults
@@ -305,6 +313,37 @@ export default function ProjectTaskBoardPage() {
     isError,
     error,
   } = useTasks(projectId, filters);
+
+  const { data: archivedTasks = [] } = useTasks(projectId, {
+    deletedOnly: true,
+  });
+
+  const handleRestoreTask = async (taskId: string) => {
+    try {
+      await restoreTask(taskId);
+      showToast("Task restored to active board!");
+    } catch (err: unknown) {
+      showToast((err as Error)?.message || "Failed to restore task.");
+    }
+  };
+
+  const handlePermanentDeleteTask = async (taskId: string) => {
+    if (
+      !window.confirm(
+        "Are you sure you want to permanently delete this task? This action cannot be undone.",
+      )
+    ) {
+      return;
+    }
+    try {
+      await permanentDeleteTask(taskId);
+      showToast("Task permanently deleted.");
+    } catch (err: unknown) {
+      showToast(
+        (err as Error)?.message || "Failed to permanently delete task.",
+      );
+    }
+  };
 
   const tasks = (rawTasks || []).filter((t) => {
     if (!searchQuery.trim()) return true;
@@ -644,6 +683,32 @@ export default function ProjectTaskBoardPage() {
                           }
                         </span>
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsArchivedTasksModalOpen(true)}
+                        className="rounded-lg border border-amber-300 bg-amber-50/70 hover:bg-amber-100 px-3.5 py-2 text-xs font-semibold text-amber-900 shadow-sm transition focus:outline-none cursor-pointer flex items-center space-x-2"
+                        title="View soft-deleted and archived tasks"
+                      >
+                        <span className="text-sm">📁</span>
+                        <span>Archived Tasks</span>
+                        <span className="rounded-full bg-amber-200/80 border border-amber-300 px-2 py-0.5 text-[10px] font-bold text-amber-950">
+                          {archivedTasks.length}
+                        </span>
+                      </button>
+                      {isAdmin && (
+                        <button
+                          type="button"
+                          onClick={() => setIsArchivedTasksModalOpen(true)}
+                          className="rounded-lg border border-amber-300 bg-amber-50/70 hover:bg-amber-100 px-3.5 py-2 text-xs font-semibold text-amber-900 shadow-sm transition focus:outline-none cursor-pointer flex items-center space-x-2"
+                          title="View soft-deleted and archived tasks"
+                        >
+                          <span className="text-sm">📁</span>
+                          <span>Archived Tasks</span>
+                          <span className="rounded-full bg-amber-200/80 border border-amber-300 px-2 py-0.5 text-[10px] font-bold text-amber-950">
+                            {archivedTasks.length}
+                          </span>
+                        </button>
+                      )}
                       {isAdmin && (
                         <>
                           <button
@@ -686,7 +751,43 @@ export default function ProjectTaskBoardPage() {
               </div>
             </div>
 
-            {activeTab === "overview" ? (
+{/* Archived Project Alert Banner */}
+            {currentProject?.status === "archived" && (
+              <div className="mb-6 rounded-2xl bg-amber-500/10 border border-amber-500/30 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl leading-none">📁</span>
+                  <div>
+                    <h4 className="text-xs font-bold text-amber-950 uppercase tracking-wider">
+                      Archived Project Workspace
+                    </h4>
+                    <p className="text-xs text-amber-900 mt-0.5">
+                      This project has been archived. All tasks and columns are read-only. Click Restore to reactivate.
+                    </p>
+                  </div>
+                </div>
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        await updateProject({
+                          id: projectId,
+                          input: { status: "active" },
+                        });
+                        showToast("Project successfully restored to active status!");
+                      } catch {
+                        showToast("Failed to restore project.");
+                      }
+                    }}
+                    className="rounded-xl bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 text-xs font-bold transition shadow-xs whitespace-nowrap cursor-pointer inline-flex items-center gap-1.5 self-start sm:self-center"
+                  >
+                    <span>🔄</span> Restore Project
+                  </button>
+                )}
+              </div>
+            )}
+
+                        {activeTab === "overview" ? (
               /* PROJECT OVERVIEW INFORMATION VIEW */
               <div className="space-y-6">
                 {/* Compact Project Information Header Card */}
@@ -1222,6 +1323,20 @@ export default function ProjectTaskBoardPage() {
                           <div className="flex justify-between items-center mb-4 px-1 pb-2 border-b border-gray-200/80">
                             <div className="flex items-center space-x-1.5">
                               {isAdmin && (
+                        <button
+                          type="button"
+                          onClick={() => setIsArchivedTasksModalOpen(true)}
+                          className="rounded-lg border border-amber-300 bg-amber-50/70 hover:bg-amber-100 px-3.5 py-2 text-xs font-semibold text-amber-900 shadow-sm transition focus:outline-none cursor-pointer flex items-center space-x-2"
+                          title="View soft-deleted and archived tasks"
+                        >
+                          <span className="text-sm">📁</span>
+                          <span>Archived Tasks</span>
+                          <span className="rounded-full bg-amber-200/80 border border-amber-300 px-2 py-0.5 text-[10px] font-bold text-amber-950">
+                            {archivedTasks.length}
+                          </span>
+                        </button>
+                      )}
+                      {isAdmin && (
                                 <button
                                   type="button"
                                   draggable
@@ -1448,6 +1563,20 @@ export default function ProjectTaskBoardPage() {
 
                                         {/* Actions: Edit and Delete buttons */}
                                         {isAdmin && (
+                        <button
+                          type="button"
+                          onClick={() => setIsArchivedTasksModalOpen(true)}
+                          className="rounded-lg border border-amber-300 bg-amber-50/70 hover:bg-amber-100 px-3.5 py-2 text-xs font-semibold text-amber-900 shadow-sm transition focus:outline-none cursor-pointer flex items-center space-x-2"
+                          title="View soft-deleted and archived tasks"
+                        >
+                          <span className="text-sm">📁</span>
+                          <span>Archived Tasks</span>
+                          <span className="rounded-full bg-amber-200/80 border border-amber-300 px-2 py-0.5 text-[10px] font-bold text-amber-950">
+                            {archivedTasks.length}
+                          </span>
+                        </button>
+                      )}
+                      {isAdmin && (
                                           <div className="flex items-center space-x-1 shrink-0">
                                             <button
                                               type="button"
@@ -1808,6 +1937,165 @@ export default function ProjectTaskBoardPage() {
                   className="rounded-lg bg-gray-900 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-gray-800 transition"
                 >
                   Close Backlog
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Archived / Soft-Deleted Tasks Modal Component */}
+        {isArchivedTasksModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+            <div className="w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl">
+              <div className="flex justify-between items-center pb-4 border-b border-gray-200 flex-shrink-0">
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xl">📁</span>
+                    <h3 className="text-lg font-bold text-gray-900">
+                      Archived Tasks (Trash)
+                    </h3>
+                    <span className="rounded-full bg-amber-100 border border-amber-200 px-2.5 py-0.5 text-xs font-bold text-amber-800">
+                      {archivedTasks.length} {archivedTasks.length === 1 ? "task" : "tasks"}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Soft-deleted tasks are stored here safely. You can restore them to active Kanban columns or permanently delete them.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsArchivedTasksModalOpen(false)}
+                  className="text-gray-400 hover:text-gray-600 font-bold p-1 text-base cursor-pointer"
+                  aria-label="Close archived tasks modal"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Search Bar for Archived Tasks */}
+              {archivedTasks.length > 0 && (
+                <div className="pt-3 pb-1 flex-shrink-0">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Search archived tasks by title, description..."
+                      value={archivedSearchQuery}
+                      onChange={(e) => setArchivedSearchQuery(e.target.value)}
+                      className="w-full rounded-xl border border-gray-200 bg-gray-50/70 px-3.5 py-2 pl-9 text-xs text-gray-800 placeholder-gray-400 focus:bg-white focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition"
+                    />
+                    <svg
+                      className="w-4 h-4 text-gray-400 absolute left-3 top-2.5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
+                    </svg>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex-1 overflow-y-auto py-4 space-y-3">
+                {(() => {
+                  const filteredArchived = archivedTasks.filter((t) => {
+                    if (!archivedSearchQuery.trim()) return true;
+                    const q = archivedSearchQuery.toLowerCase();
+                    return (
+                      t.title.toLowerCase().includes(q) ||
+                      t.description.toLowerCase().includes(q)
+                    );
+                  });
+
+                  if (filteredArchived.length === 0) {
+                    return (
+                      <div className="p-12 text-center text-xs text-gray-400 rounded-xl border border-dashed border-gray-200">
+                        {archivedSearchQuery.trim()
+                          ? "No archived tasks match your search filter."
+                          : "No archived tasks in this project. Soft-deleted tasks will appear here."}
+                      </div>
+                    );
+                  }
+
+                  return filteredArchived.map((aTask) => (
+                    <div
+                      key={aTask.id}
+                      className="rounded-xl border border-amber-200/80 bg-amber-50/30 p-4 space-y-2 hover:border-amber-300 transition"
+                    >
+                      <div className="flex justify-between items-start gap-3">
+                        <div className="min-w-0 flex-1">
+                          <h4 className="text-sm font-bold text-gray-900 truncate">
+                            {aTask.title}
+                          </h4>
+                          {aTask.description && (
+                            <p className="text-xs text-gray-600 line-clamp-2 mt-0.5 leading-relaxed">
+                              {aTask.description}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          <span
+                            className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md ${
+                              aTask.priority === "high"
+                                ? "bg-red-100 text-red-700"
+                                : aTask.priority === "medium"
+                                  ? "bg-amber-100 text-amber-700"
+                                  : "bg-gray-100 text-gray-600"
+                            }`}
+                          >
+                            {aTask.priority}
+                          </span>
+                          <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-md bg-purple-100 text-purple-700">
+                            {aTask.status.replace("_", " ")}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-2 border-t border-amber-100 text-xs">
+                        <span className="text-[11px] text-gray-500">
+                          Assignee:{" "}
+                          <strong className="text-gray-800">
+                            {getAssigneeName(aTask.assigneeId)}
+                          </strong>
+                        </span>
+                        <div className="flex items-center space-x-2">
+                          <button
+                            type="button"
+                            disabled={isRestoringTask}
+                            onClick={() => handleRestoreTask(aTask.id)}
+                            className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 text-xs font-bold transition shadow-2xs cursor-pointer disabled:opacity-50"
+                          >
+                            <span>🔄</span> Restore Task
+                          </button>
+                          {isAdmin && (
+                            <button
+                              type="button"
+                              disabled={isPermanentDeletingTask}
+                              onClick={() => handlePermanentDeleteTask(aTask.id)}
+                              className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 px-2.5 py-1.5 text-xs font-semibold transition cursor-pointer disabled:opacity-50"
+                              title="Permanently remove from database"
+                            >
+                              <span>🗑️</span> Delete Forever
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ));
+                })()}
+              </div>
+
+              <div className="flex justify-end pt-3 border-t border-gray-200 flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setIsArchivedTasksModalOpen(false)}
+                  className="rounded-lg bg-gray-900 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-gray-800 transition cursor-pointer"
+                >
+                  Close Trash
                 </button>
               </div>
             </div>
