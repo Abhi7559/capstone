@@ -49,13 +49,12 @@ class LoginRequest(BaseModel):
     """Credentials payload for login."""
 
     model_config = ConfigDict(
-        extra="forbid",
+        extra="ignore",
         strict=False,
     )
 
     email: EmailStr
     password: str = Field(min_length=1)
-    remember_me: Optional[bool] = Field(default=False, alias="rememberMe")
 
 
 class LoginResponse(BaseModel):

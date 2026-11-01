@@ -1872,7 +1872,6 @@ class LoginRequest(BaseModel):
 
     email: EmailStr
     password: str = Field(..., min_length=1, description="Account password")
-    remember_me: Optional[bool] = Field(default=False, alias="rememberMe")
 
 class RefreshTokenRequest(BaseModel):
     """Used for: POST /task_management/api/v1/auth/refresh"""
