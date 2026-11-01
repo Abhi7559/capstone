@@ -683,32 +683,6 @@ export default function ProjectTaskBoardPage() {
                           }
                         </span>
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => setIsArchivedTasksModalOpen(true)}
-                        className="rounded-lg border border-amber-300 bg-amber-50/70 hover:bg-amber-100 px-3.5 py-2 text-xs font-semibold text-amber-900 shadow-sm transition focus:outline-none cursor-pointer flex items-center space-x-2"
-                        title="View soft-deleted and archived tasks"
-                      >
-                        <span className="text-sm">📁</span>
-                        <span>Archived Tasks</span>
-                        <span className="rounded-full bg-amber-200/80 border border-amber-300 px-2 py-0.5 text-[10px] font-bold text-amber-950">
-                          {archivedTasks.length}
-                        </span>
-                      </button>
-                      {isAdmin && (
-                        <button
-                          type="button"
-                          onClick={() => setIsArchivedTasksModalOpen(true)}
-                          className="rounded-lg border border-amber-300 bg-amber-50/70 hover:bg-amber-100 px-3.5 py-2 text-xs font-semibold text-amber-900 shadow-sm transition focus:outline-none cursor-pointer flex items-center space-x-2"
-                          title="View soft-deleted and archived tasks"
-                        >
-                          <span className="text-sm">📁</span>
-                          <span>Archived Tasks</span>
-                          <span className="rounded-full bg-amber-200/80 border border-amber-300 px-2 py-0.5 text-[10px] font-bold text-amber-950">
-                            {archivedTasks.length}
-                          </span>
-                        </button>
-                      )}
                       {isAdmin && (
                         <>
                           <button
@@ -1322,20 +1296,6 @@ export default function ProjectTaskBoardPage() {
                           {/* Column Header */}
                           <div className="flex justify-between items-center mb-4 px-1 pb-2 border-b border-gray-200/80">
                             <div className="flex items-center space-x-1.5">
-                              {isAdmin && (
-                        <button
-                          type="button"
-                          onClick={() => setIsArchivedTasksModalOpen(true)}
-                          className="rounded-lg border border-amber-300 bg-amber-50/70 hover:bg-amber-100 px-3.5 py-2 text-xs font-semibold text-amber-900 shadow-sm transition focus:outline-none cursor-pointer flex items-center space-x-2"
-                          title="View soft-deleted and archived tasks"
-                        >
-                          <span className="text-sm">📁</span>
-                          <span>Archived Tasks</span>
-                          <span className="rounded-full bg-amber-200/80 border border-amber-300 px-2 py-0.5 text-[10px] font-bold text-amber-950">
-                            {archivedTasks.length}
-                          </span>
-                        </button>
-                      )}
                       {isAdmin && (
                                 <button
                                   type="button"
@@ -1562,20 +1522,6 @@ export default function ProjectTaskBoardPage() {
                                         </div>
 
                                         {/* Actions: Edit and Delete buttons */}
-                                        {isAdmin && (
-                        <button
-                          type="button"
-                          onClick={() => setIsArchivedTasksModalOpen(true)}
-                          className="rounded-lg border border-amber-300 bg-amber-50/70 hover:bg-amber-100 px-3.5 py-2 text-xs font-semibold text-amber-900 shadow-sm transition focus:outline-none cursor-pointer flex items-center space-x-2"
-                          title="View soft-deleted and archived tasks"
-                        >
-                          <span className="text-sm">📁</span>
-                          <span>Archived Tasks</span>
-                          <span className="rounded-full bg-amber-200/80 border border-amber-300 px-2 py-0.5 text-[10px] font-bold text-amber-950">
-                            {archivedTasks.length}
-                          </span>
-                        </button>
-                      )}
                       {isAdmin && (
                                           <div className="flex items-center space-x-1 shrink-0">
                                             <button
