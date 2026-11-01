@@ -75,6 +75,9 @@ export function useLogin() {
     },
     onSuccess: (user) => {
       setLogin(user);
+      if (typeof document !== "undefined") {
+        document.cookie = `auth_token=${encodeURIComponent(user.token || "active")}; path=/; max-age=604800; SameSite=Lax`;
+      }
       if (!user.requiresPasswordChange) {
         window.location.href = "/dashboard";
       }

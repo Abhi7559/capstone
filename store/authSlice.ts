@@ -31,6 +31,9 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set) => ({
     });
   },
   logout: () => {
+    if (typeof document !== "undefined") {
+      document.cookie = "auth_token=; path=/; max-age=0;";
+    }
     set({ currentUser: null, isAuthenticated: false });
   },
   setHydrated: (hydrated: boolean) => set({ isHydrated: hydrated }),
