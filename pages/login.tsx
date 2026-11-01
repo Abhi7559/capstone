@@ -310,47 +310,6 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* Quick Demo Credentials Switcher */}
-          <div className="rounded-2xl bg-slate-50 border border-slate-200/80 p-3.5 space-y-2.5 shadow-2xs">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
-                1-Click Demo Login
-              </span>
-              <span className="text-[10px] text-slate-400 font-medium">Click to pre-fill</span>
-            </div>
-            <div className="grid grid-cols-2 gap-2.5">
-              <button
-                type="button"
-                onClick={() => {
-                  setLoginValue("email", "admin@teamhub.com", { shouldValidate: true });
-                  setLoginValue("password", "Admin@123", { shouldValidate: true });
-                }}
-                className="rounded-xl bg-white border border-slate-200/80 hover:border-blue-500 hover:bg-blue-50/50 p-2.5 text-left transition cursor-pointer group shadow-2xs"
-              >
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs">🛡️</span>
-                  <span className="text-xs font-bold text-slate-800 group-hover:text-blue-700">Admin</span>
-                </div>
-                <span className="text-[10px] text-slate-500 block truncate mt-0.5">admin@teamhub.com</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setLoginValue("email", "member@teamhub.com", { shouldValidate: true });
-                  setLoginValue("password", "Member@123", { shouldValidate: true });
-                }}
-                className="rounded-xl bg-white border border-slate-200/80 hover:border-emerald-500 hover:bg-emerald-50/50 p-2.5 text-left transition cursor-pointer group shadow-2xs"
-              >
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs">👤</span>
-                  <span className="text-xs font-bold text-slate-800 group-hover:text-emerald-700">Member</span>
-                </div>
-                <span className="text-[10px] text-slate-500 block truncate mt-0.5">member@teamhub.com</span>
-              </button>
-            </div>
-          </div>
-
           <form
             onSubmit={handleSubmit(onSubmit)}
             className="space-y-5"
