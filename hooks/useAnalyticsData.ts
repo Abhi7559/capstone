@@ -90,12 +90,18 @@ async function fetchAnalyticsData(
     ? `/analytics/data?${queryString}`
     : "/analytics/data";
 
-  const response = await fetch(apiEndpoint(endpoint), {
-    headers: getAuthHeaders({
-      "x-user-role": role,
-      "x-user-id": id,
-    }),
+  const headers = getAuthHeaders({
+    "x-user-role": role,
+    "x-user-id": id,
   });
+
+  let response = await fetch(apiEndpoint(endpoint), { headers });
+  if (response.status === 404) {
+    const dashEndpoint = queryString
+      ? `/analytics/dashboard?${queryString}`
+      : "/analytics/dashboard";
+    response = await fetch(apiEndpoint(dashEndpoint), { headers });
+  }
 
   if (!response.ok) {
     throw new Error("Failed to fetch analytics from server");

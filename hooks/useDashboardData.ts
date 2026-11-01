@@ -13,12 +13,15 @@ async function fetchDashboardData(
   const role = userRole || "";
   const id = userId || "";
 
-  const response = await fetch(apiEndpoint("/dashboard/stats"), {
-    headers: getAuthHeaders({
-      "x-user-role": role,
-      "x-user-id": id,
-    }),
+  const headers = getAuthHeaders({
+    "x-user-role": role,
+    "x-user-id": id,
   });
+
+  let response = await fetch(apiEndpoint("/dashboard/stats"), { headers });
+  if (response.status === 404) {
+    response = await fetch(apiEndpoint("/analytics/dashboard"), { headers });
+  }
 
   if (!response.ok) {
     throw new Error("Failed to fetch dashboard stats from server");

@@ -17,19 +17,22 @@ async function fetchMembers(
   currentUserRole?: string,
   currentUserId?: string,
 ): Promise<User[]> {
-  const response = await fetch(apiEndpoint("/members"), {
-    headers: getAuthHeaders({
-      "x-user-role": currentUserRole || "",
-      "x-user-id": currentUserId || "",
-    }),
+  const headers = getAuthHeaders({
+    "x-user-role": currentUserRole || "",
+    "x-user-id": currentUserId || "",
   });
+  let response = await fetch(apiEndpoint("/members"), { headers });
+  if (response.status === 404) {
+    response = await fetch(apiEndpoint("/users"), { headers });
+  }
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
     throw new Error(extractErrorMessage(err, "Failed to fetch members from server"));
   }
 
-  return response.json();
+  const data = await response.json();
+  return Array.isArray(data) ? data : data.items || [];
 }
 
 async function inviteMemberRequest(
@@ -37,15 +40,23 @@ async function inviteMemberRequest(
   currentUserRole?: string,
   currentUserId?: string,
 ) {
-  const response = await fetch(apiEndpoint("/members/invite"), {
+  const headers = getAuthHeaders({
+    "Content-Type": "application/json",
+    "x-user-role": currentUserRole || "",
+    "x-user-id": currentUserId || "",
+  });
+  let response = await fetch(apiEndpoint("/members/invite"), {
     method: "POST",
-    headers: getAuthHeaders({
-      "Content-Type": "application/json",
-      "x-user-role": currentUserRole || "",
-      "x-user-id": currentUserId || "",
-    }),
+    headers,
     body: JSON.stringify(input),
   });
+  if (response.status === 404) {
+    response = await fetch(apiEndpoint("/users/invite"), {
+      method: "POST",
+      headers,
+      body: JSON.stringify(input),
+    });
+  }
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
@@ -61,15 +72,23 @@ async function updateMemberRequest(
   currentUserRole?: string,
   currentUserId?: string,
 ): Promise<User> {
-  const response = await fetch(apiEndpoint(`/members/${id}`), {
+  const headers = getAuthHeaders({
+    "Content-Type": "application/json",
+    "x-user-role": currentUserRole || "",
+    "x-user-id": currentUserId || "",
+  });
+  let response = await fetch(apiEndpoint(`/members/${id}`), {
     method: "PATCH",
-    headers: getAuthHeaders({
-      "Content-Type": "application/json",
-      "x-user-role": currentUserRole || "",
-      "x-user-id": currentUserId || "",
-    }),
+    headers,
     body: JSON.stringify(input),
   });
+  if (response.status === 404) {
+    response = await fetch(apiEndpoint(`/users/${id}`), {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify(input),
+    });
+  }
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
@@ -84,13 +103,21 @@ async function deleteMemberRequest(
   currentUserRole?: string,
   currentUserId?: string,
 ): Promise<{ message: string }> {
-  const response = await fetch(apiEndpoint(`/members/${id}`), {
-    method: "DELETE",
-    headers: getAuthHeaders({
-      "x-user-role": currentUserRole || "",
-      "x-user-id": currentUserId || "",
-    }),
+  const headers = getAuthHeaders({
+    "x-user-role": currentUserRole || "",
+    "x-user-id": currentUserId || "",
   });
+  let response = await fetch(apiEndpoint(`/members/${id}`), {
+    method: "DELETE",
+    headers,
+  });
+
+  if (response.status === 404) {
+    response = await fetch(apiEndpoint(`/users/${id}`), {
+      method: "DELETE",
+      headers,
+    });
+  }
 
   // 204 No Content has no JSON body - treat as immediate success
   if (response.status === 204) {

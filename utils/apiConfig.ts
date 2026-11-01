@@ -6,7 +6,8 @@
  */
 import { useAppStore } from "@/store";
 
-export const DEFAULT_PRODUCTION_BACKEND = "https://teamhub-backend-p5a1.onrender.com";
+export const DEFAULT_PRODUCTION_BACKEND = "https://workstream-backend-1rr8.onrender.com";
+export const FALLBACK_PRODUCTION_BACKEND = "https://teamhub-backend-p5a1.onrender.com";
 
 /**
  * Sanitizes any backend URL string, safely handling accidental duplication,
