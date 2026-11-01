@@ -76,7 +76,7 @@ export function useLogin() {
     onSuccess: (user) => {
       setLogin(user);
       if (!user.requiresPasswordChange) {
-        router.push("/dashboard?loggedIn=true");
+        window.location.href = "/dashboard";
       }
     },
   });

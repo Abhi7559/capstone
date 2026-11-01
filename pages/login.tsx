@@ -112,6 +112,8 @@ export default function LoginPage() {
         setTempPasswordUsed(data.password);
         setChangeValue("email", user.email);
         setChangeValue("currentPassword", data.password);
+      } else {
+        window.location.href = "/dashboard";
       }
     } catch {
       // Error is caught cleanly and rendered in UI error banner

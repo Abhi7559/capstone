@@ -24,7 +24,11 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set) => ({
   isHydrated: false,
   login: (user: User) => {
     const { password: _, ...safeUser } = user;
-    set({ currentUser: safeUser as User, isAuthenticated: true });
+    set({
+      currentUser: safeUser as User,
+      isAuthenticated: true,
+      isHydrated: true,
+    });
   },
   logout: () => {
     set({ currentUser: null, isAuthenticated: false });
