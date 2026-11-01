@@ -32,13 +32,13 @@ class TaskPriority(str, Enum):
 
 
 class TaskBase(CamelCaseModel):
-    """Base schema for tasks with standard camelCase serialization and strict configuration."""
+    """Base schema for tasks with standard camelCase serialization and resilient configuration."""
 
     model_config = ConfigDict(
         alias_generator=CamelCaseModel.model_config["alias_generator"],
         populate_by_name=True,
         from_attributes=True,
-        extra="forbid",
+        extra="ignore",
         strict=False,
     )
 
@@ -222,7 +222,7 @@ class ProjectActivityOut(CamelCaseModel):
         alias_generator=CamelCaseModel.model_config["alias_generator"],
         populate_by_name=True,
         from_attributes=True,
-        extra="forbid",
+        extra="ignore",
         strict=False,
     )
 

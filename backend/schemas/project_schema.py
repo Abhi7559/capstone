@@ -95,7 +95,7 @@ class ProjectBase(CamelCaseModel):
         alias_generator=CamelCaseModel.model_config["alias_generator"],
         populate_by_name=True,
         from_attributes=True,
-        extra="forbid",
+        extra="ignore",
         strict=False,
     )
 
@@ -107,6 +107,7 @@ class ProjectCreate(ProjectBase):
     description: str = Field(default="No description provided.", min_length=1)
     status: ProjectStatus = Field(default=ProjectStatus.PLANNING)
     category: Optional[ProjectCategory] = Field(default=ProjectCategory.ENGINEERING)
+    department: Optional[str] = Field(default=None)
     priority: Optional[ProjectPriority] = Field(default=ProjectPriority.MEDIUM)
     start_date: Optional[date] = Field(default=None)
     due_date: Optional[date] = Field(default=None)
@@ -204,6 +205,7 @@ class ProjectUpdate(ProjectBase):
     description: Optional[str] = Field(default=None, min_length=1)
     status: Optional[ProjectStatus] = Field(default=None)
     category: Optional[ProjectCategory] = Field(default=None)
+    department: Optional[str] = Field(default=None)
     priority: Optional[ProjectPriority] = Field(default=None)
     start_date: Optional[date] = Field(default=None)
     due_date: Optional[date] = Field(default=None)

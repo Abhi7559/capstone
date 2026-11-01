@@ -160,7 +160,7 @@ class ProjectService:
             "name": project_in.name.strip(),
             "description": project_in.description.strip(),
             "status": project_in.status.value if hasattr(project_in.status, "value") else project_in.status,
-            "category": project_in.category,
+            "category": project_in.category or project_in.department,
             "priority": project_in.priority.value if hasattr(project_in.priority, "value") else project_in.priority,
             "start_date": project_in.start_date,
             "due_date": project_in.due_date,

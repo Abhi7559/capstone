@@ -224,16 +224,16 @@ async function fetchProjectActivities(
   const response = await fetch(
     apiEndpoint(`/projects/${projectId}/activities`),
     {
-      headers: {
+      headers: getAuthHeaders({
         "x-user-role": userRole || "admin",
         "x-user-id": userId || "550e8400-e29b-41d4-a716-446655440000",
-      },
+      }),
     },
   );
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
-    throw new Error(err.message || "Failed to fetch project activities");
+    throw new Error(extractErrorMessage(err, "Failed to fetch project activities"));
   }
 
   return response.json();

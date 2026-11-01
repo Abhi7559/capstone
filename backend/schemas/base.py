@@ -15,8 +15,8 @@ class CamelCaseModel(BaseModel):
         alias_generator=to_camel,
         populate_by_name=True,
         from_attributes=True,
-        extra="forbid",
-        strict=True,
+        extra="ignore",
+        strict=False,
         validate_assignment=True,
     )
 
