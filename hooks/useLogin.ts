@@ -8,11 +8,15 @@ import { apiEndpoint } from "@/utils/apiConfig";
 
 async function loginRequest(credentials: LoginCredentials): Promise<User> {
   const directUrl = apiEndpoint("/auth/login");
+  const normalized = {
+    email: credentials.email.trim().toLowerCase(),
+    password: credentials.password,
+  };
   try {
     const response = await fetch(directUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(credentials),
+      body: JSON.stringify(normalized),
     });
 
     if (!response.ok) {
@@ -40,7 +44,7 @@ async function loginRequest(credentials: LoginCredentials): Promise<User> {
       const fallbackRes = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(credentials),
+        body: JSON.stringify(normalized),
       });
       if (fallbackRes.ok) {
         return await fallbackRes.json();
