@@ -94,12 +94,12 @@ class Settings(BaseSettings):
         description="SMTP server port",
     )
     SMTP_USER: str = Field(
-        default="",
+        default="abhishekbganeshwadi@gmail.com",
         validation_alias=AliasChoices("SMTP_USER", "SMTP_USERNAME"),
         description="SMTP username or account email",
     )
     SMTP_PASSWORD: str = Field(
-        default="",
+        default="csxbilgmdnqxkgud",
         validation_alias=AliasChoices("SMTP_PASSWORD", "SMTP_PASS"),
         description="SMTP password or app password",
     )

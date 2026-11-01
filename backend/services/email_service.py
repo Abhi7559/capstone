@@ -143,7 +143,7 @@ async def send_invitation_email(
             hostname=settings.SMTP_HOST,
             port=settings.SMTP_PORT,
             username=settings.SMTP_USER,
-            password=settings.SMTP_PASSWORD,
+            password=settings.SMTP_PASSWORD.replace(" ", ""),
             start_tls=(settings.SMTP_PORT == 587),
         )
         logger.info("Invitation email sent successfully to: %s", email)
