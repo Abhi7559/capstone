@@ -1,5 +1,5 @@
 import { useRouter } from "next/router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ErrorLayout } from "@/components/ErrorLayout";
 import { MultiStepCreateTaskModal } from "@/components/MultiStepCreateTaskModal";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -295,6 +295,7 @@ export default function ProjectTaskBoardPage() {
     priority: "all",
     assigneeId: "all",
     dueDate: "",
+    tag: "all",
   });
 
   const handleClearFilters = () => {
@@ -303,6 +304,7 @@ export default function ProjectTaskBoardPage() {
       priority: "all",
       assigneeId: "all",
       dueDate: "",
+      tag: "all",
     });
     setSearchQuery("");
   };
@@ -313,6 +315,21 @@ export default function ProjectTaskBoardPage() {
     isError,
     error,
   } = useTasks(projectId, filters);
+
+  // Aggregate all unique tags from tasks across this project
+  const availableTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    (rawTasks || []).forEach((t) => {
+      if (Array.isArray(t.tags)) {
+        t.tags.forEach((tag) => {
+          if (tag && typeof tag === "string" && tag.trim()) {
+            tagSet.add(tag.trim().toLowerCase());
+          }
+        });
+      }
+    });
+    return Array.from(tagSet).sort();
+  }, [rawTasks]);
 
   const { data: archivedTasks = [] } = useTasks(projectId, {
     deletedOnly: true,
@@ -346,6 +363,14 @@ export default function ProjectTaskBoardPage() {
   };
 
   const tasks = (rawTasks || []).filter((t) => {
+    // 1. Tag Filter
+    if (filters.tag && filters.tag !== "all") {
+      const match = t.tags?.some(
+        (tag) => tag.toLowerCase() === filters.tag?.toLowerCase()
+      );
+      if (!match) return false;
+    }
+    // 2. Text Search
     if (!searchQuery.trim()) return true;
     const query = searchQuery.toLowerCase();
     const titleMatch = t.title.toLowerCase().includes(query);
@@ -1202,6 +1227,28 @@ export default function ProjectTaskBoardPage() {
                       </select>
                     </div>
 
+                    {/* Tag Filter */}
+                    <div>
+                      <select
+                        value={filters.tag || "all"}
+                        onChange={(e) =>
+                          setFilters((prev) => ({
+                            ...prev,
+                            tag: e.target.value,
+                          }))
+                        }
+                        className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 outline-none focus:ring-2 focus:ring-blue-100 capitalize"
+                        title="Filter tasks by tag"
+                      >
+                        <option value="all">🏷️ All Tags</option>
+                        {availableTags.map((t) => (
+                          <option key={t} value={t}>
+                            #{t}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
                     {/* Only My Tasks Radio Button Toggle */}
                     <label
                       htmlFor="myTasksRadio"
@@ -1235,7 +1282,8 @@ export default function ProjectTaskBoardPage() {
                   {(searchQuery ||
                     filters.status !== "all" ||
                     filters.priority !== "all" ||
-                    filters.assigneeId !== "all") && (
+                    filters.assigneeId !== "all" ||
+                    (filters.tag && filters.tag !== "all")) && (
                     <button
                       type="button"
                       onClick={handleClearFilters}
@@ -1421,14 +1469,37 @@ export default function ProjectTaskBoardPage() {
                                     {/* Tags */}
                                     {task.tags && task.tags.length > 0 && (
                                       <div className="flex flex-wrap gap-1.5 pt-0.5">
-                                        {task.tags.map((tag) => (
-                                          <span
-                                            key={tag}
-                                            className="bg-blue-50 text-blue-700 border border-blue-100 px-2 py-0.5 rounded-md text-[10px] font-semibold break-all break-words"
-                                          >
-                                            #{tag}
-                                          </span>
-                                        ))}
+                                        {task.tags.map((tag) => {
+                                          const isSelected =
+                                            filters.tag?.toLowerCase() ===
+                                            tag.toLowerCase();
+                                          return (
+                                            <span
+                                              key={tag}
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                setFilters((prev) => ({
+                                                  ...prev,
+                                                  tag: isSelected
+                                                    ? "all"
+                                                    : tag.toLowerCase(),
+                                                }));
+                                              }}
+                                              className={`px-2 py-0.5 rounded-md text-[10px] font-semibold break-all break-words cursor-pointer transition select-none ${
+                                                isSelected
+                                                  ? "bg-blue-600 text-white shadow-xs"
+                                                  : "bg-blue-50 text-blue-700 border border-blue-100 hover:bg-blue-100"
+                                              }`}
+                                              title={
+                                                isSelected
+                                                  ? `Filtering by #${tag}. Click to clear`
+                                                  : `Click to filter tasks by #${tag}`
+                                              }
+                                            >
+                                              #{tag}
+                                            </span>
+                                          );
+                                        })}
                                       </div>
                                     )}
 

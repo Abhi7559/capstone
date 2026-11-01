@@ -4,7 +4,7 @@ from datetime import date
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete, func
+from sqlalchemy import select, delete, func, String, cast
 from sqlalchemy.orm import selectinload
 
 from dao.base_dao import BaseDAO
@@ -26,6 +26,7 @@ class TaskDAO(BaseDAO[Task]):
         priority: Optional[str] = None,
         assignee_id: Optional[UUID] = None,
         due_date: Optional[date] = None,
+        tag: Optional[str] = None,
         skip: Optional[int] = None,
         limit: Optional[int] = None,
         include_deleted: bool = False,
@@ -58,6 +59,10 @@ class TaskDAO(BaseDAO[Task]):
         if due_date is not None:
             query = query.where(Task.due_date == due_date)
 
+        if tag and tag.strip() and tag.strip().lower() != "all":
+            clean_tag = tag.strip()
+            query = query.where(cast(Task.tags, String).ilike(f"%{clean_tag}%"))
+
         query = query.order_by(Task.created_at.desc())
 
         if skip is not None:
@@ -77,6 +82,7 @@ class TaskDAO(BaseDAO[Task]):
         priority: Optional[str] = None,
         assignee_id: Optional[UUID] = None,
         due_date: Optional[date] = None,
+        tag: Optional[str] = None,
         include_deleted: bool = False,
     ) -> int:
         """Count total tasks matching filter criteria (for pagination)."""
@@ -99,6 +105,10 @@ class TaskDAO(BaseDAO[Task]):
 
         if due_date is not None:
             query = query.where(Task.due_date == due_date)
+
+        if tag and tag.strip() and tag.strip().lower() != "all":
+            clean_tag = tag.strip()
+            query = query.where(cast(Task.tags, String).ilike(f"%{clean_tag}%"))
 
         result = await db.execute(query)
         return result.scalar() or 0

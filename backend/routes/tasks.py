@@ -31,6 +31,7 @@ async def list_tasks(
     priority: Optional[str] = Query(None, description="Filter by priority"),
     assignee_id: Optional[UUID] = Query(None, alias="assigneeId", description="Filter by assignee UUID"),
     due_date: Optional[date] = Query(None, alias="dueDate", description="Filter by due date (YYYY-MM-DD)"),
+    tag: Optional[str] = Query(None, description="Filter tasks by tag"),
     include_deleted: bool = Query(False, alias="includeDeleted", description="Include soft-deleted tasks"),
     deleted_only: bool = Query(False, alias="deletedOnly", description="Return only soft-deleted tasks"),
     current_user: User = Depends(get_current_user),
@@ -55,6 +56,7 @@ async def list_tasks(
             priority=priority,
             assignee_id=assignee_id,
             due_date=due_date,
+            tag=tag,
         )
 
     return await task_service.get_tasks(
@@ -65,6 +67,7 @@ async def list_tasks(
         priority=priority,
         assignee_id=assignee_id,
         due_date=due_date,
+        tag=tag,
         include_deleted=include_deleted,
         deleted_only=deleted_only,
     )

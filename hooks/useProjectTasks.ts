@@ -31,6 +31,9 @@ async function fetchProjectTasks(
   if (filters?.dueDate) {
     params.append("dueDate", filters.dueDate);
   }
+  if (filters?.tag && filters.tag !== "all") {
+    params.append("tag", filters.tag);
+  }
   if (filters?.includeDeleted) {
     params.append("includeDeleted", "true");
   }

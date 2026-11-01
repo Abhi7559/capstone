@@ -21,6 +21,7 @@ export interface TaskFilters {
   priority?: TaskPriority | "all";
   assigneeId?: string | "all";
   dueDate?: string; // YYYY-MM-DD format for date filtering
+  tag?: string | "all"; // Filter by tag
   includeDeleted?: boolean;
   deletedOnly?: boolean;
 }

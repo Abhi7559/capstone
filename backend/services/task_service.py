@@ -44,6 +44,7 @@ class TaskService:
         priority: Optional[str] = None,
         assignee_id: Optional[UUID] = None,
         due_date: Optional[date] = None,
+        tag: Optional[str] = None,
         skip: Optional[int] = None,
         limit: Optional[int] = None,
         include_deleted: bool = False,
@@ -71,6 +72,7 @@ class TaskService:
             priority=priority,
             assignee_id=assignee_id,
             due_date=due_date,
+            tag=tag,
             skip=skip,
             limit=limit,
             include_deleted=include_deleted,
@@ -97,6 +99,7 @@ class TaskService:
         priority: Optional[str] = None,
         assignee_id: Optional[UUID] = None,
         due_date: Optional[date] = None,
+        tag: Optional[str] = None,
     ) -> PaginatedTasksResponse:
         """
         Retrieve paginated tasks accessible to the current user matching QA.md API 12.
@@ -125,6 +128,7 @@ class TaskService:
                 priority=priority,
                 assignee_id=assignee_id,
                 due_date=due_date,
+                tag=tag,
             )
             filtered_tasks = [t for t in all_raw_tasks if t.project_id in allowed_project_ids]
             total_items = len(filtered_tasks)
@@ -138,6 +142,7 @@ class TaskService:
                 priority=priority,
                 assignee_id=assignee_id,
                 due_date=due_date,
+                tag=tag,
             )
             skip = (page - 1) * page_size
             paginated_tasks = await task_dao.get_filtered(
@@ -147,6 +152,7 @@ class TaskService:
                 priority=priority,
                 assignee_id=assignee_id,
                 due_date=due_date,
+                tag=tag,
                 skip=skip,
                 limit=page_size,
             )
