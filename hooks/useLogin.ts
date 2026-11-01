@@ -61,15 +61,12 @@ export function useLogin() {
   const mutation = useMutation({
     mutationFn: async (credentials: LoginCredentials) => {
       const user = await loginRequest(credentials);
-      try {
-        await signIn("credentials", {
-          redirect: false,
-          email: credentials.email,
-          password: credentials.password,
-        });
-      } catch {
-        // NextAuth is secondary session layer; do not block login if backend already authenticated
-      }
+      // Run NextAuth in the background without blocking the UI navigation
+      signIn("credentials", {
+        redirect: false,
+        email: credentials.email,
+        password: credentials.password,
+      }).catch(() => {});
       return user;
     },
     onSuccess: (user) => {

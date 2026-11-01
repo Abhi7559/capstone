@@ -11,6 +11,7 @@ import {
   loginSchema,
 } from "@/schemas/auth.schema";
 import { useAuthStore } from "@/store/useAuthStore";
+import { apiEndpoint } from "@/utils/apiConfig";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -25,6 +26,29 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isWarmingUp, setIsWarmingUp] = useState(false);
+
+  // Pre-warm the backend immediately while the user views/fills the login form
+  useEffect(() => {
+    try {
+      fetch(apiEndpoint("/health"), { method: "GET" }).catch(() => {});
+    } catch {
+      // silent background warmer
+    }
+  }, []);
+
+  // Display helpful status if Render container takes >2.5s on cold-start
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (isLoading) {
+      timer = setTimeout(() => {
+        setIsWarmingUp(true);
+      }, 2500);
+    } else {
+      setIsWarmingUp(false);
+    }
+    return () => clearTimeout(timer);
+  }, [isLoading]);
 
   // First time login state
   const [pendingChangeUserEmail, setPendingChangeUserEmail] = useState<
@@ -346,8 +370,18 @@ export default function LoginPage() {
               disabled={isLoading}
               className="w-full rounded-lg bg-gray-900 py-3 text-sm font-semibold text-white transition hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
             >
-              {isLoading ? "Logging in..." : "Login"}
+              {isLoading
+                ? isWarmingUp
+                  ? "Connecting to server..."
+                  : "Logging in..."
+                : "Login"}
             </button>
+
+            {isLoading && isWarmingUp && (
+              <p className="text-center text-xs text-amber-600 animate-pulse font-medium">
+                ⏳ Waking up cloud backend from sleep mode, please wait...
+              </p>
+            )}
           </form>
         </div>
       </div>

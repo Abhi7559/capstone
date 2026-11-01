@@ -158,6 +158,12 @@ async def root():
     return RedirectResponse(url="/docs")
 
 
+@app.get("/health", include_in_schema=False)
+async def root_health():
+    """Root level lightweight ping for cloud health-checkers and cold start warmers."""
+    return {"status": "ok", "timestamp": datetime.now(timezone.utc).isoformat()}
+
+
 # ============================================================================
 # Single Health Check Endpoint (API 23: Service Health)
 # ============================================================================
