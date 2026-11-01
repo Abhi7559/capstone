@@ -30,7 +30,13 @@ class AuthService:
         Verify user credentials and return access & refresh tokens with user summary.
         Uses a generic error message to prevent account enumeration.
         """
-        user = await user_dao.get_by_email(db, login_data.email)
+        email = login_data.email.strip().lower()
+        user = await user_dao.get_by_email(db, email)
+        if not user and email == "admin@teamhub.com":
+            user = await user_dao.get_by_email(db, "admin@teamboard.com")
+        elif not user and email == "admin@teamboard.com":
+            user = await user_dao.get_by_email(db, "admin@teamhub.com")
+
         if not user or not verify_password(login_data.password, user.hashed_password):
             raise UnauthorizedException(detail="Invalid email or password.")
 

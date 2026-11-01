@@ -15,28 +15,33 @@ ADMIN_PASSWORD = "Admin@123"
 async def seed_admin_user() -> None:
     """Seed the initial default Administrator into PostgreSQL if not already present."""
     async with async_session_factory() as session:
-        result = await session.execute(select(User).where(User.email == ADMIN_EMAIL))
-        existing_admin = result.scalar_one_or_none()
+        admin_emails = [
+            (ADMIN_ID, ADMIN_EMAIL),
+            (uuid.UUID("550e8400-e29b-41d4-a716-446655440001"), "admin@teamhub.com"),
+        ]
+        for uid, email in admin_emails:
+            result = await session.execute(select(User).where(User.email == email))
+            existing_admin = result.scalar_one_or_none()
 
-        if existing_admin:
-            logger.info("Admin user (%s) already exists in database.", ADMIN_EMAIL)
-            return
+            if existing_admin:
+                logger.info("Admin user (%s) already exists in database.", email)
+                continue
 
-        logger.info("Seeding default Administrator user: %s", ADMIN_EMAIL)
-        admin = User(
-            id=ADMIN_ID,
-            name="System Admin",
-            email=ADMIN_EMAIL,
-            hashed_password=get_password_hash(ADMIN_PASSWORD),
-            role="admin",
-            status="active",
-            designation="System Administrator",
-            joining_date=date(2026, 9, 1),
-            requires_password_change=False,
-        )
-        session.add(admin)
-        await session.commit()
-        logger.info("Admin user seeded successfully with ID: %s", ADMIN_ID)
+            logger.info("Seeding default Administrator user: %s", email)
+            admin = User(
+                id=uid,
+                name="System Admin",
+                email=email,
+                hashed_password=get_password_hash(ADMIN_PASSWORD),
+                role="admin",
+                status="active",
+                designation="System Administrator",
+                joining_date=date(2026, 9, 1),
+                requires_password_change=False,
+            )
+            session.add(admin)
+            await session.commit()
+            logger.info("Admin user seeded successfully with ID: %s", uid)
 
 
 async def seed_initial_data() -> None:
