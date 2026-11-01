@@ -59,7 +59,7 @@ class LoginRequest(BaseModel):
 
 
 class LoginResponse(BaseModel):
-    """Authentication tokens returned by POST /auth/login (OAuth2 & QAex.md Section 5.1 Endpoint 1)."""
+    """Authentication tokens returned by POST /auth/login."""
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -72,7 +72,6 @@ class LoginResponse(BaseModel):
     token_type: str = Field(default="bearer", alias="tokenType")
     access_token_expires_in: int = Field(default=900, alias="accessTokenExpiresIn")
     refresh_token_expires_in: int = Field(default=604800, alias="refreshTokenExpiresIn")
-    user: Optional[UserSummary] = None
 
 
 class ChangePasswordRequest(BaseModel):

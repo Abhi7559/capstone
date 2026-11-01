@@ -109,7 +109,6 @@ class AuthService:
             token_type="bearer",
             access_token_expires_in=access_token_expires_in,
             refresh_token_expires_in=refresh_token_expires_in,
-            user=UserSummary.model_validate(user),
         )
 
     async def change_password(

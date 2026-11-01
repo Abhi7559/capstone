@@ -33,7 +33,7 @@ router = APIRouter()
     response_model=LoginResponse,
     status_code=status.HTTP_200_OK,
     summary="User Login",
-    description="Authenticate user with email and password, returning JWT access token, refresh token, and user profile.",
+    description="Authenticate user with email and password, returning JWT access token and refresh token. User profile is retrieved via GET /auth/me.",
 )
 async def login(
     login_data: LoginRequest,

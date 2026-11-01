@@ -25,7 +25,32 @@ async function loginRequest(credentials: LoginCredentials): Promise<User> {
     }
 
     const data = await response.json();
-    const user: User = data.user || data;
+    let user: User = data.user;
+
+    // Retrieve user details via /auth/me router if not present in login response
+    if (!user && data.accessToken) {
+      try {
+        const meRes = await fetch(apiEndpoint("/auth/me"), {
+          headers: { Authorization: `Bearer ${data.accessToken}` },
+        });
+        if (meRes.ok) {
+          user = await meRes.json();
+        }
+      } catch {
+        // Continue to fallback if /auth/me fails
+      }
+    }
+
+    if (!user) {
+      user = {
+        id: "",
+        email: normalized.email,
+        name: normalized.email.split("@")[0],
+        role: "member",
+        requiresPasswordChange: false,
+      };
+    }
+
     if (data.accessToken) {
       user.token = data.accessToken;
     }

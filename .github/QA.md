@@ -184,7 +184,7 @@ Stores task status changes and audit events within individual projects.
 
 #### 1. `POST /task_management/api/v1/auth/login`
 
-- **Purpose:** Authenticates user credentials using email and bcrypt-hashed password, issues a short-lived JWT access token (15 minutes) and a long-lived refresh token (7 days), and returns the authenticated user's public profile and onboarding status.
+- **Purpose:** Authenticates user credentials using email and bcrypt-hashed password, and issues a short-lived JWT access token (15 minutes) and a long-lived refresh token (7 days). In accordance with decoupled REST security architecture, user profile details are not included in the response body and are retrieved using the Bearer token via `GET /task_management/api/v1/auth/me`.
 - **Scoping & RBAC:**
     - **Access:** Public (No authorization header required).
     - **Status Check:** Rejects suspended or inactive accounts with `403 Forbidden`.
@@ -198,47 +198,19 @@ Stores task status changes and audit events within individual projects.
       "password": "Admin@123"
     }
     ```
-- **Positive Response Scenario A (When Called by Active User — Standard Login):**
-    - HTTP 200 OK — Issues tokens and returns profile with `requiresPasswordChange: false`:
+- **Positive Response Scenario A (Standard Successful Login):**
+    - HTTP 200 OK — Issues JWT access token and refresh token:
     
     ```json
     {
-      "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1NTBlODQwMC1lMjliLTQxZDQtYTcxNi00NDY2NTU0NDAwMDAiLCJlbWFpbCI6ImFkbWluQHRlYW1ib2FyZC5jb20iLCJyb2xlIjoiYWRtaW4iLCJleHAiOjE3OTM0NTYwMDB9...",
-      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1NTBlODQwMC1lMjliLTQxZDQtYTcxNi00NDY2NTU0NDAwMDAiLCJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc5NDAwMDAwMH0...",
-      "tokenType": "Bearer",
-      "user": {
-        "id": "550e8400-e29b-41d4-a716-446655440000",
-        "email": "admin@teamboard.com",
-        "name": "System Admin",
-        "role": "admin",
-        "designation": "System Administrator",
-        "status": "active",
-        "requiresPasswordChange": false,
-        "joiningDate": "2026-09-01"
-      }
+      "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1NTBlODQwMC1lMjliLTQxZDQtYTcxNi00NDY2NTU0NDAwMDAiLCJleHAiOjE3OTM1NDQ1NTEsInR5cGUiOiJhY2Nlc3MifQ...",
+      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1NTBlODQwMC1lMjliLTQxZDQtYTcxNi00NDY2NTU0NDAwMDAiLCJleHAiOjE3OTQxNDg0NTEsInR5cGUiOiJyZWZyZXNoIn0...",
+      "tokenType": "bearer",
+      "accessTokenExpiresIn": 900,
+      "refreshTokenExpiresIn": 604800
     }
     ```
-
-- **Positive Response Scenario B (When Called by Invited Member — First-Time Onboarding):**
-    - HTTP 200 OK — Returns `requiresPasswordChange: true` prompting the client to display the mandatory password reset screen:
-    
-    ```json
-    {
-      "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-      "tokenType": "Bearer",
-      "user": {
-        "id": "b733e169-49d4-4d66-b4ef-2460da7a3a30",
-        "email": "alex.mercer@company.com",
-        "name": "Alex Mercer",
-        "role": "member",
-        "designation": "Senior Backend Engineer",
-        "status": "active",
-        "requiresPasswordChange": true,
-        "joiningDate": "2026-11-01"
-      }
-    }
-    ```
+    *(Note: Profile details such as `id`, `name`, `email`, `role`, and `designation` are retrieved by passing this Bearer token to `GET /task_management/api/v1/auth/me`)*
 
 - **Negative Scenarios:**
     - **HTTP 401 Unauthorized** | **Exception:** `UnauthorizedException`

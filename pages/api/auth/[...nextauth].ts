@@ -34,12 +34,30 @@ export const authOptions: NextAuthOptions = {
 
           if (backendRes.ok) {
             const data = await backendRes.json();
-            const u = data.user || data;
+            let u = data.user;
+            if (!u && data.accessToken) {
+              try {
+                const meRes = await fetch(
+                  `${backendUrl}/task_management/api/v1/auth/me`,
+                  {
+                    headers: { Authorization: `Bearer ${data.accessToken}` },
+                  },
+                );
+                if (meRes.ok) {
+                  u = await meRes.json();
+                }
+              } catch {
+                // fallback
+              }
+            }
+            if (!u) {
+              u = data;
+            }
             return {
-              id: u.id,
-              name: u.name,
-              email: u.email,
-              role: u.role,
+              id: u.id || credentials.email,
+              name: u.name || credentials.email.split("@")[0],
+              email: u.email || credentials.email,
+              role: u.role || "member",
             };
           }
         } catch {
