@@ -1,6 +1,7 @@
 import email.message
 from email.message import EmailMessage
 import aiosmtplib
+import httpx
 
 from core.config import settings
 from core.logger import logger
@@ -141,6 +142,7 @@ async def send_invitation_email(
         )
         return True
 
+    sent = False
     try:
         await aiosmtplib.send(
             message,
@@ -149,14 +151,36 @@ async def send_invitation_email(
             username=settings.SMTP_USER,
             password=settings.SMTP_PASSWORD.replace(" ", ""),
             start_tls=(settings.SMTP_PORT == 587),
-            timeout=10.0,
+            timeout=5.0,
         )
-        logger.info("Invitation email sent successfully to: %s", email)
-        return True
+        logger.info("Invitation email sent successfully via direct SMTP to: %s", email)
+        sent = True
     except Exception as exc:
-        logger.error(
-            "Failed to send invitation email to %s: %s",
-            email,
-            str(exc),
+        logger.warning(
+            "Direct SMTP connection failed or blocked (%s). Attempting HTTPS relay to frontend API...",
+            exc,
         )
-        return False
+
+    # 2. Fallback to HTTPS relay on port 443 (guaranteed to bypass Render free tier SMTP blocks)
+    if not sent and signup_url:
+        try:
+            relay_url = f"{settings.FRONTEND_URL.rstrip('/')}/api/send-invitation"
+            logger.info("Relaying email dispatch via HTTPS to: %s", relay_url)
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                res = await client.post(
+                    relay_url,
+                    json={
+                        "toEmail": email,
+                        "name": name,
+                        "signupUrl": signup_url,
+                    },
+                )
+                if res.status_code in (200, 201):
+                    logger.info("Invitation email sent successfully via HTTPS relay to: %s", email)
+                    sent = True
+                else:
+                    logger.error("HTTPS relay returned status %s: %s", res.status_code, res.text)
+        except Exception as exc2:
+            logger.error("HTTPS relay failed: %s", exc2)
+
+    return sent

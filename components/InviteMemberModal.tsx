@@ -44,6 +44,22 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
     try {
       const result = await inviteMember(data);
       setSuccessResult(result);
+
+      // Client-side instant dispatch to Next.js API route (bypasses any cloud SMTP port blocking)
+      const activationUrl = result?.signupUrl || result?.signup_url;
+      if (activationUrl) {
+        fetch("/api/send-invitation", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            toEmail: data.email,
+            name: data.name,
+            signupUrl: activationUrl,
+          }),
+        }).catch((err) => {
+          console.warn("Client email relay error:", err);
+        });
+      }
     } catch {
       // Error handled by hook
     }
