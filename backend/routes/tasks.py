@@ -32,8 +32,8 @@ async def list_tasks(
     assignee_id: Optional[UUID] = Query(None, alias="assigneeId", description="Filter by assignee UUID"),
     due_date: Optional[date] = Query(None, alias="dueDate", description="Filter by due date (YYYY-MM-DD)"),
     tag: Optional[str] = Query(None, description="Filter tasks by tag"),
-    include_deleted: bool = Query(False, alias="includeDeleted", description="Include soft-deleted tasks"),
-    deleted_only: bool = Query(False, alias="deletedOnly", description="Return only soft-deleted tasks"),
+    include_deleted: bool = Query(False, alias="includeDeleted", include_in_schema=False),
+    deleted_only: bool = Query(False, alias="deletedOnly", include_in_schema=False),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> Union[PaginatedTasksResponse, List[TaskOut]]:
@@ -171,7 +171,7 @@ async def update_task(
 )
 async def delete_task(
     id: UUID,
-    permanent: bool = Query(False, description="Permanently delete from database"),
+    permanent: bool = Query(False, include_in_schema=False),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> TaskDeleteResponse:
