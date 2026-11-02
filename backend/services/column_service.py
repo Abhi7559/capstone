@@ -8,7 +8,13 @@ from models.project import Project
 from models.task import Task
 from models.user import User
 from schemas.column_schema import ColumnCreate
-from exceptions.domain import EntityNotFoundException, DuplicateEntityException
+from exceptions.domain import (
+    EntityNotFoundException,
+    DuplicateEntityException,
+    ForbiddenException,
+    ValidationException,
+)
+from dao.project_dao import project_dao
 
 DEFAULT_COLUMNS = [
     {
@@ -44,9 +50,15 @@ class ColumnService:
     async def get_project_columns(
         self, db: AsyncSession, project_id: uuid.UUID, current_user: User
     ) -> List[Dict[str, Any]]:
-        project = await db.get(Project, project_id)
+        project = await project_dao.get_by_id(db, project_id)
         if not project or project.is_deleted:
             raise EntityNotFoundException("Project", project_id)
+
+        role = (current_user.role or "").lower()
+        if role != "admin":
+            member_ids = {m.id for m in project.members}
+            if current_user.id not in member_ids:
+                raise ForbiddenException("You do not have permission to view columns for this project.")
 
         cols = project.kanban_columns
         if not cols:
@@ -77,11 +89,23 @@ class ColumnService:
         payload: ColumnCreate,
         current_user: User,
     ) -> Dict[str, Any]:
-        project = await db.get(Project, project_id)
+        project = await project_dao.get_by_id(db, project_id)
         if not project or project.is_deleted:
             raise EntityNotFoundException("Project", project_id)
 
+        role = (current_user.role or "").lower()
+        if role != "admin":
+            member_ids = {m.id for m in project.members}
+            if current_user.id not in member_ids:
+                raise ForbiddenException("You do not have permission to modify columns in this project.")
+
+        if (project.status or "").lower() == "archived":
+            raise ValidationException("Cannot modify columns in an archived project.")
+
         cols = await self.get_project_columns(db, project_id, current_user)
+        if len(cols) >= 8:
+            raise ValidationException("A project can have a maximum of 8 Kanban columns.")
+
         trimmed_name = payload.name.strip().upper()
         slug = generate_slug(payload.name)
 
@@ -110,9 +134,18 @@ class ColumnService:
         column_id: str,
         current_user: User,
     ) -> None:
-        project = await db.get(Project, project_id)
+        project = await project_dao.get_by_id(db, project_id)
         if not project or project.is_deleted:
             raise EntityNotFoundException("Project", project_id)
+
+        role = (current_user.role or "").lower()
+        if role != "admin":
+            member_ids = {m.id for m in project.members}
+            if current_user.id not in member_ids:
+                raise ForbiddenException("You do not have permission to modify columns in this project.")
+
+        if (project.status or "").lower() == "archived":
+            raise ValidationException("Cannot modify columns in an archived project.")
 
         cols = await self.get_project_columns(db, project_id, current_user)
         col_to_delete = None

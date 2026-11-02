@@ -127,7 +127,7 @@ class ActivityDAO(BaseDAO[ProjectActivity]):
         query = (
             select(ProjectActivity)
             .where(
-                ProjectActivity.to_status == "done",
+                ProjectActivity.to_status.in_(["done", "completed"]),
                 ProjectActivity.created_at >= start_datetime,
                 ProjectActivity.created_at <= end_datetime,
             )

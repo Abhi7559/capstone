@@ -48,7 +48,11 @@ class TaskDAO(BaseDAO[Task]):
             query = query.where(Task.project_id == project_id)
 
         if status and status.strip():
-            query = query.where(Task.status.ilike(status.strip()))
+            clean_status = status.strip().lower()
+            if clean_status in ("done", "completed"):
+                query = query.where(Task.status.in_(["done", "completed"]))
+            else:
+                query = query.where(Task.status.ilike(clean_status))
 
         if priority and priority.strip():
             query = query.where(Task.priority.ilike(priority.strip()))
@@ -61,7 +65,7 @@ class TaskDAO(BaseDAO[Task]):
 
         if tag and tag.strip() and tag.strip().lower() != "all":
             clean_tag = tag.strip()
-            query = query.where(cast(Task.tags, String).ilike(f"%{clean_tag}%"))
+            query = query.where(cast(Task.tags, String).ilike(f'%"{clean_tag}"%'))
 
         query = query.order_by(Task.created_at.desc())
 
@@ -95,7 +99,11 @@ class TaskDAO(BaseDAO[Task]):
             query = query.where(Task.project_id == project_id)
 
         if status and status.strip():
-            query = query.where(Task.status.ilike(status.strip()))
+            clean_status = status.strip().lower()
+            if clean_status in ("done", "completed"):
+                query = query.where(Task.status.in_(["done", "completed"]))
+            else:
+                query = query.where(Task.status.ilike(clean_status))
 
         if priority and priority.strip():
             query = query.where(Task.priority.ilike(priority.strip()))
@@ -108,7 +116,7 @@ class TaskDAO(BaseDAO[Task]):
 
         if tag and tag.strip() and tag.strip().lower() != "all":
             clean_tag = tag.strip()
-            query = query.where(cast(Task.tags, String).ilike(f"%{clean_tag}%"))
+            query = query.where(cast(Task.tags, String).ilike(f'%"{clean_tag}"%'))
 
         result = await db.execute(query)
         return result.scalar() or 0
@@ -122,12 +130,12 @@ class TaskDAO(BaseDAO[Task]):
         include_deleted: bool = False,
     ) -> int:
         """
-        Count overdue tasks: due_date < today AND status != 'done'.
+        Count overdue tasks: due_date < today AND status not in ('done', 'completed').
         Optionally filtered by assignee_id. Excludes soft-deleted tasks by default.
         """
         query = select(func.count(Task.id)).where(
             Task.due_date < today,
-            Task.status != "done",
+            ~Task.status.in_(["done", "completed"]),
         )
         if not include_deleted:
             query = query.where(Task.is_deleted == False)
@@ -146,7 +154,7 @@ class TaskDAO(BaseDAO[Task]):
         include_deleted: bool = False,
     ) -> List[Task]:
         """
-        Retrieve overdue tasks: due_date < today AND status != 'done'.
+        Retrieve overdue tasks: due_date < today AND status not in ('done', 'completed').
         Ordered by due_date ascending. Excludes soft-deleted tasks by default.
         """
         query = (
@@ -154,7 +162,7 @@ class TaskDAO(BaseDAO[Task]):
             .options(selectinload(Task.assignee))
             .where(
                 Task.due_date < today,
-                Task.status != "done",
+                ~Task.status.in_(["done", "completed"]),
             )
         )
         if not include_deleted:
@@ -177,7 +185,7 @@ class TaskDAO(BaseDAO[Task]):
     ) -> List[Task]:
         """
         Retrieve tasks with due_date between start_date and end_date (inclusive),
-        excluding completed tasks (status != 'done').
+        excluding completed tasks (status not in ('done', 'completed')).
         Ordered by due_date ascending.
         """
         query = (
@@ -186,7 +194,7 @@ class TaskDAO(BaseDAO[Task]):
             .where(
                 Task.due_date >= start_date,
                 Task.due_date <= end_date,
-                Task.status != "done",
+                ~Task.status.in_(["done", "completed"]),
             )
         )
         if not include_deleted:

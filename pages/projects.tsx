@@ -98,17 +98,31 @@ export default function ProjectsPage() {
   const [deletingProjectId, setDeletingProjectId] = useState<string | null>(
     null,
   );
+  const deletingProject = projects?.find((p) => p.id === deletingProjectId);
 
   const handleConfirmDelete = async () => {
-    if (deletingProjectId) {
-      try {
-        await deleteProject(deletingProjectId);
-        showToast("Project deleted successfully!");
-      } catch {
-        showToast("Failed to delete project.");
-      } finally {
-        setDeletingProjectId(null);
-      }
+    if (!deletingProjectId) return;
+
+    if (
+      deletingProject &&
+      (deletingProject.status || "").toLowerCase() === "active"
+    ) {
+      showToast(
+        "Cannot delete an active project. Please archive or change its status before deleting.",
+      );
+      setDeletingProjectId(null);
+      return;
+    }
+
+    try {
+      await deleteProject(deletingProjectId);
+      showToast("Project deleted successfully!");
+    } catch (err: unknown) {
+      const errorMsg =
+        (err as Error)?.message || "Failed to delete project.";
+      showToast(errorMsg);
+    } finally {
+      setDeletingProjectId(null);
     }
   };
 
@@ -974,28 +988,113 @@ export default function ProjectsPage() {
       {/* Delete Confirmation Modal */}
       {Boolean(deletingProjectId) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl border border-gray-100 space-y-4">
-            <h3 className="text-lg font-bold text-gray-900">Delete Project</h3>
-            <p className="text-xs text-gray-600">
-              Are you sure you want to delete this project? This action cannot
-              be undone.
-            </p>
-            <div className="flex justify-end space-x-3 pt-2">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl border border-gray-100 space-y-4">
+            <div className="flex items-center gap-3">
+              <div
+                className={`p-2.5 rounded-xl ${
+                  (deletingProject?.status || "").toLowerCase() === "active"
+                    ? "bg-amber-100 text-amber-600"
+                    : "bg-red-100 text-red-600"
+                }`}
+              >
+                {(deletingProject?.status || "").toLowerCase() === "active" ? (
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                    />
+                  </svg>
+                ) : (
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
+                )}
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-gray-900">
+                  {(deletingProject?.status || "").toLowerCase() === "active"
+                    ? "Active Project Cannot Be Deleted"
+                    : "Delete Project"}
+                </h3>
+                <p className="text-xs text-gray-500 font-medium">
+                  {deletingProject?.name}
+                </p>
+              </div>
+            </div>
+
+            {(deletingProject?.status || "").toLowerCase() === "active" ? (
+              <div className="rounded-xl bg-amber-50 p-3.5 border border-amber-200">
+                <p className="text-xs font-medium text-amber-900 leading-relaxed">
+                  This project is currently marked as{" "}
+                  <strong className="font-semibold">Active</strong>. To protect
+                  ongoing work and data, active projects cannot be deleted.
+                </p>
+                <p className="text-xs text-amber-800 mt-2">
+                  Please archive or change its status to Completed before
+                  deleting.
+                </p>
+              </div>
+            ) : (
+              <p className="text-xs text-gray-600 leading-relaxed">
+                Are you sure you want to delete{" "}
+                <strong className="text-gray-900 font-semibold">
+                  &quot;{deletingProject?.name}&quot;
+                </strong>
+                ? This action will remove the project and its associated data.
+              </p>
+            )}
+
+            <div className="flex justify-end items-center space-x-3 pt-2">
               <button
                 type="button"
                 onClick={() => setDeletingProjectId(null)}
                 className="rounded-xl border border-gray-300 px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition"
               >
-                Cancel
+                {(deletingProject?.status || "").toLowerCase() === "active"
+                  ? "Close"
+                  : "Cancel"}
               </button>
-              <button
-                type="button"
-                onClick={handleConfirmDelete}
-                disabled={isDeleting}
-                className="rounded-xl bg-red-600 px-4 py-2 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition"
-              >
-                {isDeleting ? "Deleting..." : "Delete Project"}
-              </button>
+              {(deletingProject?.status || "").toLowerCase() === "active" ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const target = deletingProject;
+                    setDeletingProjectId(null);
+                    if (target) {
+                      handleArchiveToggle(target);
+                    }
+                  }}
+                  className="rounded-xl bg-amber-600 px-4 py-2 text-xs font-semibold text-white hover:bg-amber-700 transition"
+                >
+                  📦 Archive Project Instead
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleConfirmDelete}
+                  disabled={isDeleting}
+                  className="rounded-xl bg-red-600 px-4 py-2 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition"
+                >
+                  {isDeleting ? "Deleting..." : "Delete Project"}
+                </button>
+              )}
             </div>
           </div>
         </div>

@@ -136,6 +136,13 @@ export const projectServiceServer = {
     if (userRole && userRole.toLowerCase() !== "admin") {
       throw new Error("Forbidden: Only admin can delete projects");
     }
+    const existing = projectRepository.findById(id);
+    if (!existing) {
+      throw new Error("Project not found");
+    }
+    if ((existing.status || "").toLowerCase() === "active") {
+      throw new Error("Cannot delete an active project. Please archive or change its status before deleting.");
+    }
     projectRepository.delete(id);
   },
 };

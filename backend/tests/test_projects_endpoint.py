@@ -368,6 +368,20 @@ async def test_admin_deletes_project_success(client: AsyncClient, setup_users_an
     assert get_res.status_code == 404
 
 
+@pytest.mark.asyncio
+async def test_admin_cannot_delete_active_project_endpoint(client: AsyncClient, setup_users_and_projects):
+    """Admin receives 400 Bad Request when attempting to delete an active project."""
+    ctx = setup_users_and_projects
+    headers = {"Authorization": f"Bearer {ctx['admin_token']}"}
+    p1_id = str(ctx["p1"].id)
+
+    response = await client.delete(f"/task_management/api/v1/projects/{p1_id}", headers=headers)
+    assert response.status_code == 400
+    data = response.json()
+    assert "Cannot delete an active project" in (data.get("detail") or data.get("message") or "")
+
+
+
 # ============================================================================
 # Tests: GET /projects Pagination & Filters (QA.md API 6)
 # ============================================================================

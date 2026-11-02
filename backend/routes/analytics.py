@@ -14,9 +14,11 @@ from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.logger import logger
+from dao.project_dao import project_dao
 from database.redis import get_redis
 from dependencies.auth import get_current_user
 from dependencies.db import get_db
+from exceptions.domain import EntityNotFoundException, ForbiddenException
 from models.user import User
 from schemas.analytics_schema import AnalyticsDataResponse
 from services.analytics_service import analytics_service
@@ -63,6 +65,17 @@ async def get_analytics_data(
     """
     user_role = (current_user.role or "member").lower()
     is_admin = user_role == "admin"
+
+    # Enforce permissions for specific project requests before returning cached data
+    if projectId is not None and not is_admin:
+        project = await project_dao.get_by_id(db, projectId)
+        if not project:
+            raise EntityNotFoundException(entity_name="Project", identifier=projectId)
+        member_ids = {m.id for m in project.members}
+        if current_user.id not in member_ids:
+            raise ForbiddenException(
+                detail="You do not have access to view analytics for this project."
+            )
 
     # Build cache key:
     # When project_id is provided, the key is kpi:analytics:{project_id}.

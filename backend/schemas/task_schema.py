@@ -112,6 +112,8 @@ class TaskCreate(TaskBase):
         if isinstance(v, TaskStatus):
             return v.value
         str_val = str(v).strip().lower()
+        if str_val == "completed":
+            return "done"
         return str_val
 
 
@@ -192,6 +194,8 @@ class TaskUpdate(TaskBase):
         if isinstance(v, TaskStatus):
             return v.value
         str_val = str(v).strip().lower()
+        if str_val == "completed":
+            return "done"
         return str_val
 
 

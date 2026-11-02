@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.security import hash_password
 from dao.user_dao import user_dao
-from exceptions.domain import DomainException, EntityNotFoundException, ForbiddenException
+from exceptions.domain import DomainException, EntityNotFoundException, ForbiddenException, ValidationException
 from models.user import User
 from schemas.project_schema import ProjectCreate, ProjectUpdate, ProjectStatus, ProjectPriority
 from services.project_service import project_service
@@ -263,3 +263,21 @@ async def test_admin_delete_project(db_session: AsyncSession, admin_and_members)
     # Deleting missing project raises EntityNotFoundException
     with pytest.raises(EntityNotFoundException):
         await project_service.delete_project(db_session, uuid.uuid4(), current_user=admin)
+
+
+@pytest.mark.asyncio
+async def test_admin_cannot_delete_active_project(db_session: AsyncSession, admin_and_members):
+    """Admin cannot delete an active project, must archive or change status first."""
+    admin, _, _ = admin_and_members
+
+    project = await project_service.create_project(
+        db_session,
+        ProjectCreate(name="Active Project To Delete", description="Desc", status=ProjectStatus.ACTIVE),
+        current_user=admin,
+    )
+
+    with pytest.raises(ValidationException) as exc_info:
+        await project_service.delete_project(db_session, project.id, current_user=admin)
+
+    assert "Cannot delete an active project" in str(exc_info.value.details)
+

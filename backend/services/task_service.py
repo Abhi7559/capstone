@@ -256,11 +256,17 @@ class TaskService:
         if not existing_task:
             raise EntityNotFoundException(entity_name="Task", identifier=task_id)
 
+        project = await project_dao.get_by_id(db, existing_task.project_id)
+        if not project:
+            raise EntityNotFoundException(entity_name="Project", identifier=existing_task.project_id)
+
         role = (current_user.role or "").lower()
         is_admin = role == "admin"
         is_assigned_member = existing_task.assignee_id == current_user.id
+        project_member_ids = {m.id for m in project.members}
+        is_project_member = current_user.id in project_member_ids
 
-        if not (is_admin or is_assigned_member):
+        if not (is_admin or is_assigned_member or is_project_member):
             raise ForbiddenException(detail="You do not have permission to update this task.")
 
         update_dict = task_update.model_dump(exclude_unset=True, by_alias=False)
@@ -268,11 +274,6 @@ class TaskService:
         # Validate assignee if updated to a non-null user
         if "assignee_id" in update_dict and update_dict["assignee_id"] is not None:
             new_assignee_id = update_dict["assignee_id"]
-            project = await project_dao.get_by_id(db, existing_task.project_id)
-            if not project:
-                raise EntityNotFoundException(entity_name="Project", identifier=existing_task.project_id)
-
-            project_member_ids = {m.id for m in project.members}
             if new_assignee_id not in project_member_ids:
                 raise ValidationException("Assignee is not a member of this project")
 
@@ -348,13 +349,18 @@ class TaskService:
         if not task:
             raise EntityNotFoundException(entity_name="Task", identifier=task_id)
 
+        project = await project_dao.get_by_id(db, task.project_id)
+        if not project:
+            raise EntityNotFoundException(entity_name="Project", identifier=task.project_id)
+
+        if (project.status or "").lower() == "archived":
+            raise ValidationException("Cannot restore tasks in an archived project.")
+
         role = (current_user.role or "").lower()
         if role != "admin":
-            project = await project_dao.get_by_id(db, task.project_id)
-            if project:
-                member_ids = {m.id for m in project.members}
-                if current_user.id not in member_ids:
-                    raise ForbiddenException(detail="You do not have access to this project's tasks.")
+            member_ids = {m.id for m in project.members}
+            if current_user.id not in member_ids:
+                raise ForbiddenException(detail="You do not have access to this project's tasks.")
 
         restored_task = await task_dao.restore(db, task_id)
         if not restored_task:

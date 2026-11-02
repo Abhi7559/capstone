@@ -118,7 +118,10 @@ class AnalyticsService:
         slices = []
         for cfg in self.STATUS_CONFIG:
             key = cfg["key"]
-            count = db_counts.get(key, 0)
+            if key == "done":
+                count = db_counts.get("done", 0) + db_counts.get("completed", 0)
+            else:
+                count = db_counts.get(key, 0)
             slices.append(
                 StatusDistributionItem(
                     name=cfg["name"],

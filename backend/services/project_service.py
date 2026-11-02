@@ -12,6 +12,7 @@ from exceptions.domain import (
     DomainException,
     EntityNotFoundException,
     ForbiddenException,
+    ValidationException,
 )
 import math
 from models.project import Project
@@ -168,12 +169,18 @@ class ProjectService:
                         details=f"Assigned member with ID '{member_id}' does not exist in workspace.",
                     )
 
+        category_val = (
+            project_in.category.value
+            if hasattr(project_in.category, "value")
+            else project_in.category
+        ) or project_in.department or "General"
+
         # Prepare project dictionary
         project_dict = {
             "name": project_in.name.strip(),
             "description": project_in.description.strip(),
             "status": project_in.status.value if hasattr(project_in.status, "value") else project_in.status,
-            "category": project_in.category or project_in.department,
+            "category": category_val,
             "priority": project_in.priority.value if hasattr(project_in.priority, "value") else project_in.priority,
             "start_date": project_in.start_date,
             "due_date": project_in.due_date,
@@ -247,9 +254,15 @@ class ProjectService:
         update_dict = {}
         dumped = project_in.model_dump(exclude_unset=True)
 
-        for key in ("name", "description", "category"):
+        for key in ("name", "description"):
             if key in dumped and dumped[key] is not None:
                 update_dict[key] = dumped[key].strip() if isinstance(dumped[key], str) else dumped[key]
+
+        if "category" in dumped and dumped["category"] is not None:
+            cat_val = dumped["category"]
+            if hasattr(cat_val, "value"):
+                cat_val = cat_val.value
+            update_dict["category"] = cat_val.strip() if isinstance(cat_val, str) else cat_val
 
         for key in ("priority", "start_date", "due_date", "end_date"):
             if key in dumped:
@@ -306,6 +319,9 @@ class ProjectService:
         existing = await project_dao.get_by_id(db, project_id)
         if not existing:
             raise EntityNotFoundException(entity_name="Project", identifier=project_id)
+
+        if (existing.status or "").lower() == "active":
+            raise ValidationException("Cannot delete an active project. Please archive or change its status before deleting.")
 
         deleted = await project_dao.delete(db, project_id)
         if deleted:

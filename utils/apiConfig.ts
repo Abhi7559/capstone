@@ -139,6 +139,9 @@ export function extractErrorMessage(errData: any, defaultMsg: string): string {
     if (/cannot create tasks in an archived project/i.test(trimmed)) {
       return "Cannot create tasks in an archived project. Please reactivate or unarchive the project first.";
     }
+    if (/cannot delete an active project/i.test(trimmed)) {
+      return "Cannot delete an active project. Please archive or change its status before deleting.";
+    }
     return trimmed;
   }
 
@@ -179,6 +182,9 @@ export function extractErrorMessage(errData: any, defaultMsg: string): string {
     if (!genericPhrases.has(msg.toLowerCase())) {
       if (/assignee is not a member/i.test(msg)) {
         return "The selected assignee is not a member of this project. Please select a valid project member or add them to the project first.";
+      }
+      if (/cannot delete an active project/i.test(msg)) {
+        return "Cannot delete an active project. Please archive or change its status before deleting.";
       }
       return msg;
     }
