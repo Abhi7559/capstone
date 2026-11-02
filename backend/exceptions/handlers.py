@@ -17,7 +17,6 @@ def register_exception_handlers(app: FastAPI) -> None:
             content={
                 "status_code": exc.status_code,
                 "error": error_title,
-                "msg": error_title,
                 "detail": detail_msg,
             },
             headers=exc.headers,
@@ -38,7 +37,6 @@ def register_exception_handlers(app: FastAPI) -> None:
             content={
                 "status_code": status.HTTP_422_UNPROCESSABLE_ENTITY,
                 "error": "Unprocessable Entity",
-                "msg": "Unprocessable Entity",
                 "detail": clean_errors,
             },
         )
@@ -55,7 +53,6 @@ def register_exception_handlers(app: FastAPI) -> None:
             content={
                 "status_code": exc.status_code,
                 "error": error_title,
-                "msg": error_title,
                 "detail": exc.detail,
             },
             headers=exc.headers,
@@ -75,7 +72,6 @@ def register_exception_handlers(app: FastAPI) -> None:
             content={
                 "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR,
                 "error": "Internal Server Error",
-                "msg": "Internal Server Error",
                 "detail": "An unexpected server error occurred. Please try again later.",
             },
         )
