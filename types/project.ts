@@ -29,6 +29,7 @@ export interface Project {
   category?: string;
   priority?: string;
   previousStatus?: ProjectStatus;
+  isDeleted?: boolean;
   /** Persisted Kanban column config. Empty array = use frontend defaults. */
   kanbanColumns?: KanbanColumnDef[];
 }

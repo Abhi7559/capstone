@@ -44,13 +44,19 @@ export default function ArchivesPage() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // Show ONLY soft-deleted (trash) projects
+  // Show ONLY soft-deleted (trash) projects: must have isDeleted === true or status === 'archived'
   const archivedProjects: (Project & { isSoftDeleted?: boolean })[] = (() => {
     const list: (Project & { isSoftDeleted?: boolean })[] = [];
     const seenIds = new Set<string>();
 
     (deletedProjects || []).forEach((p) => {
-      if (!seenIds.has(p.id)) {
+      // Guard against old deployed backends that ignore deletedOnly: true
+      const isActuallyDeleted =
+        p.isDeleted === true ||
+        (p as any).is_deleted === true ||
+        p.status === "archived";
+
+      if (isActuallyDeleted && !seenIds.has(p.id)) {
         seenIds.add(p.id);
         list.push({ ...p, isSoftDeleted: true });
       }
@@ -59,13 +65,18 @@ export default function ArchivesPage() {
     return list;
   })();
 
-  // Show ONLY soft-deleted (trash) tasks
+  // Show ONLY soft-deleted (trash) tasks: must have isDeleted === true or status === 'archived'
   const archivedTasks: Task[] = (() => {
     const list: Task[] = [];
     const seenIds = new Set<string>();
 
     (deletedTasks || []).forEach((t) => {
-      if (!seenIds.has(t.id)) {
+      const isActuallyDeleted =
+        t.isDeleted === true ||
+        (t as any).is_deleted === true ||
+        t.status === "archived";
+
+      if (isActuallyDeleted && !seenIds.has(t.id)) {
         seenIds.add(t.id);
         list.push(t);
       }
