@@ -4,5 +4,9 @@
     "source.fixAll.biome": "explicit"
   },
   "biome.enabled": true,
-  "biome.requireConfiguration": true
+  "biome.requireConfiguration": true,
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/*.pyc": true
+  }
 }

@@ -5,6 +5,7 @@ import httpx
 
 from core.config import settings
 from core.logger import logger
+from core.retry import retry_with_backoff
 
 
 def render_invitation_html(
@@ -106,6 +107,7 @@ def create_invitation_message(
     return message
 
 
+@retry_with_backoff(max_retries=3, initial_delay=1.0, backoff_factor=2.0)
 async def send_invitation_email(
     email: str,
     name: str,

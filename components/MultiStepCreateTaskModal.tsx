@@ -56,6 +56,8 @@ export function MultiStepCreateTaskModal({
     trigger,
     watch,
     setValue,
+    setError,
+    clearErrors,
     reset: resetForm,
     formState: { errors },
   } = useForm<MultiStepTaskFormValues>({
@@ -74,6 +76,32 @@ export function MultiStepCreateTaskModal({
   });
 
   const formValues = watch();
+
+  const targetProjectId = formValues.projectId || defaultProjectId;
+  const selectedProject = projects?.find((p) => p.id === targetProjectId);
+  const selectedAssignee = members?.find((m) => m.id === formValues.assigneeId);
+  const projectMemberIds = selectedProject?.memberIds || [];
+  const hasProjectMembers = projectMemberIds.length > 0;
+  const isAssigneeInProject =
+    !formValues.assigneeId ||
+    (hasProjectMembers
+      ? projectMemberIds.includes(formValues.assigneeId)
+      : true);
+
+  const projectMembers = (members || []).filter((m) =>
+    projectMemberIds.includes(m.id),
+  );
+  const nonProjectMembers = (members || []).filter(
+    (m) => !projectMemberIds.includes(m.id),
+  );
+
+  const activeProjects = (projects || []).filter(
+    (p) => p.status !== "archived",
+  );
+  const hasActiveProjects = activeProjects.length > 0;
+  const isTargetArchived = selectedProject?.status === "archived";
+  const isTaskCreationBlocked =
+    (!editingTask && !hasActiveProjects) || isTargetArchived;
 
   // Reset & Populate form when modal state or editingTarget changes
   useEffect(() => {
@@ -138,6 +166,19 @@ export function MultiStepCreateTaskModal({
       isValid = await trigger(["title", "description", "priority"]);
     } else if (currentStep === 2) {
       isValid = await trigger(["projectId", "assigneeId"]);
+      if (
+        isValid &&
+        formValues.assigneeId &&
+        hasProjectMembers &&
+        !projectMemberIds.includes(formValues.assigneeId)
+      ) {
+        setError("assigneeId", {
+          type: "manual",
+          message:
+            "This member is not assigned to the selected project. Please select a valid project member or leave unassigned.",
+        });
+        isValid = false;
+      }
     } else if (currentStep === 3) {
       isValid = await trigger(["dueDate", "tags"]);
     }
@@ -216,17 +257,6 @@ export function MultiStepCreateTaskModal({
 
   if (!isOpen) return null;
 
-  const activeProjects = (projects || []).filter(
-    (p) => p.status !== "archived",
-  );
-  const hasActiveProjects = activeProjects.length > 0;
-  const targetProjectId = formValues.projectId || defaultProjectId;
-  const selectedProject = projects?.find((p) => p.id === targetProjectId);
-  const selectedAssignee = members?.find((m) => m.id === formValues.assigneeId);
-  const isTargetArchived = selectedProject?.status === "archived";
-  const isTaskCreationBlocked =
-    (!editingTask && !hasActiveProjects) || isTargetArchived;
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-xl h-[580px] max-h-[90vh] flex flex-col rounded-2xl bg-white p-6 shadow-xl border border-gray-100 overflow-hidden">
@@ -299,8 +329,25 @@ export function MultiStepCreateTaskModal({
         )}
 
         {error && (
-          <div className="mb-4 rounded-lg bg-red-50 p-3 border border-red-200">
-            <p className="text-xs font-semibold text-red-800">{error}</p>
+          <div className="mb-4 rounded-xl bg-red-50 p-3.5 border border-red-200 flex items-start gap-2.5 shadow-sm">
+            <svg
+              className="w-4 h-4 text-red-600 mt-0.5 shrink-0"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <div className="flex-1">
+              <p className="text-xs font-semibold text-red-800 leading-relaxed">
+                {error}
+              </p>
+            </div>
           </div>
         )}
 
@@ -517,25 +564,54 @@ export function MultiStepCreateTaskModal({
                 <select
                   id="taskAssignee"
                   className={`w-full rounded-lg border px-3.5 py-2 text-sm outline-none focus:ring-2 ${
-                    errors.assigneeId
+                    errors.assigneeId || (!isAssigneeInProject && formValues.assigneeId)
                       ? "border-red-500 focus:ring-red-200"
                       : "border-gray-300 focus:border-gray-500 focus:ring-gray-100"
                   }`}
                   {...register("assigneeId")}
+                  onChange={(e) => {
+                    register("assigneeId").onChange(e);
+                    clearErrors("assigneeId");
+                  }}
                 >
                   <option value="">Select an assignee (optional)...</option>
-                  {members?.map((mem) => (
-                    <option key={mem.id} value={mem.id}>
-                      {mem.name} ({mem.email})
-                    </option>
-                  ))}
+                  {projectMembers.length > 0 ? (
+                    <>
+                      <optgroup label="Project Members">
+                        {projectMembers.map((mem) => (
+                          <option key={mem.id} value={mem.id}>
+                            {mem.name} ({mem.email})
+                          </option>
+                        ))}
+                      </optgroup>
+                      {nonProjectMembers.length > 0 && (
+                        <optgroup label="Other Members (Not assigned to this project)">
+                          {nonProjectMembers.map((mem) => (
+                            <option key={mem.id} value={mem.id}>
+                              {mem.name} ({mem.email}) — Not in project
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                    </>
+                  ) : (
+                    members?.map((mem) => (
+                      <option key={mem.id} value={mem.id}>
+                        {mem.name} ({mem.email})
+                      </option>
+                    ))
+                  )}
                 </select>
                 <div className="min-h-[18px] mt-1">
-                  {errors.assigneeId && (
+                  {errors.assigneeId ? (
                     <p className="text-xs text-red-600 font-medium">
                       {errors.assigneeId.message}
                     </p>
-                  )}
+                  ) : !isAssigneeInProject && formValues.assigneeId ? (
+                    <p className="text-xs text-amber-600 font-medium">
+                      ⚠️ Note: This member is not assigned to {selectedProject?.name || "this project"}. Tasks can only be assigned to project members.
+                    </p>
+                  ) : null}
                 </div>
               </div>
             </div>
@@ -773,10 +849,19 @@ export function MultiStepCreateTaskModal({
                 </div>
                 <div>
                   <span className="text-gray-500">Assignee:</span>
-                  <p className="font-semibold text-gray-900">
-                    {selectedAssignee?.name ||
-                      formValues.assigneeId ||
-                      "Unassigned"}
+                  <p className="font-semibold text-gray-900 flex items-center gap-1.5 flex-wrap">
+                    <span>
+                      {selectedAssignee?.name ||
+                        formValues.assigneeId ||
+                        "Unassigned"}
+                    </span>
+                    {selectedAssignee &&
+                      hasProjectMembers &&
+                      !projectMemberIds.includes(selectedAssignee.id) && (
+                        <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">
+                          Not in project
+                        </span>
+                      )}
                   </p>
                 </div>
                 <div>

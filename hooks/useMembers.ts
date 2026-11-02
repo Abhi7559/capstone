@@ -2,16 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useAuthStore } from "@/store/useAuthStore";
 import type { InviteMemberInput, User } from "@/types/auth";
-import { apiEndpoint, getAuthHeaders } from "@/utils/apiConfig";
-
-function extractErrorMessage(errData: any, defaultMsg: string): string {
-  if (errData?.message) return errData.message;
-  if (typeof errData?.detail === "string") return errData.detail;
-  if (Array.isArray(errData?.detail)) {
-    return errData.detail.map((d: any) => d.msg || JSON.stringify(d)).join(", ");
-  }
-  return defaultMsg;
-}
+import { apiEndpoint, extractErrorMessage, getAuthHeaders } from "@/utils/apiConfig";
 
 async function fetchMembers(
   currentUserRole?: string,

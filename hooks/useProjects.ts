@@ -5,19 +5,10 @@ import type {
   Project,
   UpdateProjectInput,
 } from "@/types/project";
-import { apiEndpoint, getAuthHeaders } from "@/utils/apiConfig";
+import { apiEndpoint, extractErrorMessage, getAuthHeaders } from "@/utils/apiConfig";
 
 const DEFAULT_ROLE = "admin";
 const DEFAULT_USER_ID = "550e8400-e29b-41d4-a716-446655440000";
-
-function extractErrorMessage(errData: any, defaultMsg: string): string {
-  if (errData?.message) return errData.message;
-  if (typeof errData?.detail === "string") return errData.detail;
-  if (Array.isArray(errData?.detail)) {
-    return errData.detail.map((d: any) => d.msg || JSON.stringify(d)).join(", ");
-  }
-  return defaultMsg;
-}
 
 async function fetchProjects(
   userRole?: string,

@@ -114,3 +114,81 @@ export function getAuthHeaders(
   }
   return headers;
 }
+
+/**
+ * Extracts a user-friendly, descriptive error message from any backend API error response.
+ * Safely traverses `detail`, `details`, `error.details`, `message`, and arrays of validation errors,
+ * filtering out unhelpful generic HTTP status phrases (e.g. "Bad Request", "Internal Server Error").
+ */
+export function extractErrorMessage(errData: any, defaultMsg: string): string {
+  if (!errData) return defaultMsg;
+
+  // 1. Check for specific detailed errors (FastAPI / DomainException puts specific reasons here)
+  const detail =
+    errData?.detail ??
+    errData?.details ??
+    errData?.error?.details ??
+    errData?.error?.message;
+
+  if (typeof detail === "string" && detail.trim() !== "") {
+    const trimmed = detail.trim();
+    // User-friendly mappings for common backend exceptions
+    if (/assignee is not a member/i.test(trimmed)) {
+      return "The selected assignee is not a member of this project. Please select a valid project member or add them to the project first.";
+    }
+    if (/cannot create tasks in an archived project/i.test(trimmed)) {
+      return "Cannot create tasks in an archived project. Please reactivate or unarchive the project first.";
+    }
+    return trimmed;
+  }
+
+  // If detail is an array (e.g. FastAPI / Pydantic validation errors)
+  if (Array.isArray(detail) && detail.length > 0) {
+    const parts = detail
+      .map((item: any) => {
+        if (typeof item === "string") return item;
+        if (item?.msg) {
+          const field = Array.isArray(item?.loc)
+            ? item.loc[item.loc.length - 1]
+            : "";
+          return field ? `${field}: ${item.msg}` : item.msg;
+        }
+        return JSON.stringify(item);
+      })
+      .filter(Boolean);
+    if (parts.length > 0) {
+      return parts.join("; ");
+    }
+  }
+
+  // 2. Check errData.message, avoiding generic HTTP status titles
+  const genericPhrases = new Set([
+    "bad request",
+    "validation error",
+    "internal server error",
+    "error",
+    "unauthorized",
+    "forbidden",
+    "not found",
+    "conflict",
+    "unprocessable entity",
+  ]);
+
+  if (typeof errData?.message === "string" && errData.message.trim() !== "") {
+    const msg = errData.message.trim();
+    if (!genericPhrases.has(msg.toLowerCase())) {
+      if (/assignee is not a member/i.test(msg)) {
+        return "The selected assignee is not a member of this project. Please select a valid project member or add them to the project first.";
+      }
+      return msg;
+    }
+  }
+
+  // 3. Fallback to top-level errData.error if it's a string
+  if (typeof errData?.error === "string" && errData.error.trim() !== "") {
+    return errData.error.trim();
+  }
+
+  return defaultMsg;
+}
+
