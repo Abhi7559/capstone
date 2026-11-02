@@ -38,6 +38,8 @@ async def list_projects(
     status_filter: Optional[str] = Query(None, alias="status", description="Project status filter"),
     category: Optional[str] = Query(None, description="Project category filter"),
     search: Optional[str] = Query(None, description="Search by project name"),
+    include_deleted: bool = Query(False, alias="includeDeleted", include_in_schema=False),
+    deleted_only: bool = Query(False, alias="deletedOnly", include_in_schema=False),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> Union[PaginatedProjectsResponse, List[ProjectOut]]:
@@ -66,6 +68,8 @@ async def list_projects(
         status=status_filter,
         category=category,
         search=search,
+        include_deleted=include_deleted,
+        deleted_only=deleted_only,
     )
 
 
@@ -181,6 +185,32 @@ async def delete_project(
     return ProjectDeleteResponse(
         success=True,
         message="Project deleted successfully.",
+    )
+
+
+# ============================================================================
+# API 10b: Restore Soft-Deleted Project (Admin Only)
+# ============================================================================
+@router.post(
+    "/{id}/restore",
+    response_model=ProjectOut,
+    status_code=status.HTTP_200_OK,
+    summary="Restore Project",
+    description="Restores a soft-deleted project. Restricted to Admin users.",
+)
+async def restore_project(
+    id: uuid.UUID,
+    current_admin: User = Depends(require_role("admin")),
+    db: AsyncSession = Depends(get_db),
+) -> ProjectOut:
+    """
+    Restore a soft-deleted project:
+    - Admin only.
+    - Sets is_deleted = False.
+    - Returns restored ProjectOut.
+    """
+    return await project_service.restore_project(
+        db=db, project_id=id, current_user=current_admin
     )
 
 

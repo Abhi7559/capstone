@@ -1,7 +1,7 @@
 from typing import Any, Dict, Optional
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from dao.base_dao import BaseDAO
 from models.user import User
@@ -14,8 +14,10 @@ class UserDAO(BaseDAO[User]):
         super().__init__(User)
 
     async def get_by_email(self, db: AsyncSession, email: str) -> Optional[User]:
-        """Find a user by their email address."""
-        result = await db.execute(select(User).where(User.email == email))
+        """Find a user by their email address (case-insensitive)."""
+        result = await db.execute(
+            select(User).where(func.lower(User.email) == email.strip().lower())
+        )
         return result.scalar_one_or_none()
 
     async def get_by_id(self, db: AsyncSession, user_id: UUID) -> Optional[User]:

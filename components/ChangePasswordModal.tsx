@@ -18,8 +18,9 @@ export function ChangePasswordModal({
   isOpen,
   onClose,
 }: ChangePasswordModalProps) {
-  const { currentUser, logout } = useAuthStore();
+  const { currentUser } = useAuthStore();
   const { changePassword, isLoading, error } = useChangePassword();
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -42,6 +43,7 @@ export function ChangePasswordModal({
     }
     if (!isOpen) {
       reset();
+      setSuccessMessage(null);
     }
   }, [isOpen, currentUser?.email, setValue, reset]);
 
@@ -50,10 +52,12 @@ export function ChangePasswordModal({
   const onSubmit = async (data: ChangePasswordValues) => {
     try {
       await changePassword(data);
-      logout();
-      onClose();
-      await signOut({ redirect: false });
-      window.location.href = "/login?passwordChanged=true";
+      setSuccessMessage("Password updated successfully.");
+      reset();
+      setTimeout(() => {
+        setSuccessMessage(null);
+        onClose();
+      }, 1500);
     } catch {
       // Error handled via mutation state 'error'
     }
@@ -72,7 +76,7 @@ export function ChangePasswordModal({
               Change Password
             </h3>
             <p className="text-xs text-gray-500 mt-0.5">
-              Update your account password. You will be signed out upon success.
+              Update your account password securely.
             </p>
           </div>
           <button
@@ -83,6 +87,13 @@ export function ChangePasswordModal({
             ✕
           </button>
         </div>
+
+        {successMessage && (
+          <div className="rounded-lg bg-emerald-50 p-3 border border-emerald-200 text-xs font-semibold text-emerald-800 flex items-center space-x-2">
+            <span>✓</span>
+            <span>{successMessage}</span>
+          </div>
+        )}
 
         {error && (
           <div className="rounded-lg bg-red-50 p-3 border border-red-200 text-xs font-medium text-red-700">

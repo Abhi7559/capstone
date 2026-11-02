@@ -24,6 +24,7 @@ class UserRead(UserBase):
 class MemberUpdateRequest(CamelCaseModel):
     """Payload for updating member details, including optional password rotation."""
     name: Optional[str] = None
+    email: Optional[EmailStr] = None
     designation: Optional[str] = None
     role: Optional[str] = None
     current_password: Optional[str] = None

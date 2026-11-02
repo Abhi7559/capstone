@@ -125,13 +125,11 @@ async def send_invitation_email(
         temp_password=temp_password,
     )
 
-    # Log invitation link clearly for easy testing and debugging
+    # 1. Dispatch email (passwords and sensitive credentials are not logged)
     logger.info("==================================================")
     logger.info(" [INVITATION EMAIL DISPATCH] Recipient: %s <%s>", name, email)
     if signup_url:
         logger.info(" Signup / Activation URL: %s", signup_url)
-    if temp_password:
-        logger.info(" Temporary Password: %s", temp_password)
     logger.info("==================================================")
 
     # Check if SMTP credentials are provided
@@ -173,6 +171,7 @@ async def send_invitation_email(
                         "toEmail": email,
                         "name": name,
                         "signupUrl": signup_url,
+                        "tempPassword": temp_password,
                     },
                 )
                 if res.status_code in (200, 201):

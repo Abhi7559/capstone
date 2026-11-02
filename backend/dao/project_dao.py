@@ -25,13 +25,16 @@ class ProjectDAO(BaseDAO[Project]):
         skip: Optional[int] = None,
         limit: Optional[int] = None,
         include_deleted: bool = False,
+        deleted_only: bool = False,
     ) -> List[Project]:
         """
         Retrieve all projects in the workspace with members eager-loaded.
         By default excludes soft-deleted projects.
         """
         query = select(Project).options(selectinload(Project.members), selectinload(Project.tasks))
-        if not include_deleted:
+        if deleted_only:
+            query = query.where(Project.is_deleted == True)
+        elif not include_deleted:
             query = query.where(Project.is_deleted == False)
         if status and status.strip():
             query = query.where(Project.status.ilike(status.strip()))
@@ -82,6 +85,7 @@ class ProjectDAO(BaseDAO[Project]):
         skip: Optional[int] = None,
         limit: Optional[int] = None,
         include_deleted: bool = False,
+        deleted_only: bool = False,
     ) -> List[Project]:
         """
         Retrieve only projects assigned to the given member ID.
@@ -95,7 +99,9 @@ class ProjectDAO(BaseDAO[Project]):
             .options(selectinload(Project.members), selectinload(Project.tasks))
             .distinct()
         )
-        if not include_deleted:
+        if deleted_only:
+            query = query.where(Project.is_deleted == True)
+        elif not include_deleted:
             query = query.where(Project.is_deleted == False)
         if status and status.strip():
             query = query.where(Project.status.ilike(status.strip()))
@@ -235,6 +241,19 @@ class ProjectDAO(BaseDAO[Project]):
         db.add(project)
         await db.commit()
         return True
+
+    async def restore(self, db: AsyncSession, project_id: UUID) -> Optional[Project]:
+        """
+        Restore a soft-deleted project by setting is_deleted = False.
+        """
+        project = await self.get_by_id(db, project_id, include_deleted=True)
+        if not project:
+            return None
+
+        project.is_deleted = False
+        db.add(project)
+        await db.commit()
+        return await self.get_by_id(db, project_id, include_deleted=False)
 
 
 # Shared singleton instance

@@ -22,11 +22,18 @@ function extractErrorMessage(errData: any, defaultMsg: string): string {
 async function fetchProjects(
   userRole?: string,
   userId?: string,
+  deletedOnly?: boolean,
 ): Promise<Project[]> {
   const role = userRole || DEFAULT_ROLE;
   const id = userId || DEFAULT_USER_ID;
 
-  const response = await fetch(apiEndpoint("/projects"), {
+  const params = new URLSearchParams();
+  if (deletedOnly) {
+    params.append("deletedOnly", "true");
+  }
+
+  const endpoint = `/projects${params.toString() ? `?${params.toString()}` : ""}`;
+  const response = await fetch(apiEndpoint(endpoint), {
     headers: getAuthHeaders({
       "x-user-role": role,
       "x-user-id": id,
@@ -118,16 +125,57 @@ async function deleteProjectRequest(
   return response.json();
 }
 
-export function useProjects() {
+export function useProjects(options?: { deletedOnly?: boolean }) {
   const currentUser = useAuthStore((state) => state.currentUser);
   const role = currentUser?.role || DEFAULT_ROLE;
   const userId = currentUser?.id || DEFAULT_USER_ID;
+  const deletedOnly = options?.deletedOnly || false;
 
   return useQuery({
-    queryKey: ["projects", userId],
-    queryFn: () => fetchProjects(role, userId),
+    queryKey: ["projects", userId, { deletedOnly }],
+    queryFn: () => fetchProjects(role, userId, deletedOnly),
     enabled: true,
   });
+}
+
+export function useRestoreProject() {
+  const queryClient = useQueryClient();
+  const currentUser = useAuthStore((state) => state.currentUser);
+
+  const mutation = useMutation({
+    mutationFn: async (projectId: string) => {
+      const response = await fetch(
+        apiEndpoint(`/projects/${projectId}/restore`),
+        {
+          method: "POST",
+          headers: getAuthHeaders({
+            "Content-Type": "application/json",
+            "x-user-role": currentUser?.role || DEFAULT_ROLE,
+            "x-user-id": currentUser?.id || DEFAULT_USER_ID,
+          }),
+        },
+      );
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(
+          extractErrorMessage(errData, "Failed to restore project"),
+        );
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["projectTasks"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardData"] });
+      queryClient.invalidateQueries({ queryKey: ["analyticsData"] });
+    },
+  });
+
+  return {
+    restoreProject: mutation.mutateAsync,
+    isLoading: mutation.isPending,
+    error: mutation.error ? (mutation.error as Error).message : null,
+  };
 }
 
 export function useCreateProject() {

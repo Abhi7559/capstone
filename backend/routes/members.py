@@ -74,17 +74,18 @@ async def invite_member(
     db: AsyncSession = Depends(get_db),
 ) -> MemberInviteResponse:
     """Invite a new member with a temporary password and send welcome email."""
-    existing_user = await user_dao.get_by_email(db, invite_data.email)
+    normalized_email = invite_data.email.strip().lower()
+    existing_user = await user_dao.get_by_email(db, normalized_email)
     if existing_user:
-        raise DuplicateEntityException(message="A user with this email already exists")
+        raise DuplicateEntityException(message="Member already exists with this email address.")
 
-    # Placeholder hash for pending user until they activate via signup_url
-    placeholder_pwd = secrets.token_urlsafe(32)
-    hashed_pwd = hash_password(placeholder_pwd)
+    # Generate a secure temporary password for first login
+    temp_password = f"Member@{secrets.token_hex(4)}"
+    hashed_pwd = hash_password(temp_password)
 
     user_payload = {
-        "name": invite_data.name,
-        "email": invite_data.email,
+        "name": invite_data.name.strip(),
+        "email": normalized_email,
         "hashed_password": hashed_pwd,
         "role": "member",
         "status": "active",
@@ -99,12 +100,13 @@ async def invite_member(
     frontend_base = get_frontend_base_url(request)
     signup_url = f"{frontend_base}/signup?email={new_user.email}&token={invitation_token}"
 
-    # Dispatch email asynchronously in background with signup link
+    # Dispatch email asynchronously in background with signup link and temporary password
     background_tasks.add_task(
         send_invitation_email,
         email=new_user.email,
         name=new_user.name,
         signup_url=signup_url,
+        temp_password=temp_password,
     )
 
     return MemberInviteResponse(

@@ -99,6 +99,7 @@ export default function ProjectTaskBoardPage() {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [viewingTask, setViewingTask] = useState<Task | null>(null);
   const [deletingTask, setDeletingTask] = useState<Task | null>(null);
+  const [restoringTask, setRestoringTask] = useState<Task | null>(null);
   const [isArchivedTasksModalOpen, setIsArchivedTasksModalOpen] =
     useState(false);
   const [archivedSearchQuery, setArchivedSearchQuery] = useState("");
@@ -252,9 +253,12 @@ export default function ProjectTaskBoardPage() {
       try {
         await deleteTask(deletingTask.id);
         showToast("Task deleted successfully!");
-      } catch {
-        showToast("Failed to delete task.");
-      } finally {
+        setDeletingTask(null);
+      } catch (err: unknown) {
+        const errorMsg =
+          (err as Error)?.message || "Failed to delete task. Please try again.";
+        showToast(errorMsg);
+        // Do not delete or hide task on failure
         setDeletingTask(null);
       }
     }
@@ -339,6 +343,7 @@ export default function ProjectTaskBoardPage() {
     try {
       await restoreTask(taskId);
       showToast("Task restored to active board!");
+      setRestoringTask(null);
     } catch (err: unknown) {
       showToast((err as Error)?.message || "Failed to restore task.");
     }
@@ -1702,15 +1707,16 @@ export default function ProjectTaskBoardPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
             <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl border border-gray-100 space-y-4">
               <h3 className="text-lg font-bold text-gray-900">Delete Task</h3>
-              <p className="text-xs text-gray-600">
-                Are you sure you want to delete this task? This action cannot be
-                undone.
+              <p className="text-xs text-gray-600 leading-relaxed">
+                Are you sure you want to delete task{" "}
+                <strong className="text-gray-900">"{deletingTask?.title}"</strong>?
+                This action will move the task to archives or delete it.
               </p>
               <div className="flex justify-end space-x-3 pt-2">
                 <button
                   type="button"
                   onClick={() => setDeletingTask(null)}
-                  className="rounded-xl border border-gray-300 px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition"
+                  className="rounded-xl border border-gray-300 px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -1718,9 +1724,57 @@ export default function ProjectTaskBoardPage() {
                   type="button"
                   onClick={handleConfirmDeleteTask}
                   disabled={isDeletingTask}
-                  className="rounded-xl bg-red-600 px-4 py-2 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition"
+                  className="rounded-xl bg-red-600 px-4 py-2 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition cursor-pointer"
                 >
                   {isDeletingTask ? "Deleting..." : "Delete Task"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Task Restore Confirmation Modal - Stacked z-[70] Above All Dialogs */}
+        {Boolean(restoringTask) && (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm animate-in fade-in duration-150">
+            <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl border border-gray-100 space-y-4">
+              <div className="flex items-center space-x-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 text-lg border border-emerald-200">
+                  🔄
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-gray-900">
+                    Restore Task
+                  </h3>
+                  <p className="text-xs text-gray-500">
+                    Return task to active Kanban board
+                  </p>
+                </div>
+              </div>
+              <p className="text-xs text-gray-600 leading-relaxed">
+                Are you sure you want to restore{" "}
+                <strong className="text-gray-900">
+                  "{restoringTask?.title}"
+                </strong>{" "}
+                back to the active task board?
+              </p>
+              <div className="flex justify-end space-x-3 pt-2 border-t border-gray-100">
+                <button
+                  type="button"
+                  disabled={isRestoringTask}
+                  onClick={() => setRestoringTask(null)}
+                  className="rounded-xl border border-gray-300 px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition cursor-pointer disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    restoringTask && handleRestoreTask(restoringTask.id)
+                  }
+                  disabled={isRestoringTask}
+                  className="rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition shadow-sm cursor-pointer"
+                >
+                  {isRestoringTask ? "Restoring..." : "Confirm Restore"}
                 </button>
               </div>
             </div>
@@ -2083,7 +2137,7 @@ export default function ProjectTaskBoardPage() {
                           <button
                             type="button"
                             disabled={isRestoringTask}
-                            onClick={() => handleRestoreTask(aTask.id)}
+                            onClick={() => setRestoringTask(aTask)}
                             className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 text-xs font-bold transition shadow-2xs cursor-pointer disabled:opacity-50"
                           >
                             <span>🔄</span> Restore Task

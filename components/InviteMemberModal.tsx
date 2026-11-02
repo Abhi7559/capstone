@@ -20,7 +20,6 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
 
   const [successResult, setSuccessResult] =
     useState<InviteMemberResponse | null>(null);
-  const [copied, setCopied] = useState(false);
 
   const {
     register,
@@ -34,7 +33,6 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
 
   const handleClose = () => {
     setSuccessResult(null);
-    setCopied(false);
     resetForm();
     resetMutation();
     onClose();
@@ -55,6 +53,7 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
             toEmail: data.email,
             name: data.name,
             signupUrl: activationUrl,
+            tempPassword: result?.tempPassword || result?.temp_password,
           }),
         }).catch((err) => {
           console.warn("Client email relay error:", err);
@@ -129,34 +128,6 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
                 </div>
               )}
             </div>
-
-            {Boolean(successResult.signupUrl || successResult.signup_url) && (
-              <div className="bg-indigo-50/80 rounded-xl p-3.5 border border-indigo-200 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-indigo-900 uppercase tracking-wider">
-                    Activation Link
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const link = successResult.signupUrl || successResult.signup_url || "";
-                      navigator.clipboard.writeText(link);
-                      setCopied(true);
-                      setTimeout(() => setCopied(false), 2500);
-                    }}
-                    className="inline-flex items-center space-x-1 text-xs font-semibold text-indigo-700 bg-white px-2.5 py-1 rounded-md border border-indigo-200 shadow-sm hover:bg-indigo-50 transition"
-                  >
-                    <span>{copied ? "✓ Copied" : "📋 Copy Link"}</span>
-                  </button>
-                </div>
-                <p className="text-[11px] text-indigo-800 font-mono break-all line-clamp-2 select-all bg-white/70 p-2 rounded border border-indigo-100">
-                  {successResult.signupUrl || successResult.signup_url}
-                </p>
-                <p className="text-[11px] text-indigo-600">
-                  Check the recipient&apos;s Spam/Junk folder or copy this direct link to complete setup.
-                </p>
-              </div>
-            )}
 
             <button
               type="button"

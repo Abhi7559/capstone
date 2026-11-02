@@ -377,9 +377,9 @@ export default function ProjectsPage() {
             </div>
 
             {/* Quick Status Filter Tabs & Search Bar */}
-            <div className="rounded-2xl border border-gray-200/80 bg-white p-4 shadow-sm mb-6 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+            <div className="rounded-2xl border border-gray-200/80 bg-white p-4 shadow-sm mb-6 flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4">
               {/* Quick Filter Pill Tabs */}
-              <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 md:pb-0">
+              <div className="flex items-center space-x-2 shrink-0">
                 <button
                   type="button"
                   onClick={() => setStatusFilter("all")}
@@ -466,9 +466,9 @@ export default function ProjectsPage() {
               </div>
 
               {/* Search & View Controls */}
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3 justify-start xl:justify-end flex-1">
                 {/* Search Input */}
-                <div className="relative flex-1 min-w-[200px] max-w-xs">
+                <div className="relative flex-1 sm:flex-initial min-w-[200px] sm:w-64">
                   <input
                     type="text"
                     placeholder="Search projects..."
@@ -508,7 +508,7 @@ export default function ProjectsPage() {
                 </select>
 
                 {/* View Switcher: Cards vs Table */}
-                <div className="flex items-center space-x-1 rounded-xl border border-gray-200 bg-gray-100/80 p-1">
+                <div className="flex items-center space-x-1 rounded-xl border border-gray-200 bg-gray-100/80 p-1 shrink-0">
                   <button
                     type="button"
                     onClick={() => setViewMode("cards")}

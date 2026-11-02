@@ -36,6 +36,8 @@ class ProjectService:
         status: Optional[str] = None,
         category: Optional[str] = None,
         search: Optional[str] = None,
+        include_deleted: bool = False,
+        deleted_only: bool = False,
     ) -> List[ProjectOut]:
         """
         Retrieve projects based on user role:
@@ -45,11 +47,22 @@ class ProjectService:
         role = (current_user.role or "").lower()
         if role == "admin":
             projects = await project_dao.get_all_admin(
-                db, status=status, category=category, search=search
+                db,
+                status=status,
+                category=category,
+                search=search,
+                include_deleted=include_deleted,
+                deleted_only=deleted_only,
             )
         else:
             projects = await project_dao.get_all_for_member(
-                db, current_user.id, status=status, category=category, search=search
+                db,
+                current_user.id,
+                status=status,
+                category=category,
+                search=search,
+                include_deleted=include_deleted,
+                deleted_only=deleted_only,
             )
 
         return [self._to_project_out(p) for p in projects]
@@ -298,6 +311,23 @@ class ProjectService:
         if deleted:
             await invalidate_dashboard_cache(str(project_id))
         return deleted
+
+    async def restore_project(
+        self, db: AsyncSession, project_id: UUID, current_user: User
+    ) -> ProjectOut:
+        """
+        Restore a soft-deleted project. Restricted to Admin users.
+        """
+        role = (current_user.role or "").lower()
+        if role != "admin":
+            raise ForbiddenException(detail="Forbidden: Only Admins can restore projects.")
+
+        restored = await project_dao.restore(db, project_id)
+        if not restored:
+            raise EntityNotFoundException(entity_name="Project", identifier=project_id)
+
+        await invalidate_dashboard_cache(str(project_id))
+        return self._to_project_out(restored)
 
     @staticmethod
     def _to_project_out(project: Project) -> ProjectOut:

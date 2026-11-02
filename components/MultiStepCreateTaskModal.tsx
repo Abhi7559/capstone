@@ -69,7 +69,7 @@ export function MultiStepCreateTaskModal({
       assigneeId: "",
       dueDate: "",
       tags: "",
-      status: "backlog",
+      status: "todo",
     },
   });
 
@@ -90,6 +90,11 @@ export function MultiStepCreateTaskModal({
           status: editingTask.status || "todo",
         });
       } else {
+        const defaultStatus =
+          availableColumns && availableColumns.length > 0
+            ? availableColumns.find((c) => c.status === "todo")?.status ||
+              availableColumns[0].status
+            : "todo";
         resetForm({
           title: "",
           description: "",
@@ -98,7 +103,7 @@ export function MultiStepCreateTaskModal({
           assigneeId: "",
           dueDate: "",
           tags: "",
-          status: "backlog",
+          status: defaultStatus,
         });
       }
       setCurrentStep(1);
@@ -109,6 +114,7 @@ export function MultiStepCreateTaskModal({
     isOpen,
     editingTask,
     defaultProjectId,
+    availableColumns,
     resetForm,
     resetCreate,
     resetUpdate,
@@ -425,10 +431,10 @@ export function MultiStepCreateTaskModal({
                   >
                     {(
                       availableColumns || [
-                        { status: "backlog", label: "BACKLOG" },
                         { status: "todo", label: "TO DO" },
                         { status: "in_progress", label: "IN PROGRESS" },
                         { status: "done", label: "COMPLETED" },
+                        { status: "backlog", label: "BACKLOG" },
                       ]
                     ).map((col) => (
                       <option key={col.status} value={col.status}>
@@ -783,6 +789,13 @@ export function MultiStepCreateTaskModal({
                   <span className="text-gray-500">Tags:</span>
                   <p className="font-semibold text-gray-900">
                     {formValues.tags || "None"}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-gray-500">Column / Status:</span>
+                  <p className="font-semibold text-gray-900 uppercase">
+                    {availableColumns?.find((c) => c.status === formValues.status)?.label ||
+                      (formValues.status ? formValues.status.replace("_", " ") : "TO DO")}
                   </p>
                 </div>
               </div>

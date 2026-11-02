@@ -9,7 +9,7 @@ export default async function handler(
     return res.status(405).json({ success: false, message: "Method not allowed" });
   }
 
-  const { toEmail, name, signupUrl } = req.body || {};
+  const { toEmail, name, signupUrl, tempPassword } = req.body || {};
 
   if (!toEmail || !signupUrl) {
     return res.status(400).json({
@@ -39,6 +39,13 @@ export default async function handler(
       },
     });
 
+    const tempPasswordSection = tempPassword
+      ? `<div style="background-color: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 18px 22px; margin: 24px 0;">
+      <p style="margin: 0 0 8px 0; font-size: 13px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Your Temporary Password</p>
+      <code style="font-family: 'Courier New', Courier, monospace; font-size: 18px; color: #38bdf8; font-weight: 700; letter-spacing: 1px;">${tempPassword}</code>
+    </div>`
+      : "";
+
     const htmlContent = `<!DOCTYPE html>
 <html>
 <head>
@@ -59,6 +66,8 @@ export default async function handler(
     <p style="font-size: 15px; line-height: 24px; color: #cbd5e1;">
       You have been invited to join the <strong>Team Hub</strong> workspace. Please activate your account and choose your password by clicking the button below:
     </p>
+
+    ${tempPasswordSection}
 
     <div style="text-align: center; margin: 32px 0;">
       <a href="${signupUrl}" style="background-color: #6366f1; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 15px; display: inline-block; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);">
@@ -102,3 +111,4 @@ export default async function handler(
     });
   }
 }
+

@@ -106,32 +106,56 @@ async def is_token_blacklisted(token: str) -> bool:
         return False
 
 
-async def store_refresh_token(user_id: str, jti: str, expires_in_seconds: int) -> None:
+async def store_refresh_token(
+    user_id: str,
+    jti: str,
+    expires_in_seconds: int,
+    raw_token: Optional[str] = None,
+) -> None:
     """
-    Store active refresh token record in Redis whitelist: refresh_token:<user_id>:<jti> -> "active".
-    TTL matches the token's remaining validity duration.
+    Store active refresh token record in Redis:
+    1. refresh_token:<user_id> -> stores the raw refresh token (or "active") with TTL.
+    2. userid:<user_id> -> user session tracking key.
+    3. refresh_token:<user_id>:<jti> -> backward-compatible whitelist key.
     """
     if expires_in_seconds <= 0:
         return
 
     try:
         redis = get_redis_client()
-        key = f"refresh_token:{user_id}:{jti}"
-        await redis.set(key, "active", ex=expires_in_seconds)
+        token_val = raw_token or "active"
+
+        # Key 1: refresh_token:<user_id> -> holds raw token string with TTL
+        key_user_rt = f"refresh_token:{user_id}"
+        await redis.set(key_user_rt, token_val, ex=expires_in_seconds)
+
+        # Key 2: userid:<user_id> -> user tracking key
+        key_user = f"userid:{user_id}"
+        await redis.set(key_user, token_val, ex=expires_in_seconds)
+
+        # Key 3: refresh_token:<user_id>:<jti> -> backward compatibility for jti verification
+        key_jti = f"refresh_token:{user_id}:{jti}"
+        await redis.set(key_jti, "active", ex=expires_in_seconds)
     except Exception as exc:
         logger.warning("Failed to store refresh token in Redis: %s", exc)
 
 
 async def is_refresh_token_active(user_id: str, jti: str) -> bool:
     """
-    Check if the refresh token key exists and is active in Redis whitelist.
+    Check if the refresh token key exists and is active in Redis.
+    Checks either refresh_token:<user_id>:<jti> or refresh_token:<user_id>.
     Returns False if Redis is unreachable or key does not exist.
     """
     try:
         redis = get_redis_client()
-        key = f"refresh_token:{user_id}:{jti}"
-        val = await redis.get(key)
-        return val == "active"
+        key_jti = f"refresh_token:{user_id}:{jti}"
+        val = await redis.get(key_jti)
+        if val == "active":
+            return True
+
+        key_user = f"refresh_token:{user_id}"
+        val_user = await redis.get(key_user)
+        return bool(val_user)
     except Exception as exc:
         logger.warning("Failed to check refresh token in Redis: %s", exc)
         return False
@@ -139,13 +163,16 @@ async def is_refresh_token_active(user_id: str, jti: str) -> bool:
 
 async def revoke_refresh_token(user_id: str, jti: str) -> bool:
     """
-    Delete a specific refresh token from Redis whitelist upon logout or rotation.
+    Delete refresh token keys from Redis upon logout or rotation.
     """
     try:
         redis = get_redis_client()
-        key = f"refresh_token:{user_id}:{jti}"
-        deleted = await redis.delete(key)
-        return bool(deleted)
+        await redis.delete(
+            f"refresh_token:{user_id}:{jti}",
+            f"refresh_token:{user_id}",
+            f"userid:{user_id}",
+        )
+        return True
     except Exception as exc:
         logger.warning("Failed to revoke refresh token in Redis: %s", exc)
         return False
@@ -157,6 +184,10 @@ async def revoke_all_user_refresh_tokens(user_id: str) -> int:
     """
     try:
         redis = get_redis_client()
+        await redis.delete(
+            f"refresh_token:{user_id}",
+            f"userid:{user_id}",
+        )
         pattern = f"refresh_token:{user_id}:*"
         count = 0
         if hasattr(redis, "keys"):

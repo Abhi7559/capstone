@@ -25,7 +25,7 @@ export const SEED_MEMBER: User = {
   joiningDate: "2026-09-01",
 };
 
-export const INITIAL_USERS: User[] = [SEED_ADMIN, SEED_MEMBER];
+export const INITIAL_USERS: User[] = [SEED_ADMIN];
 
 export const INITIAL_PROJECTS: Project[] = [];
 

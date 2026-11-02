@@ -4,7 +4,7 @@ import { signIn } from "next-auth/react";
 import type { LoginCredentials } from "@/schemas/auth.schema";
 import { useAuthStore } from "@/store/useAuthStore";
 import type { User } from "@/types/auth";
-import { apiEndpoint } from "@/utils/apiConfig";
+import { apiEndpoint, getAuthHeaders } from "@/utils/apiConfig";
 
 async function loginRequest(credentials: LoginCredentials): Promise<User> {
   const directUrl = apiEndpoint("/auth/login");
@@ -21,7 +21,11 @@ async function loginRequest(credentials: LoginCredentials): Promise<User> {
 
     if (!response.ok) {
       const err = await response.json().catch(() => ({}));
-      throw new Error(err.message || err.detail || "Invalid email or password");
+      const errorMsg =
+        err.detail ||
+        (err.message && err.message !== "Unauthorized" ? err.message : null) ||
+        "Invalid email or password. Please check your credentials.";
+      throw new Error(errorMsg);
     }
 
     const data = await response.json();
@@ -75,9 +79,11 @@ async function loginRequest(credentials: LoginCredentials): Promise<User> {
         return await fallbackRes.json();
       }
       const errData = await fallbackRes.json().catch(() => ({}));
-      throw new Error(
-        errData.message || errData.detail || "Invalid email or password",
-      );
+      const fallbackErrorMsg =
+        errData.detail ||
+        (errData.message && errData.message !== "Unauthorized" ? errData.message : null) ||
+        "Invalid email or password. Please check your credentials.";
+      throw new Error(fallbackErrorMsg);
     }
     throw err;
   }
@@ -118,31 +124,47 @@ export function useLogin() {
 }
 
 async function changePasswordRequest(data: {
-  email: string;
+  email?: string;
   currentPassword: string;
   newPassword: string;
-  confirmPassword: string;
+  confirmPassword?: string;
 }): Promise<User> {
   const directUrl = apiEndpoint("/auth/change-password");
+  const headers = getAuthHeaders({ "Content-Type": "application/json" });
+  const payload = {
+    currentPassword: data.currentPassword,
+    newPassword: data.newPassword,
+    email: data.email,
+  };
+
   try {
     const response = await fetch(directUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
+      method: "PATCH",
+      headers,
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
       const err = await response.json().catch(() => ({}));
-      throw new Error(err.message || "Failed to update password");
+      const message =
+        err.detail ||
+        err.message ||
+        (Array.isArray(err.detail)
+          ? err.detail.map((d: any) => d.msg).join(", ")
+          : null) ||
+        "Failed to update password";
+      throw new Error(message);
     }
 
-    return response.json();
+    const resData = await response.json();
+    return resData.user || resData;
   } catch (err: any) {
     if (
       directUrl !== "/api/auth/change-password" &&
       (err.name === "TypeError" ||
         err.message?.includes("fetch") ||
-        err.message?.includes("Failed"))
+        err.message?.includes("Failed to fetch") ||
+        err.message?.includes("NetworkError"))
     ) {
       const fallbackRes = await fetch("/api/auth/change-password", {
         method: "POST",
@@ -153,7 +175,7 @@ async function changePasswordRequest(data: {
         return await fallbackRes.json();
       }
       const errData = await fallbackRes.json().catch(() => ({}));
-      throw new Error(errData.message || "Failed to update password");
+      throw new Error(errData.message || errData.detail || "Failed to update password");
     }
     throw err;
   }

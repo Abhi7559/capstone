@@ -141,34 +141,24 @@ async def logout(
     auth_creds: HTTPAuthorizationCredentials | None = Depends(security_bearer),
 ) -> MessageResponse:
     """
-    Blacklist the bearer token in Redis and invalidate the specific refresh token session.
+    Remove user refresh token and session from Redis upon logout.
     """
-    from database.redis import blacklist_token, revoke_refresh_token
+    from database.redis import revoke_refresh_token, revoke_all_user_refresh_tokens
 
-    # 1. Invalidate specific refresh token if provided
+    # 1. Remove refresh token keys for this logged-out user from Redis
+    if current_user and current_user.id:
+        user_id_str = str(current_user.id)
+        await revoke_all_user_refresh_tokens(user_id_str)
+
+    # 2. Invalidate specific refresh token if passed
     if logout_data and logout_data.refresh_token:
         try:
             payload = decode_token(logout_data.refresh_token)
-            user_id = payload.get("sub")
+            uid = payload.get("sub")
             jti = payload.get("jti")
-            if user_id and jti:
-                await revoke_refresh_token(user_id=str(user_id), jti=str(jti))
+            if uid and jti:
+                await revoke_refresh_token(user_id=str(uid), jti=str(jti))
         except Exception:
-            pass
-
-    # 2. Blacklist access token for its remaining lifetime
-    if auth_creds and auth_creds.credentials:
-        token = auth_creds.credentials.strip()
-        try:
-            payload = decode_token(token)
-            exp_timestamp = payload.get("exp")
-            if exp_timestamp:
-                now_timestamp = datetime.now(timezone.utc).timestamp()
-                remaining_seconds = int(exp_timestamp - now_timestamp)
-                if remaining_seconds > 0:
-                    await blacklist_token(token, expires_in_seconds=remaining_seconds)
-        except Exception:
-            # Token already invalid or cannot be decoded; proceed cleanly
             pass
 
     return MessageResponse(message="Logged out successfully")

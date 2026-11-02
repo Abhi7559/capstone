@@ -131,10 +131,10 @@ export function TaskDetailModal({
                 ))
               ) : (
                 <>
-                  <option value="backlog">BACKLOG</option>
                   <option value="todo">TO DO</option>
                   <option value="in_progress">IN PROGRESS</option>
                   <option value="done">COMPLETED</option>
+                  <option value="backlog">BACKLOG</option>
                 </>
               )}
             </select>

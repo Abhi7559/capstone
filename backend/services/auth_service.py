@@ -95,12 +95,16 @@ class AuthService:
         access_token_expires_in = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
         refresh_token_expires_in = settings.REFRESH_TOKEN_EXPIRE_DAYS * 86400
 
-        # Store refresh token in Redis whitelist: refresh_token:<user_id>:<jti> -> "active"
+        # Store refresh token in Redis:
+        # 1. refresh_token:<user_id> -> token string
+        # 2. userid:<user_id> -> token string
+        # 3. refresh_token:<user_id>:<jti> -> "active"
         from database.redis import store_refresh_token
         await store_refresh_token(
             user_id=user_id_str,
             jti=token_jti,
             expires_in_seconds=refresh_token_expires_in,
+            raw_token=refresh_token,
         )
 
         return LoginResponse(
@@ -225,6 +229,7 @@ class AuthService:
             user_id=str(user.id),
             jti=new_jti,
             expires_in_seconds=refresh_token_expires_in,
+            raw_token=new_refresh_token,
         )
 
         return {

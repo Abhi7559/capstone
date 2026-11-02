@@ -95,10 +95,11 @@ export default async function handler(
         return res.status(200).json(userWithTokens);
       } else if (backendRes.status === 401 || backendRes.status === 403) {
         const errData = await backendRes.json().catch(() => ({}));
-        // If FastAPI explicitly rejected the password, throw the message
-        throw new Error(
-          errData.detail || errData.message || "Invalid email or password",
-        );
+        const explicitMsg =
+          errData.detail ||
+          (errData.message && errData.message !== "Unauthorized" ? errData.message : null) ||
+          "Invalid email or password. Please check your credentials.";
+        return res.status(400).json({ message: explicitMsg });
       }
     } catch (backendError) {
       // If FastAPI specifically gave an invalid password / credentials error, propagate it

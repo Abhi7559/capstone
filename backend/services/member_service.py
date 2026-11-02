@@ -10,6 +10,7 @@ from core.security import hash_password, verify_password
 from dao.user_dao import user_dao
 from exceptions.domain import (
     DomainException,
+    DuplicateEntityException,
     EntityNotFoundException,
     ForbiddenException,
     UnauthorizedException,
@@ -73,6 +74,15 @@ class MemberService:
         updates = {}
         if update_data.name is not None:
             updates["name"] = update_data.name
+        if update_data.email is not None:
+            normalized_email = update_data.email.strip().lower()
+            if normalized_email != (target_user.email or "").strip().lower():
+                existing_email_user = await user_dao.get_by_email(db, normalized_email)
+                if existing_email_user and existing_email_user.id != target_user.id:
+                    raise DuplicateEntityException(
+                        message="Member already exists with this email address."
+                    )
+                updates["email"] = normalized_email
         if update_data.designation is not None:
             updates["designation"] = update_data.designation
         if update_data.role is not None and is_admin:
