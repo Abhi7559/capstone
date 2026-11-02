@@ -13,18 +13,19 @@ def register_exception_handlers(app: FastAPI) -> None:
         detail_msg = exc.details if exc.details is not None else exc.msg
         error_title = exc.msg or status.HTTP_STATUS_PHRASES.get(exc.status_code, "Error")
         code = exc.code or error_title.upper().replace(" ", "_")
-        err_details = exc.error_details if exc.error_details is not None else {"reason": str(detail_msg)}
+
+        error_obj: Dict[str, Any] = {"code": code}
+        if exc.error_details:
+            error_obj["details"] = exc.error_details
 
         return JSONResponse(
             status_code=exc.status_code,
             content={
+                "status_code": exc.status_code,
                 "success": False,
-                "message": str(detail_msg),
+                "message": error_title,
                 "detail": detail_msg,
-                "error": {
-                    "code": code,
-                    "details": err_details,
-                },
+                "error": error_obj,
             },
             headers=exc.headers,
         )
@@ -32,23 +33,26 @@ def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(request: Request, exc: RequestValidationError):
         clean_errors = []
+        fields = []
         for err in exc.errors():
             cleaned = dict(err)
             if "ctx" in cleaned and isinstance(cleaned["ctx"], dict):
                 cleaned["ctx"] = {k: str(v) for k, v in cleaned["ctx"].items()}
             clean_errors.append(cleaned)
-
-        first_err_msg = clean_errors[0].get("msg", "Validation error") if clean_errors else "Validation error"
+            loc = cleaned.get("loc", [])
+            if len(loc) > 1:
+                fields.append(str(loc[-1]))
 
         return JSONResponse(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             content={
+                "status_code": status.HTTP_422_UNPROCESSABLE_ENTITY,
                 "success": False,
-                "message": first_err_msg,
+                "message": "Validation Error",
                 "detail": clean_errors,
                 "error": {
                     "code": "REQUEST_VALIDATION_ERROR",
-                    "details": {"validation_errors": clean_errors},
+                    "details": {"invalid_fields": fields} if fields else {"errors_count": len(clean_errors)},
                 },
             },
         )
@@ -56,20 +60,20 @@ def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(HTTPException)
     async def http_exception_handler(request: Request, exc: HTTPException):
         try:
-            error_title = http.HTTPStatus(exc.status_code).phrase
+            phrase = http.HTTPStatus(exc.status_code).phrase
         except ValueError:
-            error_title = "Error"
-        code = error_title.upper().replace(" ", "_")
+            phrase = "Error"
+        code = phrase.upper().replace(" ", "_")
 
         return JSONResponse(
             status_code=exc.status_code,
             content={
+                "status_code": exc.status_code,
                 "success": False,
-                "message": str(exc.detail),
+                "message": phrase,
                 "detail": exc.detail,
                 "error": {
                     "code": code,
-                    "details": {"reason": str(exc.detail)},
                 },
             },
             headers=exc.headers,
@@ -87,12 +91,12 @@ def register_exception_handlers(app: FastAPI) -> None:
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={
+                "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR,
                 "success": False,
-                "message": "An unexpected server error occurred. Please try again later.",
+                "message": "Internal Server Error",
                 "detail": "An unexpected server error occurred. Please try again later.",
                 "error": {
                     "code": "INTERNAL_SERVER_ERROR",
-                    "details": {"reason": "Internal server error"},
                 },
             },
         )

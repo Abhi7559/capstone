@@ -38,10 +38,10 @@ class DuplicateEntityException(DomainException):
     def __init__(self, message: str, code: str = "DUPLICATE_ENTITY"):
         super().__init__(
             status_code=status.HTTP_409_CONFLICT,
-            msg="Resource already exists",
+            msg="Conflict",
             details=message,
             code=code,
-            error_details={"reason": message},
+            error_details=None,
         )
 
 
@@ -52,7 +52,7 @@ class UnauthorizedException(DomainException):
             msg=msg,
             details=detail,
             code=code,
-            error_details={"reason": detail},
+            error_details=None,
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -64,18 +64,18 @@ class ForbiddenException(DomainException):
             msg=msg,
             details=detail,
             code=code,
-            error_details={"reason": detail},
+            error_details=None,
         )
 
 
 class ValidationException(DomainException):
-    def __init__(self, detail: str = "Validation error", msg: str = "Validation error", code: str = "VALIDATION_ERROR"):
+    def __init__(self, detail: str = "Validation error", msg: str = "Bad Request", code: str = "VALIDATION_ERROR"):
         super().__init__(
             status_code=status.HTTP_400_BAD_REQUEST,
             msg=msg,
             details=detail,
             code=code,
-            error_details={"reason": detail},
+            error_details=None,
         )
 
 
