@@ -19,6 +19,9 @@ export default function ArchivesPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [restoringId, setRestoringId] = useState<string | null>(null);
   const [taskToRestore, setTaskToRestore] = useState<Task | null>(null);
+  const [projectToRestore, setProjectToRestore] = useState<
+    (Project & { isSoftDeleted?: boolean }) | null
+  >(null);
 
   const currentUser = useAuthStore((state) => state.currentUser);
   const isAdmin = currentUser?.role === "admin";
@@ -110,6 +113,7 @@ export default function ArchivesPage() {
     try {
       await restoreProject(project.id);
       showToast(`Project "${project.name}" restored successfully!`);
+      setProjectToRestore(null);
     } catch (err: any) {
       showToast(err?.message || "Failed to restore project.");
     } finally {
@@ -316,7 +320,7 @@ export default function ArchivesPage() {
                                 <button
                                   type="button"
                                   disabled={restoringId === project.id}
-                                  onClick={() => handleRestoreProject(project)}
+                                  onClick={() => setProjectToRestore(project)}
                                   className="inline-flex items-center space-x-1.5 rounded-lg border border-gray-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-gray-700 shadow-2xs transition hover:bg-gray-50 hover:border-gray-400 cursor-pointer disabled:opacity-50"
                                 >
                                   <svg
@@ -510,6 +514,56 @@ export default function ArchivesPage() {
             </div>
           </main>
         </div>
+
+        {/* Project Restore Confirmation Modal */}
+        {Boolean(projectToRestore) && (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm animate-in fade-in duration-150">
+            <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl border border-gray-100 space-y-4">
+              <div className="flex items-center space-x-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-50 text-purple-600 text-lg border border-purple-200">
+                  📁
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-gray-900">
+                    Restore Project
+                  </h3>
+                  <p className="text-xs text-gray-500">
+                    Return project to active workspace
+                  </p>
+                </div>
+              </div>
+              <p className="text-xs text-gray-600 leading-relaxed">
+                Are you sure you want to restore project{" "}
+                <strong className="text-gray-900">
+                  "{projectToRestore?.name}"
+                </strong>{" "}
+                back to your active project list?
+              </p>
+              <div className="flex justify-end space-x-3 pt-2 border-t border-gray-100">
+                <button
+                  type="button"
+                  disabled={restoringId === projectToRestore?.id}
+                  onClick={() => setProjectToRestore(null)}
+                  className="rounded-xl border border-gray-300 px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition cursor-pointer disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    projectToRestore && handleRestoreProject(projectToRestore)
+                  }
+                  disabled={restoringId === projectToRestore?.id}
+                  className="rounded-xl bg-purple-600 px-4 py-2 text-xs font-semibold text-white hover:bg-purple-700 disabled:opacity-50 transition shadow-sm cursor-pointer"
+                >
+                  {restoringId === projectToRestore?.id
+                    ? "Restoring..."
+                    : "Confirm Restore"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Task Restore Confirmation Modal */}
         {Boolean(taskToRestore) && (
