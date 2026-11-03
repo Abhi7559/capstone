@@ -117,46 +117,6 @@ async def invite_member(
     )
 
 
-# ============================================================================
-# API 18b: Resend Invitation Email
-# ============================================================================
-@router.post(
-    "/{id}/resend-invite",
-    response_model=MemberInviteResponse,
-    status_code=status.HTTP_200_OK,
-    summary="Resend Member Invitation",
-    description="Regenerates activation token and dispatches an invitation email to the member.",
-)
-async def resend_invite(
-    id: uuid.UUID,
-    background_tasks: BackgroundTasks,
-    request: Request,
-    current_admin: User = Depends(require_role("admin")),
-    db: AsyncSession = Depends(get_db),
-) -> MemberInviteResponse:
-    """Resend onboarding invitation email with fresh activation link."""
-    target_user = await user_dao.get_by_id(db, id)
-    if not target_user:
-        raise EntityNotFoundException(entity_name="Member", identifier=id)
-
-    invitation_token = create_invitation_token({"sub": str(target_user.id), "email": target_user.email})
-    frontend_base = get_frontend_base_url(request)
-    signup_url = f"{frontend_base}/signup?email={target_user.email}&token={invitation_token}"
-
-    background_tasks.add_task(
-        send_invitation_email,
-        email=target_user.email,
-        name=target_user.name,
-        signup_url=signup_url,
-    )
-
-    return MemberInviteResponse(
-        message="Invitation email re-dispatched successfully",
-        member=UserRead.model_validate(target_user),
-        invitation_token=invitation_token,
-        signup_url=signup_url,
-    )
-
 
 # ============================================================================
 # API 19: Update Member
