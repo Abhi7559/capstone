@@ -135,7 +135,7 @@ export default function ArchivesPage() {
   };
 
   return (
-    <ProtectedRoute allowedRoles={["admin", "member"]}>
+    <ProtectedRoute allowedRoles={["admin"]}>
       <Head>
         <title>Archives — WorkStream Workspace</title>
       </Head>

@@ -145,6 +145,12 @@ export default function ProjectsPage() {
   >("all");
   const [sortBy, setSortBy] = useState<"newest" | "name" | "status">("newest");
   const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 6;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, sortBy]);
 
   // Metrics calculations
   const allProjectsList = projects || [];
@@ -190,6 +196,13 @@ export default function ProjectsPage() {
       if (sortBy === "name") return a.name.localeCompare(b.name);
       return a.status.localeCompare(b.status);
     });
+
+  const totalPages = Math.max(1, Math.ceil(filteredProjects.length / pageSize));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const paginatedProjects = filteredProjects.slice(
+    (safeCurrentPage - 1) * pageSize,
+    safeCurrentPage * pageSize,
+  );
 
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
@@ -596,7 +609,7 @@ export default function ProjectsPage() {
             ) : viewMode === "cards" ? (
               /* CARDS VIEW */
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {filteredProjects.map((project) => {
+                {paginatedProjects.map((project) => {
                   const isDropdownOpen = activeDropdownId === project.id;
                   const isProjectActive = project.status === "active";
                   const progressPct = calculateProjectProgress(project.id);
@@ -792,7 +805,7 @@ export default function ProjectsPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 overflow-visible">
-                    {filteredProjects.map((project, index) => {
+                    {paginatedProjects.map((project, index) => {
                       const isNearBottom =
                         index >= Math.max(1, filteredProjects.length - 2);
                       const isDropdownOpen = activeDropdownId === project.id;
@@ -957,6 +970,94 @@ export default function ProjectsPage() {
                     })}
                   </tbody>
                 </table>
+              </div>
+            )}
+            {/* Pagination Controls */}
+            {filteredProjects.length > pageSize && (
+              <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-gray-200/80 pt-6">
+                <div className="text-xs text-gray-500 font-medium">
+                  Showing{" "}
+                  <span className="font-semibold text-gray-800">
+                    {(safeCurrentPage - 1) * pageSize + 1}
+                  </span>
+                  {" "}-{" "}
+                  <span className="font-semibold text-gray-800">
+                    {Math.min(safeCurrentPage * pageSize, filteredProjects.length)}
+                  </span>{" "}
+                  of{" "}
+                  <span className="font-semibold text-gray-800">
+                    {filteredProjects.length}
+                  </span>{" "}
+                  projects
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {/* On first page don't show the prev button. In 2nd page and above show prev button */}
+                  {safeCurrentPage > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 hover:text-blue-600 transition shadow-2xs cursor-pointer"
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M15 19l-7-7 7-7"
+                        />
+                      </svg>
+                      <span>Prev</span>
+                    </button>
+                  )}
+
+                  {/* Page number buttons */}
+                  <div className="flex items-center gap-1 px-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                      <button
+                        key={pageNum}
+                        type="button"
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={`h-8 w-8 rounded-lg text-xs font-bold transition cursor-pointer ${
+                          pageNum === safeCurrentPage
+                            ? "bg-blue-600 text-white shadow-xs"
+                            : "text-gray-600 hover:bg-gray-100"
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Next button */}
+                  {safeCurrentPage < totalPages && (
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 hover:text-blue-600 transition shadow-2xs cursor-pointer"
+                    >
+                      <span>Next</span>
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M9 5l7 7-7 7"
+                        />
+                      </svg>
+                    </button>
+                  )}
+                </div>
               </div>
             )}
           </main>
