@@ -1,6 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import { HtmxKpiFragment } from "@/components/HtmxKpiFragment";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Sidebar } from "@/components/Sidebar";
 import { TopBar } from "@/components/TopBar";
@@ -18,6 +19,7 @@ export default function DashboardPage() {
   const queryClient = useQueryClient();
   const currentUser = useAuthStore((state) => state.currentUser);
   const isAdmin = currentUser?.role === "admin";
+  const [useHtmxMode, setUseHtmxMode] = useState(false);
 
   const { data: dashboardData, isLoading, isError, error } = useDashboardData();
   const { data: projects } = useProjects();
@@ -97,7 +99,7 @@ export default function DashboardPage() {
           {/* Scrollable Page Body */}
           <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto">
             {/* Dashboard Welcome Header */}
-            <header className="mb-8 pb-4 border-b border-gray-200">
+            <header className="mb-8 pb-4 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">
                   Welcome back, {currentUser?.name || "User"}! 👋
@@ -107,6 +109,22 @@ export default function DashboardPage() {
                     ? "Overview of workspace health, total tasks, and operational activity."
                     : "Overview of your assigned tasks, upcoming deadlines, and team projects."}
                 </p>
+              </div>
+
+              {/* Toggle HTMX / React KPI Mode */}
+              <div className="flex items-center space-x-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setUseHtmxMode((prev) => !prev)}
+                  className={`inline-flex items-center px-3.5 py-1.5 text-xs font-semibold rounded-lg border transition shadow-2xs cursor-pointer ${
+                    useHtmxMode
+                      ? "bg-indigo-600 border-indigo-600 text-white hover:bg-indigo-700"
+                      : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                  }`}
+                >
+                  <span className="mr-1.5">⚡</span>
+                  {useHtmxMode ? "HTMX Mode (Active)" : "Enable HTMX Live Mode"}
+                </button>
               </div>
             </header>
 
@@ -133,44 +151,48 @@ export default function DashboardPage() {
             ) : isAdmin && adminData ? (
               /* ADMIN DASHBOARD UI */
               <div className="space-y-8">
-                {/* Metric Summary Cards */}
-                <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
-                  <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
-                    <h3 className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
-                      Total Projects
-                    </h3>
-                    <p className="text-2xl sm:text-3xl font-extrabold text-gray-900">
-                      {adminData.totalProjects}
-                    </p>
-                  </div>
+                {/* Metric Summary Cards: HTMX Live Mode or React Mode */}
+                {useHtmxMode ? (
+                  <HtmxKpiFragment onSwitchToReact={() => setUseHtmxMode(false)} />
+                ) : (
+                  <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
+                    <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
+                      <h3 className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
+                        Total Projects
+                      </h3>
+                      <p className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+                        {adminData.totalProjects}
+                      </p>
+                    </div>
 
-                  <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
-                    <h3 className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
-                      Total Tasks
-                    </h3>
-                    <p className="text-2xl sm:text-3xl font-extrabold text-gray-900">
-                      {adminData.totalTasks}
-                    </p>
-                  </div>
+                    <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
+                      <h3 className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
+                        Total Tasks
+                      </h3>
+                      <p className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+                        {adminData.totalTasks}
+                      </p>
+                    </div>
 
-                  <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
-                    <h3 className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
-                      Completed Tasks
-                    </h3>
-                    <p className="text-2xl sm:text-3xl font-extrabold text-green-600">
-                      {adminData.completedTasks}
-                    </p>
-                  </div>
+                    <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
+                      <h3 className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
+                        Completed Tasks
+                      </h3>
+                      <p className="text-2xl sm:text-3xl font-extrabold text-green-600">
+                        {adminData.completedTasks}
+                      </p>
+                    </div>
 
-                  <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
-                    <h3 className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
-                      Overdue Tasks
-                    </h3>
-                    <p className="text-2xl sm:text-3xl font-extrabold text-red-600">
-                      {adminData.overdueTasks}
-                    </p>
+                    <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
+                      <h3 className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
+                        Overdue Tasks
+                      </h3>
+                      <p className="text-2xl sm:text-3xl font-extrabold text-red-600">
+                        {adminData.overdueTasks}
+                      </p>
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Recently Created Tasks Section */}
                 <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">

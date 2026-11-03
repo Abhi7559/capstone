@@ -243,7 +243,7 @@ async def get_project_activities(
 
 
 # ============================================================================
-# Dynamic Kanban Column Endpoints
+# Dynamic Kanban Column Endpoints (Hidden from Swagger UI)
 # ============================================================================
 @router.get(
     "/{id}/columns",
@@ -251,6 +251,7 @@ async def get_project_activities(
     status_code=status.HTTP_200_OK,
     summary="Get Project Columns",
     description="Retrieve all Kanban columns configured for this project.",
+    include_in_schema=False,
 )
 async def get_columns(
     id: uuid.UUID,
@@ -267,6 +268,7 @@ async def get_columns(
     status_code=status.HTTP_201_CREATED,
     summary="Create Project Column",
     description="Add a new custom Kanban column to this project.",
+    include_in_schema=False,
 )
 async def create_column(
     id: uuid.UUID,
@@ -286,6 +288,7 @@ async def create_column(
     status_code=status.HTTP_200_OK,
     summary="Reorder Project Columns",
     description="Reorder Kanban columns for a project. Admin only.",
+    include_in_schema=False,
 )
 async def reorder_columns(
     id: uuid.UUID,
@@ -305,6 +308,7 @@ async def reorder_columns(
     status_code=status.HTTP_200_OK,
     summary="Delete Project Column",
     description="Delete a column and reassign all tasks in it to 'backlog'.",
+    include_in_schema=False,
 )
 async def delete_column(
     id: uuid.UUID,
