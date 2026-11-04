@@ -717,6 +717,15 @@ export default function ProjectTaskBoardPage() {
                         <>
                           <button
                             type="button"
+                            onClick={() => setIsArchivedTasksModalOpen(true)}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 px-3 py-2 text-xs font-semibold shadow-xs transition cursor-pointer"
+                            title="View soft-deleted archived tasks"
+                          >
+                            <span>🗑️</span>
+                            <span>Trash ({archivedTasks.length})</span>
+                          </button>
+                          <button
+                            type="button"
                             onClick={handleOpenAddColumnModal}
                             className="rounded-lg border border-gray-300 bg-white px-3.5 py-2 text-xs font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none cursor-pointer"
                           >

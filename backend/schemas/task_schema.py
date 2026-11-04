@@ -211,6 +211,7 @@ class TaskOut(TaskBase):
     assignee_id: Optional[uuid.UUID] = None
     due_date: date
     tags: List[str] = Field(default_factory=list)
+    is_deleted: bool = Field(default=False, description="Soft-delete flag")
     created_at: datetime
     updated_at: datetime
 
