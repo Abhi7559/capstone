@@ -51,6 +51,7 @@ class MemberInviteResponse(CamelCaseModel):
     member: UserRead
     invitation_token: str
     signup_url: str
+    temporary_password: Optional[str] = Field(default=None, description="Generated initial temporary password")
 
 
 class MemberDeleteResponse(CamelCaseModel):

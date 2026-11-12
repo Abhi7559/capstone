@@ -34,6 +34,9 @@ export interface InviteMemberInput {
 export interface InviteMemberResponse {
   member: User;
   temporaryPassword?: string;
+  temporary_password?: string;
+  tempPassword?: string;
+  temp_password?: string;
   emailSent?: boolean;
   invitationToken?: string;
   signupUrl?: string;

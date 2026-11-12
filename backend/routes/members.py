@@ -114,6 +114,7 @@ async def invite_member(
         member=UserRead.model_validate(new_user),
         invitation_token=invitation_token,
         signup_url=signup_url,
+        temporary_password=temp_password,
     )
 
 
