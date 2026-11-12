@@ -104,7 +104,7 @@ class ProjectCreate(ProjectBase):
     """Payload submitted when creating a new project (Admin only)."""
 
     name: str = Field(min_length=3, max_length=50)
-    description: str = Field(default="No description provided.", min_length=1)
+    description: str = Field(default="", min_length=0)
     status: ProjectStatus = Field(default=ProjectStatus.PLANNING)
     category: Optional[ProjectCategory] = Field(default=ProjectCategory.ENGINEERING)
     department: Optional[str] = Field(default=None)
@@ -118,7 +118,7 @@ class ProjectCreate(ProjectBase):
     @classmethod
     def normalize_description(cls, v):
         if not v or not str(v).strip():
-            return "No description provided."
+            return ""
         return str(v).strip()
 
     @field_validator("category", mode="before")
@@ -202,7 +202,7 @@ class ProjectUpdate(ProjectBase):
     """Payload for partial updates to a project."""
 
     name: Optional[str] = Field(default=None, min_length=3, max_length=50)
-    description: Optional[str] = Field(default=None, min_length=1)
+    description: Optional[str] = Field(default=None, min_length=0)
     status: Optional[ProjectStatus] = Field(default=None)
     category: Optional[ProjectCategory] = Field(default=None)
     department: Optional[str] = Field(default=None)
