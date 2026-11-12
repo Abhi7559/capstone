@@ -18,7 +18,6 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
     reset: resetMutation,
   } = useInviteMember();
 
-  const [copiedLink, setCopiedLink] = useState(false);
   const [successResult, setSuccessResult] =
     useState<InviteMemberResponse | null>(null);
 
@@ -34,7 +33,6 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
 
   const handleClose = () => {
     setSuccessResult(null);
-    setCopiedLink(false);
     resetForm();
     resetMutation();
     onClose();
@@ -126,51 +124,6 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
                   </span>
                   <p className="text-sm font-semibold text-gray-900">
                     {successResult.member.designation}
-                  </p>
-                </div>
-              )}
-
-              {(successResult.temporaryPassword ||
-                successResult.temporary_password ||
-                successResult.tempPassword ||
-                successResult.temp_password) && (
-                <div className="pt-2 border-t border-gray-200">
-                  <span className="text-xs font-medium text-gray-500 uppercase">
-                    Temporary Password
-                  </span>
-                  <p className="mt-1 font-mono text-sm font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg px-3 py-1.5 inline-block">
-                    {successResult.temporaryPassword ||
-                      successResult.temporary_password ||
-                      successResult.tempPassword ||
-                      successResult.temp_password}
-                  </p>
-                </div>
-              )}
-
-              {(successResult.signupUrl || successResult.signup_url) && (
-                <div className="pt-2 border-t border-gray-200">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-medium text-gray-500 uppercase">
-                      Direct Activation Link
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const link =
-                          successResult.signupUrl || successResult.signup_url || "";
-                        if (link && navigator?.clipboard) {
-                          navigator.clipboard.writeText(link);
-                          setCopiedLink(true);
-                          setTimeout(() => setCopiedLink(false), 2500);
-                        }
-                      }}
-                      className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 cursor-pointer"
-                    >
-                      {copiedLink ? "✓ Copied!" : "Copy Link"}
-                    </button>
-                  </div>
-                  <p className="text-xs font-mono text-gray-600 bg-gray-100 rounded-lg p-2 break-all select-all">
-                    {successResult.signupUrl || successResult.signup_url}
                   </p>
                 </div>
               )}
