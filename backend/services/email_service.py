@@ -18,15 +18,6 @@ def render_invitation_html(
     action_url = signup_url or login_url or f"{settings.FRONTEND_URL.rstrip('/')}/signup"
     if "localhost" in action_url:
         action_url = action_url.replace("http://localhost:3000", "https://capstone-git-main-abhishek-ganeshwadis-projects.vercel.app")
-    
-    password_box = ""
-    if temp_password:
-        password_box = f"""
-    <div style="background-color: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 18px 22px; margin: 24px 0;">
-      <p style="margin: 0 0 8px 0; font-size: 13px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Your Temporary Password</p>
-      <code style="font-family: 'Courier New', Courier, monospace; font-size: 18px; color: #38bdf8; font-weight: 700; letter-spacing: 1px;">{temp_password}</code>
-    </div>
-        """
 
     return f"""<!DOCTYPE html>
 <html>
@@ -46,22 +37,19 @@ def render_invitation_html(
     </p>
 
     <p style="font-size: 15px; line-height: 24px; color: #cbd5e1;">
-      You have been invited to join the <strong>Team Hub</strong> workspace. Please activate your account by setting up your password below.
+      You have been invited to join the <strong>Team Hub</strong> workspace. Please activate your account and choose your password by clicking the button below:
     </p>
-
-    {password_box}
-
-    <div style="background-color: #3b82f61a; border-left: 4px solid #3b82f6; padding: 12px 16px; margin: 24px 0; border-radius: 4px;">
-      <p style="margin: 0; font-size: 14px; color: #93c5fd; line-height: 20px;">
-        {f"<strong>Important:</strong> You will be prompted to change this temporary password immediately after your first login." if temp_password else "Click the button below to open your secure signup page, choose your password, and start collaborating."}
-      </p>
-    </div>
 
     <div style="text-align: center; margin: 32px 0;">
       <a href="{action_url}" style="background-color: #6366f1; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 15px; display: inline-block; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);">
         Set Up Your Account &rarr;
       </a>
     </div>
+
+    <p style="font-size: 13px; line-height: 20px; color: #94a3b8;">
+      Or copy and paste this activation link directly into your browser:<br>
+      <a href="{action_url}" style="color: #818cf8; word-break: break-all;">{action_url}</a>
+    </p>
 
     <hr style="border: none; border-top: 1px solid #334155; margin: 32px 0 20px 0;">
 
