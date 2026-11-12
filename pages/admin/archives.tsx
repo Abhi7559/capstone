@@ -1,6 +1,6 @@
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Sidebar } from "@/components/Sidebar";
 import { TopBar } from "@/components/TopBar";
@@ -24,7 +24,14 @@ export default function ArchivesPage() {
   >(null);
 
   const currentUser = useAuthStore((state) => state.currentUser);
+  const isHydrated = useAuthStore((state) => state.isHydrated);
   const isAdmin = currentUser?.role === "admin";
+
+  useEffect(() => {
+    if (isHydrated && !isAdmin) {
+      router.replace("/dashboard");
+    }
+  }, [isHydrated, isAdmin, router]);
 
   const { data: allActiveProjects } = useProjects();
   const { data: deletedProjects, isLoading: isProjectsLoading } = useProjects({
@@ -133,6 +140,10 @@ export default function ArchivesPage() {
       setRestoringId(null);
     }
   };
+
+  if (isHydrated && !isAdmin) {
+    return null;
+  }
 
   return (
     <ProtectedRoute allowedRoles={["admin"]}>
