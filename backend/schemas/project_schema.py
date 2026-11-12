@@ -21,14 +21,20 @@ class KanbanColumnSchema(CamelCaseModel):
         populate_by_name=True,
         from_attributes=True,
         extra="ignore",
+        json_schema_extra={
+            "example": {
+                "label": "Code Review",
+                "status": "code_review"
+            }
+        },
     )
 
-    id: str = Field(default="col_default", description="Stable column identifier, e.g. 'col_todo'")
-    label: str = Field(default="Column", description="Display label shown in UI")
-    status: str = Field(default="todo", description="Task status value this column represents")
-    color: str = Field(default="bg-purple-50 border-purple-200 text-purple-800", description="Tailwind colour classes")
-    is_custom: bool = Field(default=False, description="True for user-created columns")
-    order: Optional[int] = Field(default=None, description="Column display order")
+    label: str = Field(description="Display label shown in UI header, e.g. 'Code Review'")
+    status: Optional[str] = Field(default=None, description="Task status value this column represents (auto-derived from label if omitted)")
+    id: Optional[str] = Field(default=None, description="Stable column identifier, e.g. 'col_code_review' (auto-generated if omitted)")
+    color: Optional[str] = Field(default="bg-purple-50 border-purple-200 text-purple-800", description="Tailwind color classes for column badge")
+    is_custom: Optional[bool] = Field(default=True, description="True for user-created custom columns")
+    order: Optional[int] = Field(default=None, description="Column horizontal display order (0-indexed)")
 
     @model_validator(mode="before")
     @classmethod
