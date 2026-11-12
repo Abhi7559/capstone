@@ -145,6 +145,8 @@ export default function ProjectsPage() {
   >("all");
   const [sortBy, setSortBy] = useState<"newest" | "name" | "status">("newest");
   const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 6;
 
   // Metrics calculations
   const allProjectsList = projects || [];
@@ -190,6 +192,20 @@ export default function ProjectsPage() {
       if (sortBy === "name") return a.name.localeCompare(b.name);
       return a.status.localeCompare(b.status);
     });
+
+  // Reset to page 1 on filter or search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, sortBy]);
+
+  // Paginated slice for current page
+  const totalPages = Math.max(1, Math.ceil(filteredProjects.length / pageSize));
+  const effectivePage = Math.min(currentPage, totalPages);
+  const startIndex = (effectivePage - 1) * pageSize;
+  const paginatedProjects = filteredProjects.slice(
+    startIndex,
+    startIndex + pageSize,
+  );
 
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
@@ -596,7 +612,7 @@ export default function ProjectsPage() {
             ) : viewMode === "cards" ? (
               /* CARDS VIEW */
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {filteredProjects.map((project) => {
+                {paginatedProjects.map((project) => {
                   const isDropdownOpen = activeDropdownId === project.id;
                   const isProjectActive = project.status === "active";
                   const progressPct = calculateProjectProgress(project.id);
@@ -792,7 +808,7 @@ export default function ProjectsPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 overflow-visible">
-                    {filteredProjects.map((project, index) => {
+                    {paginatedProjects.map((project, index) => {
                       const isNearBottom =
                         index >= Math.max(1, filteredProjects.length - 2);
                       const isDropdownOpen = activeDropdownId === project.id;
@@ -957,6 +973,56 @@ export default function ProjectsPage() {
                     })}
                   </tbody>
                 </table>
+              </div>
+            )}
+
+            {/* Pagination Controls */}
+            {filteredProjects.length > 0 && (
+              <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-xs">
+                <p className="text-xs text-gray-500 font-medium">
+                  Showing <span className="font-bold text-gray-900">{startIndex + 1}</span> to{" "}
+                  <span className="font-bold text-gray-900">
+                    {Math.min(startIndex + pageSize, filteredProjects.length)}
+                  </span>{" "}
+                  of <span className="font-bold text-gray-900">{filteredProjects.length}</span> projects
+                </p>
+
+                <div className="flex items-center space-x-2">
+                  <button
+                    type="button"
+                    disabled={effectivePage <= 1}
+                    onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                    className="inline-flex items-center px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-xs font-semibold text-gray-700 shadow-xs hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                  >
+                    ← Previous
+                  </button>
+
+                  <div className="flex items-center space-x-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((pNum) => (
+                      <button
+                        key={pNum}
+                        type="button"
+                        onClick={() => setCurrentPage(pNum)}
+                        className={`min-w-[32px] h-8 rounded-lg text-xs font-bold transition ${
+                          effectivePage === pNum
+                            ? "bg-blue-600 text-white shadow-xs"
+                            : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+                        }`}
+                      >
+                        {pNum}
+                      </button>
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={effectivePage >= totalPages}
+                    onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                    className="inline-flex items-center px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-xs font-semibold text-gray-700 shadow-xs hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                  >
+                    Next →
+                  </button>
+                </div>
               </div>
             )}
           </main>
