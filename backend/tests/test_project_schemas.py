@@ -13,6 +13,9 @@ from schemas.project_schema import (
     ProjectPriority,
 )
 
+pytestmark = pytest.mark.unit
+
+
 
 # ============================================================================
 # Tests: ProjectCreate

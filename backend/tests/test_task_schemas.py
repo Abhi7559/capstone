@@ -14,6 +14,9 @@ from schemas.task_schema import (
     ProjectActivityOut,
 )
 
+pytestmark = pytest.mark.unit
+
+
 
 def test_task_create_valid_payload():
     """1. Valid task creation payload is successfully parsed with camelCase aliases."""

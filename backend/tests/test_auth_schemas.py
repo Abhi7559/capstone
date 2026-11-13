@@ -9,6 +9,8 @@ from schemas.auth_schema import (
     RefreshTokenRequest,
 )
 
+pytestmark = pytest.mark.unit
+
 
 def test_valid_login_request():
     """1. A valid login request is accepted."""

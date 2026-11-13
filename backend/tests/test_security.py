@@ -10,6 +10,9 @@ from core.security import (
     decode_token,
 )
 
+pytestmark = pytest.mark.unit
+
+
 
 def test_password_hash_and_verify_success():
     raw_password = "SecurePassword@123"

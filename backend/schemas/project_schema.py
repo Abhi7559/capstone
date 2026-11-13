@@ -23,8 +23,7 @@ class KanbanColumnSchema(CamelCaseModel):
         extra="ignore",
         json_schema_extra={
             "example": {
-                "label": "Code Review",
-                "status": "code_review"
+                "label": "Code Review"
             }
         },
     )
