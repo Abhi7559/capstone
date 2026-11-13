@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Bar,
   BarChart,
@@ -33,6 +33,13 @@ export default function AnalyticsPage() {
     tasksByAssignee,
     completionTrend,
   } = useAnalyticsData(selectedProjectId);
+
+  // Filter out any "Unassigned" entry if count is 0 or if all tasks are assigned
+  const filteredTasksByAssignee = useMemo(() => {
+    return (tasksByAssignee || []).filter(
+      (item) => item.name?.toLowerCase() !== "unassigned" || item.tasksCount > 0
+    );
+  }, [tasksByAssignee]);
 
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
@@ -189,7 +196,7 @@ export default function AnalyticsPage() {
                   </div>
                   <div className="w-full h-80">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={tasksByAssignee}>
+                      <BarChart data={filteredTasksByAssignee}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
                         <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                         <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
